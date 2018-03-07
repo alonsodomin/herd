@@ -3,14 +3,14 @@
 
 module Herd.Storage
      ( StorageProtocol
-     --, saveEvent
+     , saveRecordMsg
      , storageProcess
      ) where
 
 import           Control.Distributed.Process
-import           Control.Monad               (forever, void)
+import           Control.Monad               (forever)
+import           Control.Monad.Logger
 import           Control.Monad.State
-import           Control.Monad.Trans
 import           Data.Binary
 import           Data.ByteString             (ByteString)
 import           Data.Time.Clock             (UTCTime)
@@ -22,30 +22,34 @@ import           Herd.Storage.Memory
 import           Herd.Types
 
 data StorageProtocol =
-  SaveEvent SaveEvent'
+  SaveRecord SaveRecord'
   deriving (Eq, Show, Generic, Typeable)
 
 instance Binary StorageProtocol
 
-data SaveEvent' = SaveEvent' PersistenceId ByteString UTCTime
+data SaveRecord' = SaveRecord' PersistenceId ByteString UTCTime
   deriving (Eq, Show, Generic, Typeable)
 
-instance Binary SaveEvent'
+instance Binary SaveRecord'
 
-saveEvent' :: ProcessId -> SaveEvent' -> MemStore Process EventRecord
-saveEvent' _ (SaveEvent' persistenceId payload time) =
-  saveEvent persistenceId payload time
+saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageProtocol
+saveRecordMsg pid payload time =
+  SaveRecord $ SaveRecord' pid payload time
+
+saveRecord' :: ProcessId -> SaveRecord' -> MemStore Process EventRecord
+saveRecord' _ (SaveRecord' persistenceId payload time) =
+  saveRecord persistenceId payload time
 
 handleMsg :: ProcessId -> StorageProtocol -> MemStore Process ()
-handleMsg pid (SaveEvent msg) = do
-  _ <- saveEvent' pid msg
+handleMsg pid (SaveRecord msg) = do
+  _ <- saveRecord' pid msg
   return ()
 
-storageProcess :: Process ()
-storageProcess = do
+storageProcess :: Process ProcessId
+storageProcess = spawnLocal $ do
   pid <- getSelfPid
-  evalStateT (loop pid) initialMemStore
+  evalStateT (runStdoutLoggingT (loop pid)) initialMemStore
   where loop :: ProcessId -> MemStore Process ()
         loop pid = forever $ do
-          msg <- lift (expect :: Process StorageProtocol)
+          msg <- lift $ lift (expect :: Process StorageProtocol)
           handleMsg pid msg

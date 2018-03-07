@@ -20,4 +20,4 @@ import           Herd.Types
 -- type Storage = Free StorageOp
 
 class Monad m => MonadStorage m where
-  saveEvent :: PersistenceId -> ByteString -> UTCTime -> m EventRecord
+  saveRecord :: PersistenceId -> ByteString -> UTCTime -> m EventRecord

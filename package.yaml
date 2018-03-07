@@ -25,6 +25,8 @@ dependencies:
 - binary-orphans
 - bytestring
 - free
+- mmorph
+- monad-logger
 - mtl >= 2.2.2 && < 2.3
 - lens
 - text
