@@ -17,8 +17,7 @@ import           Data.Time.Clock             (UTCTime)
 import           Data.Typeable
 import           GHC.Generics
 
-import           Herd.Storage.Algebra
-import           Herd.Storage.Memory
+import           Herd.Internal.Storage
 import           Herd.Types
 
 data StorageProtocol =

@@ -20,4 +20,6 @@ startHerd host port = do
   runProcess node $ do
     storagePid <- storageProcess
     send storagePid (saveRecordMsg "pid" B.empty time)
+    send storagePid (saveRecordMsg "pid" B.empty time)
+    send storagePid (saveRecordMsg "pid" B.empty time)
     liftIO $ threadDelay 2000000

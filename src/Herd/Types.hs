@@ -7,12 +7,11 @@ module Herd.Types where
 
 import           Control.Lens
 import           Data.Binary
-import           Data.Binary.Orphans
+import           Data.Binary.Orphans ()
 import           Data.ByteString     (ByteString)
 import           Data.String
 import           Data.Text           (Text)
 import qualified Data.Text           as T
-import           Data.Text.Binary
 import           Data.Time.Clock     (UTCTime)
 import           Data.Typeable
 import           GHC.Generics
@@ -34,6 +33,10 @@ data EventId = EventId PersistenceId Int
   deriving (Eq, Show, Generic, Typeable)
 
 instance Binary EventId
+
+instance ToText EventId where
+  toText (EventId persistenceId seqNum) =
+    T.concat [toText persistenceId, "#", toText seqNum]
 
 data EventRecord = EventRecord
   { _erEventId :: EventId
