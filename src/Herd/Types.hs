@@ -1,18 +1,18 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 module Herd.Types where
 
-import Control.Lens
-import Data.Binary
-import Data.Binary.Orphans
-import Data.Text (Text)
-import Data.Text.Binary
-import Data.Typeable
-import Data.ByteString (ByteString)
-import Data.Time.Clock (UTCTime)
-import GHC.Generics
+import           Control.Lens
+import           Data.Binary
+import           Data.Binary.Orphans
+import           Data.ByteString     (ByteString)
+import           Data.Text           (Text)
+import           Data.Text.Binary
+import           Data.Time.Clock     (UTCTime)
+import           Data.Typeable
+import           GHC.Generics
 
 newtype PersistenceId = PersistenceId Text
   deriving (Eq, Show, Generic, Typeable)

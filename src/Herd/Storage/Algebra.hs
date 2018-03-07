@@ -1,15 +1,15 @@
 {-# LANGUAGE DeriveFunctor    #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell  #-}
 
 module Herd.Storage.Algebra where
 
 import           Control.Monad.Free
 import           Control.Monad.Free.TH
-import Data.ByteString (ByteString)
-import Data.Time.Clock (UTCTime)
+import           Data.ByteString       (ByteString)
+import           Data.Time.Clock       (UTCTime)
 
-import Herd.Types
+import           Herd.Types
 
 -- data StorageOp a =
 --   SaveEventOp PersistenceId ByteString UTCTime (EventRecord -> a)

@@ -1,5 +1,5 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE LambdaCase           #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Storage.Memory
@@ -8,13 +8,13 @@ module Herd.Storage.Memory
      ) where
 
 -- import Control.Monad.Free (foldFree)
-import Control.Monad.State
-import Control.Monad.Identity
-import Data.ByteString (ByteString)
-import Data.Time.Clock (UTCTime)
+import           Control.Monad.Identity
+import           Control.Monad.State
+import           Data.ByteString        (ByteString)
+import           Data.Time.Clock        (UTCTime)
 
-import Herd.Storage.Algebra
-import Herd.Types
+import           Herd.Storage.Algebra
+import           Herd.Types
 
 type MemStore = StateT (Int, [EventRecord])
 

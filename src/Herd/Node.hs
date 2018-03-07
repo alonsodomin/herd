@@ -1,10 +1,11 @@
 module Herd.Node where
 
-import Control.Distributed.Process
-import Control.Distributed.Process.Node (initRemoteTable, runProcess)
-import Control.Distributed.Process.Backend.SimpleLocalnet
+import           Control.Distributed.Process
+import           Control.Distributed.Process.Backend.SimpleLocalnet
+import           Control.Distributed.Process.Node                   (initRemoteTable,
+                                                                     runProcess)
 
-import Herd.Storage
+import           Herd.Storage
 
 startHerd :: String -> Int -> IO ()
 startHerd host port = do

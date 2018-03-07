@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric      #-}
 
 module Herd.Storage
      ( StorageProtocol
@@ -7,18 +7,19 @@ module Herd.Storage
      , storageProcess
      ) where
 
-import Control.Distributed.Process
-import Control.Monad (forever)
-import Control.Monad.State
-import Data.Binary
-import Data.Typeable
-import Data.ByteString (ByteString)
-import Data.Time.Clock (UTCTime)
-import GHC.Generics
+import           Control.Distributed.Process
+import           Control.Monad               (forever, void)
+import           Control.Monad.State
+import           Control.Monad.Trans
+import           Data.Binary
+import           Data.ByteString             (ByteString)
+import           Data.Time.Clock             (UTCTime)
+import           Data.Typeable
+import           GHC.Generics
 
-import Herd.Storage.Algebra
-import Herd.Storage.Memory
-import Herd.Types
+import           Herd.Storage.Algebra
+import           Herd.Storage.Memory
+import           Herd.Types
 
 data StorageProtocol =
   SaveEvent SaveEvent'
@@ -36,11 +37,15 @@ saveEvent' _ (SaveEvent' persistenceId payload time) =
   saveEvent persistenceId payload time
 
 handleMsg :: ProcessId -> StorageProtocol -> MemStore Process ()
-handleMsg pid (SaveEvent msg) = saveEvent' pid msg
+handleMsg pid (SaveEvent msg) = do
+  _ <- saveEvent' pid msg
+  return ()
 
 storageProcess :: Process ()
 storageProcess = do
   pid <- getSelfPid
-  forever $ do
-    msg <- expect :: Process StorageProtocol
-    handleMsg (pid, msg)
+  evalStateT (loop pid) initialMemStore
+  where loop :: ProcessId -> MemStore Process ()
+        loop pid = forever $ do
+          msg <- lift (expect :: Process StorageProtocol)
+          handleMsg pid msg

@@ -5,7 +5,7 @@ module Herd.CLI
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
 
-import Herd.Node
+import           Herd.Node
 
 data HerdOpts = HerdOpts
   { host :: String
