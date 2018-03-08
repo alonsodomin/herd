@@ -6,7 +6,7 @@ module Herd.Internal.Storage where
 
 import           Control.Monad.Logger
 import           Control.Monad.State
-import qualified Control.Monad.Trans as Trans
+import qualified Control.Monad.Trans  as Trans
 import           Data.ByteString      (ByteString)
 import           Data.Semigroup       ((<>))
 import           Data.Time.Clock      (UTCTime)

@@ -14,6 +14,19 @@ import           GHC.Generics
 defaultClusterPort :: Int
 defaultClusterPort = 9001
 
+data NetworkConfig = NetworkConfig
+  { _ncHost :: Text
+  , _ncPort :: Int
+  } deriving (Eq, Show, Generic)
+
+makeLenses ''NetworkConfig
+
+instance FromJSON NetworkConfig where
+  parseJSON = withObject "network config" $ \o -> do
+    _ncHost <- o .: "host"
+    _ncPort <- o .: "port"
+    return NetworkConfig{..}
+
 data LoggingDriver =
   LoggingStdOut
   deriving (Eq, Show, Generic, Enum, Ord)
@@ -53,7 +66,8 @@ instance FromJSON StorageConfig where
     return StorageConfig{..}
 
 data HerdConfig = HerdConfig
-  { _hcLogging :: LoggingConfig
+  { _hcNetwork :: NetworkConfig
+  , _hcLogging :: LoggingConfig
   , _hcStorage :: StorageConfig
   , _hcVersion :: Text
   } deriving (Eq, Show, Generic)
@@ -62,6 +76,7 @@ makeLenses ''HerdConfig
 
 instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
+    _hcNetwork <- o .: "network"
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
     _hcStorage <- o .: "storage"
     _hcVersion <- o .: "version"

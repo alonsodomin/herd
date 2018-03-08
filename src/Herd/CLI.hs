@@ -1,7 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Herd.CLI
      ( herdCli
      ) where
 
+import           Control.Lens
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
 
@@ -9,25 +12,10 @@ import           Herd.Config
 import           Herd.Node
 
 data HerdOpts = HerdOpts
-  { host       :: String
-  , port       :: Int
-  , configFile :: FilePath
+  { _hoConfigFile :: FilePath
   } deriving (Eq, Show)
 
-hostOpt :: Parser String
-hostOpt = strOption
-        ( long "host"
-       <> short 'h'
-       <> metavar "HOST"
-       <> help "Host name to bind to" )
-
-portOpt :: Parser Int
-portOpt = option auto
-        ( long "port"
-       <> short 'p'
-       <> metavar "PORT"
-       <> value defaultClusterPort
-       <> help "Port to bind the server to" )
+makeLenses ''HerdOpts
 
 configFileOpt :: Parser FilePath
 configFileOpt = strOption
@@ -39,12 +27,10 @@ configFileOpt = strOption
 
 herdOpts :: Parser HerdOpts
 herdOpts = HerdOpts
-       <$> hostOpt
-       <*> portOpt
-       <*> configFileOpt
+       <$> configFileOpt
 
 herd :: HerdOpts -> IO ()
-herd (HerdOpts h p cfgFile) = startHerd h p cfgFile
+herd opts = startHerd $ opts ^. hoConfigFile
 
 herdCli :: IO ()
 herdCli = herd =<< execParser opts
