@@ -17,6 +17,7 @@ import           Data.Time.Clock             (UTCTime)
 import           Data.Typeable
 import           GHC.Generics
 
+import           Herd.Config
 import           Herd.Internal.Storage
 import           Herd.Types
 
@@ -44,8 +45,8 @@ handleMsg pid (SaveRecord msg) = do
   _ <- saveRecord' pid msg
   return ()
 
-storageProcess :: Process ProcessId
-storageProcess = spawnLocal $ do
+storageProcess :: StorageConfig -> Process ProcessId
+storageProcess cfg = spawnLocal $ do
   pid <- getSelfPid
   evalStateT (runStdoutLoggingT (loop pid)) initialMemStore
   where loop :: ProcessId -> MemStore Process ()

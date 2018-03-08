@@ -9,6 +9,7 @@ import           Control.Distributed.Process
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import           Control.Distributed.Process.Node                   (initRemoteTable,
                                                                      runProcess)
+import           Control.Lens
 import qualified Data.ByteString                                    as B
 import           Data.Time.Clock
 import           Data.Yaml                                          (ParseException,
@@ -27,7 +28,7 @@ launch host port config = do
   backend <- initializeBackend host (show port) initRemoteTable
   node    <- newLocalNode backend
   runProcess node $ do
-    storagePid <- storageProcess
+    storagePid <- storageProcess $ config ^. hcStorage
     send storagePid (saveRecordMsg "pid" B.empty time)
     send storagePid (saveRecordMsg "pid" B.empty time)
     send storagePid (saveRecordMsg "pid" B.empty time)

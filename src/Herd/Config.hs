@@ -41,8 +41,20 @@ instance FromJSON LoggingConfig where
 defaultLoggingConfig :: LoggingConfig
 defaultLoggingConfig = LoggingConfig defaultLoggingDriver
 
+data StorageConfig = StorageConfig
+  { _scDataLocation :: FilePath
+  } deriving (Eq, Show, Generic)
+
+makeLenses ''StorageConfig
+
+instance FromJSON StorageConfig where
+  parseJSON = withObject "storage config" $ \o -> do
+    _scDataLocation <- o .: "location"
+    return StorageConfig{..}
+
 data HerdConfig = HerdConfig
   { _hcLogging :: LoggingConfig
+  , _hcStorage :: StorageConfig
   , _hcVersion :: Text
   } deriving (Eq, Show, Generic)
 
@@ -51,6 +63,7 @@ makeLenses ''HerdConfig
 instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
+    _hcStorage <- o .: "storage"
     _hcVersion <- o .: "version"
     return HerdConfig{..}
 

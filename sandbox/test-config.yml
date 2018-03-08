@@ -1,1 +1,3 @@
 version: "1"
+storage:
+  location: "./sandbox/var/db"
