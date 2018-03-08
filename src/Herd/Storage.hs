@@ -17,7 +17,7 @@ import           Data.Time.Clock             (UTCTime)
 import           Data.Typeable
 import           GHC.Generics
 
-import           Herd.Config
+import Herd.Config
 import           Herd.Internal.Storage
 import           Herd.Types
 
