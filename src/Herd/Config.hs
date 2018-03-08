@@ -5,10 +5,10 @@
 
 module Herd.Config where
 
-import Control.Lens
-import Data.Aeson
-import Data.Text (Text)
-import qualified Data.Text as T
+import           Control.Lens
+import           Data.Aeson
+import           Data.Text    (Text)
+import qualified Data.Text    as T
 import           GHC.Generics
 
 defaultClusterPort :: Int
@@ -43,6 +43,7 @@ defaultLoggingConfig = LoggingConfig defaultLoggingDriver
 
 data HerdConfig = HerdConfig
   { _hcLogging :: LoggingConfig
+  , _hcVersion :: Text
   } deriving (Eq, Show, Generic)
 
 makeLenses ''HerdConfig
@@ -50,4 +51,8 @@ makeLenses ''HerdConfig
 instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
+    _hcVersion <- o .: "version"
     return HerdConfig{..}
+
+defaultConfigFile :: FilePath
+defaultConfigFile = "./conf/config.yml"
