@@ -5,6 +5,7 @@ module Herd.CLI
 import           Data.Semigroup      ((<>))
 import           Options.Applicative
 
+import Herd.Config
 import           Herd.Node
 
 data HerdOpts = HerdOpts
@@ -24,6 +25,7 @@ portOpt = option auto
         ( long "port"
        <> short 'p'
        <> metavar "PORT"
+       <> value defaultClusterPort
        <> help "Port to bind the server to" )
 
 herdOpts :: Parser HerdOpts
