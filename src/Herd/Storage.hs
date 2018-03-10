@@ -1,13 +1,16 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE LambdaCase         #-}
 
 module Herd.Storage
      ( StorageProtocol
+     , _SaveRecord
      , saveRecordMsg
      , storageProcess
      ) where
 
 import           Control.Distributed.Process
+import           Control.Lens
 import           Control.Monad               (forever)
 import           Control.Monad.Logger
 import           Control.Monad.State
@@ -22,21 +25,25 @@ import           Herd.Internal.Storage
 import           Herd.Types
 
 data StorageProtocol =
-  SaveRecord SaveRecord'
+  SaveRecord SaveRecord
   deriving (Eq, Show, Generic, Typeable)
 
 instance Binary StorageProtocol
 
-data SaveRecord' = SaveRecord' PersistenceId ByteString UTCTime
+_SaveRecord :: Prism' StorageProtocol SaveRecord
+_SaveRecord = prism SaveRecord $ \case
+  SaveRecord x -> Right x
+
+data SaveRecord = SaveRecord' PersistenceId ByteString UTCTime
   deriving (Eq, Show, Generic, Typeable)
 
-instance Binary SaveRecord'
+instance Binary SaveRecord
 
 saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageProtocol
 saveRecordMsg pid payload time =
   SaveRecord $ SaveRecord' pid payload time
 
-saveRecord' :: ProcessId -> SaveRecord' -> MemStore Process EventRecord
+saveRecord' :: ProcessId -> SaveRecord -> MemStore Process EventRecord
 saveRecord' _ (SaveRecord' persistenceId payload time) =
   saveRecord persistenceId payload time
 
