@@ -46,7 +46,7 @@ library:
   - Herd.CLI
 
 executables:
-  herd-exe:
+  herd:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
