@@ -14,7 +14,7 @@ import           Data.Text           (Text)
 import qualified Data.Text           as T
 import           Data.Time.Clock     (UTCTime)
 import           Data.Typeable
-import           GHC.Generics
+import           GHC.Generics        hiding (to)
 
 import           Herd.Data.Text
 
@@ -47,3 +47,6 @@ data EventRecord = EventRecord
 instance Binary EventRecord
 
 makeLenses ''EventRecord
+
+erPersistenceId :: Getter EventRecord PersistenceId
+erPersistenceId = erEventId . (to $ \(EventId pid _) -> pid)

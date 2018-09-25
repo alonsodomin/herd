@@ -1,12 +1,15 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE OverloadedStrings    #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE TypeSynonymInstances  #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Herd.Internal.Storage where
 
+import           Control.Lens
 import           Control.Monad.Logger
 import           Control.Monad.State
-import qualified Control.Monad.Trans  as Trans
 import           Data.ByteString      (ByteString)
 import           Data.Semigroup       ((<>))
 import           Data.Time.Clock      (UTCTime)
@@ -16,19 +19,15 @@ import           Herd.Types
 
 class Monad m => MonadStorage m where
   saveRecord :: PersistenceId -> ByteString -> UTCTime -> m EventRecord
+  loadRecords :: PersistenceId -> UTCTime -> m [EventRecord]
 
-instance MonadStorage m => MonadStorage (StateT s m) where
-  saveRecord a b c = Trans.lift $ saveRecord a b c
-instance MonadStorage m => MonadStorage (LoggingT m) where
-  saveRecord a b c = Trans.lift $ saveRecord a b c
+type StoreS = (Int, [EventRecord])
+type MemStore m = LoggingT (StateT StoreS m)
 
-type MemStoreS = (Int, [EventRecord])
-type MemStore m = LoggingT (StateT MemStoreS m)
-
-instance {-# OVERLAPS #-} (Monad m, MonadIO m) => MonadStorage (MemStore m) where
+instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorage m where
   saveRecord pid payload time = do
     logDebugN $ "Going to store event record for persistence ID '" <> (toText pid) <> "'"
-    (lastSeqNum, prevEvents) <- lift $ get
+    (lastSeqNum, prevEvents) <- get
     let newSeqNum = lastSeqNum + 1
     let eventId   = EventId pid newSeqNum
     let record    = EventRecord eventId payload time
@@ -36,5 +35,10 @@ instance {-# OVERLAPS #-} (Monad m, MonadIO m) => MonadStorage (MemStore m) wher
     logDebugN $ "Event record for persistence ID '" <> (toText pid) <> "' successfully stored with id: " <> (toText eventId)
     return record
 
-initialMemStore :: MemStoreS
+  loadRecords pid oldest = do
+    logDebugN $ "Loading records for persistence ID '" <> (toText pid) <> "'"
+    (_, allRecords) <- get
+    return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erPersistenceId) == pid) allRecords
+
+initialMemStore :: StoreS
 initialMemStore = (0, [])

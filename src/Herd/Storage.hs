@@ -1,11 +1,14 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE LambdaCase         #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 module Herd.Storage
      ( StorageProtocol
      , _SaveRecord
+     , _LoadRecords
      , saveRecordMsg
+     , loadRecordsMsg
      , storageProcess
      ) where
 
@@ -24,15 +27,14 @@ import           Herd.Config
 import           Herd.Internal.Storage
 import           Herd.Types
 
+-- Protocol definition
+
 data StorageProtocol =
-  SaveRecord SaveRecord
+    SaveRecord SaveRecord
+  | LoadRecords LoadRecords
   deriving (Eq, Show, Generic, Typeable)
 
 instance Binary StorageProtocol
-
-_SaveRecord :: Prism' StorageProtocol SaveRecord
-_SaveRecord = prism SaveRecord $ \case
-  SaveRecord x -> Right x
 
 data SaveRecord = SaveRecord' PersistenceId ByteString UTCTime
   deriving (Eq, Show, Generic, Typeable)
@@ -43,20 +45,53 @@ saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageProtocol
 saveRecordMsg pid payload time =
   SaveRecord $ SaveRecord' pid payload time
 
-saveRecord' :: ProcessId -> SaveRecord -> MemStore Process EventRecord
-saveRecord' _ (SaveRecord' persistenceId payload time) =
-  saveRecord persistenceId payload time
+data LoadRecords = LoadRecords' PersistenceId UTCTime
+  deriving (Eq, Show, Generic, Typeable)
 
-handleMsg :: ProcessId -> StorageProtocol -> MemStore Process ()
-handleMsg pid (SaveRecord msg) = do
-  _ <- saveRecord' pid msg
+instance Binary LoadRecords
+
+loadRecordsMsg :: PersistenceId -> UTCTime -> StorageProtocol
+loadRecordsMsg pid oldest = LoadRecords $ LoadRecords' pid oldest
+
+_SaveRecord :: Prism' StorageProtocol SaveRecord
+_SaveRecord = prism' SaveRecord $ \case
+  SaveRecord x -> Just x
+  _            -> Nothing
+
+_LoadRecords :: Prism' StorageProtocol LoadRecords
+_LoadRecords = prism' LoadRecords $ \case
+  LoadRecords x -> Just x
+  _             -> Nothing
+
+-- Message handlers
+
+runInMemory :: MemStore Process a -> Process a
+runInMemory memStore = evalStateT (runStdoutLoggingT memStore) initialMemStore
+
+saveRecord' :: SaveRecord -> MemStore Process ()
+saveRecord' (SaveRecord' persistenceId payload time) = do
+  saveRecord persistenceId payload time
   return ()
+
+loadRecords' :: ProcessId -> LoadRecords -> MemStore Process ()
+loadRecords' sender (LoadRecords' pid oldest) = do
+  records <- loadRecords pid oldest
+  lift . lift $ send sender records
+
+-- Process behaviour
+
+storageBehaviour :: ProcessId -> (ProcessId, StorageProtocol) -> MemStore Process ()
+storageBehaviour _ (sender, msg) = case msg of
+  SaveRecord  msg' -> saveRecord' msg'
+  LoadRecords msg' -> loadRecords' sender msg'
 
 storageProcess :: StorageConfig -> Process ProcessId
 storageProcess cfg = spawnLocal $ do
   pid <- getSelfPid
-  evalStateT (runStdoutLoggingT (loop pid)) initialMemStore
+  runInMemory $ do
+    logDebugN "Starting storage process"
+    loop pid
   where loop :: ProcessId -> MemStore Process ()
-        loop pid = forever $ do
-          msg <- lift $ lift (expect :: Process StorageProtocol)
-          handleMsg pid msg
+        loop self = forever $ do
+          msg <- lift $ lift (expect :: Process (ProcessId, StorageProtocol))
+          storageBehaviour self msg

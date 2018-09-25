@@ -19,6 +19,7 @@ import           Data.Yaml                                          (ParseExcept
 
 import           Herd.Config
 import           Herd.Storage
+import           Herd.Types
 
 parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
 parseConfig = decodeFileEither
@@ -31,10 +32,14 @@ launch config = do
   backend <- initializeBackend host port initRemoteTable
   node    <- newLocalNode backend
   runProcess node $ do
+    self       <- getSelfPid
     storagePid <- storageProcess $ config ^. hcStorage
-    send storagePid (saveRecordMsg "pid" B.empty time)
-    send storagePid (saveRecordMsg "pid" B.empty time)
-    send storagePid (saveRecordMsg "pid" B.empty time)
+    send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
+    send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
+    send storagePid (self, saveRecordMsg "bar-entity" B.empty time)
+    send storagePid (self, loadRecordsMsg "foo-entity" time)
+    records <- (expect :: Process [EventRecord])
+    liftIO $ print records
     liftIO $ threadDelay 2000000
 
 startHerd :: FilePath -> IO ()
