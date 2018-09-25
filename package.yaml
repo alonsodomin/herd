@@ -32,6 +32,7 @@ dependencies:
 - lens
 - text
 - text-binary
+- transformers
 - time
 - yaml
 
@@ -42,6 +43,10 @@ library:
   - distributed-process-simplelocalnet
   - network-transport-tcp
   - optparse-applicative >= 0.14.2 && < 0.15
+  - servant
+  - servant-server
+  - wai
+  - warp
   exposed-modules:
   - Herd.CLI
 
