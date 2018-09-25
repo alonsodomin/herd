@@ -14,17 +14,33 @@ import           GHC.Generics
 defaultClusterPort :: Int
 defaultClusterPort = 9001
 
+defaultHttpPort :: Int
+defaultHttpPort = 8081
+
+data NetworkBinding = NetworkBinding
+  { _nbHost :: Text
+  , _nbPort :: Int
+  } deriving (Eq, Show, Generic)
+
+makeLenses ''NetworkBinding
+
+instance FromJSON NetworkBinding where
+  parseJSON = withObject "network config" $ \o -> do
+    _nbHost <- o .: "host"
+    _nbPort <- o .: "port"
+    return NetworkBinding{..}
+
 data NetworkConfig = NetworkConfig
-  { _ncHost :: Text
-  , _ncPort :: Int
+  { _ncCluster :: NetworkBinding
+  , _ncHttp    :: NetworkBinding
   } deriving (Eq, Show, Generic)
 
 makeLenses ''NetworkConfig
 
 instance FromJSON NetworkConfig where
   parseJSON = withObject "network config" $ \o -> do
-    _ncHost <- o .: "host"
-    _ncPort <- o .: "port"
+    _ncCluster <- o .: "cluster"
+    _ncHttp    <- o .: "http"
     return NetworkConfig{..}
 
 data LoggingDriver =

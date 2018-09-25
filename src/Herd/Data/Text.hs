@@ -3,8 +3,10 @@
 
 module Herd.Data.Text where
 
-import           Data.Text (Text)
-import qualified Data.Text as T
+import           Data.Text        (Text)
+import qualified Data.Text        as T
+import           Data.Time.Clock  (UTCTime)
+import           Data.Time.Format
 
 class ToText a where
   toText :: a -> Text
@@ -20,3 +22,6 @@ instance ToText String where
 
 instance ToText Int where
   toText = T.pack . show
+
+instance ToText UTCTime where
+  toText utc = T.pack $ formatTime defaultTimeLocale "%m/%d/%Y" utc

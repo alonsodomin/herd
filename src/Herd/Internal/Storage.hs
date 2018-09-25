@@ -36,7 +36,7 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
     return record
 
   loadRecords pid oldest = do
-    logDebugN $ "Loading records for persistence ID '" <> (toText pid) <> "'"
+    logDebugN $ "Loading records for persistence ID '" <> (toText pid) <> "' starting at: " <> (toText oldest)
     (_, allRecords) <- get
     return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erPersistenceId) == pid) allRecords
 

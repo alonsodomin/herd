@@ -7,7 +7,7 @@ module Herd.Node
 import           Control.Concurrent                                 (threadDelay)
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Backend.SimpleLocalnet
-import           Control.Distributed.Process.Node                   (initRemoteTable,
+import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
 import qualified Data.ByteString                                    as B
@@ -16,7 +16,10 @@ import           Data.Time.Clock
 import           Data.Yaml                                          (ParseException,
                                                                      decodeFileEither,
                                                                      prettyPrintParseException)
+import qualified Network.Wai.Handler.Warp                           as Wai
+import           Servant
 
+import           Herd.API
 import           Herd.Config
 import           Herd.Storage
 import           Herd.Types
@@ -24,23 +27,38 @@ import           Herd.Types
 parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
 parseConfig = decodeFileEither
 
+server :: ProcessId -> Server EventsAPI
+server systemRoot = fetchEvents
+
 launch :: HerdConfig -> IO ()
 launch config = do
-  time    <- getCurrentTime
-  let host = T.unpack $ config ^. hcNetwork . ncHost
-  let port = show $ config ^. hcNetwork . ncPort
-  backend <- initializeBackend host port initRemoteTable
-  node    <- newLocalNode backend
+  node       <- startNode
   runProcess node $ do
-    self       <- getSelfPid
-    storagePid <- storageProcess $ config ^. hcStorage
-    send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
-    send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
-    send storagePid (self, saveRecordMsg "bar-entity" B.empty time)
-    send storagePid (self, loadRecordsMsg "foo-entity" time)
-    records <- (expect :: Process [EventRecord])
-    liftIO $ print records
-    liftIO $ threadDelay 2000000
+    systemRoot <- launchSystem
+    httpServer systemRoot
+  where startNode :: IO LocalNode
+        startNode = do
+          let host = T.unpack $ config ^. hcNetwork . ncCluster . nbHost
+          let port = show $ config ^. hcNetwork . ncCluster . nbPort
+          backend <- initializeBackend host port initRemoteTable
+          newLocalNode backend
+
+        launchSystem :: Process ProcessId
+        launchSystem = do
+          time       <- liftIO $ getCurrentTime
+          self       <- getSelfPid
+          storagePid <- storageProcess $ config ^. hcStorage
+          send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
+          send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
+          send storagePid (self, saveRecordMsg "bar-entity" B.empty time)
+          send storagePid (self, loadRecordsMsg "foo-entity" time)
+          liftIO $ threadDelay 50000
+          return self
+
+        httpServer :: ProcessId -> Process ()
+        httpServer systemRoot = do
+          let httpPort = config ^. hcNetwork . ncHttp . nbPort
+          liftIO $ Wai.run httpPort $ serve eventsAPI (server systemRoot)
 
 startHerd :: FilePath -> IO ()
 startHerd configFile = do
