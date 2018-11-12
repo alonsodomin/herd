@@ -5,11 +5,13 @@ module Herd.Node
      ) where
 
 import           Control.Concurrent                                 (threadDelay)
-import           Control.Distributed.Process
+import           Control.Monad.State
+import           Control.Distributed.Process hiding (Handler)
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
+import Control.Monad.Morph
 import qualified Data.ByteString                                    as B
 import qualified Data.Text                                          as T
 import           Data.Time.Clock
@@ -28,7 +30,19 @@ parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
 parseConfig = decodeFileEither
 
 server :: ProcessId -> Server EventsAPI
-server systemRoot = fetchEvents
+--server systemRoot node = fetchEvents
+server systemRoot = fetchEvents' systemRoot
+
+--fetchEvents' :: ProcessId -> LocalNode -> Maybe UTCTime -> Handler [EventRecord]
+fetchEvents' :: ProcessId -> Handler [EventRecord]
+fetchEvents' = undefined
+-- fetchEvents' systemRoot node (Just oldest) = execStateT (hoist (\x -> liftIO $ runProcess node x) asyncEvents) []
+--   where asyncEvents :: StateT [EventRecord] Process ()
+--         asyncEvents = do
+--           self <- lift $ getSelfPid
+--           lift $ send systemRoot (self, loadRecordsMsg "" oldest)
+--           events <- lift $ (expect :: Process [EventRecord])
+--           put events
 
 launch :: HerdConfig -> IO ()
 launch config = do

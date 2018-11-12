@@ -8,7 +8,8 @@ import           Servant
 
 import           Herd.Types
 
-type EventsAPI = "events" :> QueryParam "oldest" UTCTime :> Get '[JSON] [EventRecord]
+--type EventsAPI = "events" :> QueryParam "oldest" UTCTime :> Get '[JSON] [EventRecord]
+type EventsAPI = "events" :> Get '[JSON] [EventRecord]
 
 eventsAPI :: Proxy EventsAPI
 eventsAPI = Proxy
