@@ -6,6 +6,8 @@ module Herd.CLI
 
 import           Control.Lens
 import           Data.Semigroup      ((<>))
+import           Data.Yaml           (ParseException, decodeFileEither,
+                                      prettyPrintParseException)
 import           Options.Applicative
 
 import           Herd.Config
@@ -29,8 +31,21 @@ herdOpts :: Parser HerdOpts
 herdOpts = HerdOpts
        <$> configFileOpt
 
+loadHerdConf :: FilePath -> IO HerdConfig
+loadHerdConf configFile = do
+  decodedConfig <- parseConfig configFile
+  case decodedConfig of
+    Left  err -> fail $ prettyPrintParseException err
+    Right cfg -> return cfg
+
+  where
+    parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
+    parseConfig = decodeFileEither
+
 herd :: HerdOpts -> IO ()
-herd opts = startHerd $ opts ^. hoConfigFile
+herd opts = do
+  config <- loadHerdConf (opts ^. hoConfigFile)
+  startHerdNode config
 
 herdCli :: IO ()
 herdCli = herd =<< execParser opts

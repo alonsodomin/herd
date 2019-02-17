@@ -33,6 +33,7 @@ instance FromJSON NetworkBinding where
 data NetworkConfig = NetworkConfig
   { _ncCluster :: NetworkBinding
   , _ncHttp    :: NetworkBinding
+  , _ncBroker  :: NetworkBinding
   } deriving (Eq, Show, Generic)
 
 makeLenses ''NetworkConfig
@@ -41,6 +42,7 @@ instance FromJSON NetworkConfig where
   parseJSON = withObject "network config" $ \o -> do
     _ncCluster <- o .: "cluster"
     _ncHttp    <- o .: "http"
+    _ncBroker  <- o .: "broker"
     return NetworkConfig{..}
 
 data LoggingDriver =

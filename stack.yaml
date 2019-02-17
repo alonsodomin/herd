@@ -41,9 +41,11 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - distributed-process-0.7.4@sha256:9e43cb9a27e976e3e4c054e783bdfbd6140760e70997448da66993f4674a6409
+- distributed-process-monad-control-0.5.1.3@sha256:72f0c212135ddaf9c7613499f9612855f2470e4ec6b8aa3447781fa2a5dbd260
 - distributed-process-simplelocalnet-0.2.4@sha256:044a003f81a648f9fb9b1c7ae9cd8f753f5f1c32d9db5ff8b31e91e91f525ed7
 - network-transport-tcp-0.6.0@sha256:077b733c97db7949d18d09877e847fae117cc6e4e5c35941442f52debbd32452
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
+- json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

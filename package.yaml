@@ -46,9 +46,12 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
+  - conduit-extra
   - distributed-process
+  - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - directory
+  - json-rpc
   - network-transport-tcp
   - optparse-applicative >= 0.14.2 && < 0.15
   - servant

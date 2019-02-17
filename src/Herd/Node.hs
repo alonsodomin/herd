@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Herd.Node
-     ( startHerd
+     ( startHerdNode
      ) where
 
 import           Control.Concurrent                                 (threadDelay)
@@ -16,9 +16,7 @@ import           Control.Monad.State
 import qualified Data.ByteString                                    as B
 import qualified Data.Text                                          as T
 import           Data.Time.Clock
-import           Data.Yaml                                          (ParseException,
-                                                                     decodeFileEither,
-                                                                     prettyPrintParseException)
+
 import qualified Network.Wai.Handler.Warp                           as Wai
 import           Servant
 
@@ -27,30 +25,24 @@ import           Herd.Config
 import           Herd.Internal.Types
 import           Herd.Process.Storage
 
-parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
-parseConfig = decodeFileEither
+server :: ProcessId -> LocalNode -> Server EventsAPI
+server = fetchEvents'
 
-server :: ProcessId -> Server EventsAPI
---server systemRoot node = fetchEvents
-server systemRoot = fetchEvents' systemRoot
-
---fetchEvents' :: ProcessId -> LocalNode -> Maybe UTCTime -> Handler [EventRecord]
-fetchEvents' :: ProcessId -> Handler [EventRecord]
+fetchEvents' :: ProcessId -> LocalNode -> Handler [EventRecord]
 fetchEvents' = undefined
--- fetchEvents' systemRoot node (Just oldest) = execStateT (hoist (\x -> liftIO $ runProcess node x) asyncEvents) []
---   where asyncEvents :: StateT [EventRecord] Process ()
---         asyncEvents = do
---           self <- lift $ getSelfPid
---           lift $ send systemRoot (self, loadRecordsMsg "" oldest)
---           events <- lift $ (expect :: Process [EventRecord])
---           put events
+-- fetchEvents' systemRoot node = liftIO $ runProcess node $ do
+--   self       <- getSelfPid
+--   time       <- liftIO $ getCurrentTime
+--   send systemRoot (self, loadRecordsMsg "foo-entity" time)
+--   response   <- (expect :: Process StorageResponse)
+--   return $ getRecords response
 
-launch :: HerdConfig -> IO ()
-launch config = do
+startHerdNode :: HerdConfig -> IO ()
+startHerdNode config = do
   node       <- startNode
   runProcess node $ do
     systemRoot <- launchSystem
-    httpServer systemRoot
+    httpServer systemRoot node
   where startNode :: IO LocalNode
         startNode = do
           let host = T.unpack $ config ^. hcNetwork . ncCluster . nbHost
@@ -73,14 +65,7 @@ launch config = do
           liftIO $ print response
           return self
 
-        httpServer :: ProcessId -> Process ()
-        httpServer systemRoot = do
+        httpServer :: ProcessId -> LocalNode -> Process ()
+        httpServer systemRoot node = do
           let httpPort = config ^. hcNetwork . ncHttp . nbPort
-          liftIO $ Wai.run httpPort $ serve eventsAPI (server systemRoot)
-
-startHerd :: FilePath -> IO ()
-startHerd configFile = do
-  decodedConfig <- parseConfig configFile
-  case decodedConfig of
-    Left  err -> putStrLn $ prettyPrintParseException err
-    Right cfg -> launch cfg
+          liftIO $ Wai.run httpPort $ serve eventsAPI (server systemRoot node)

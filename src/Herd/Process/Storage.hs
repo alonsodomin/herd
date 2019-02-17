@@ -12,6 +12,7 @@ module Herd.Process.Storage
      , saveRecordMsg
      , loadRecordsMsg
      , storageProcess
+     , getRecords
      ) where
 
 import           Control.Distributed.Process
@@ -61,6 +62,9 @@ _LoadRecords = prism' LoadRecords $ \case
 
 data StorageResponse = FoundRecords [EventRecord]
   deriving (Eq, Show, Generic, Typeable, Binary)
+
+getRecords :: StorageResponse -> [EventRecord]
+getRecords (FoundRecords xs) = xs
 
 -- Message handlers
 
