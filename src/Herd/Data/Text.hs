@@ -23,5 +23,8 @@ instance ToText String where
 instance ToText Int where
   toText = T.pack . show
 
+instance ToText Integer where
+  toText = T.pack . show
+
 instance ToText UTCTime where
   toText utc = T.pack $ formatTime defaultTimeLocale "%m/%d/%Y" utc
