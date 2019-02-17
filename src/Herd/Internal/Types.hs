@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TemplateHaskell    #-}
 
-module Herd.Types where
+module Herd.Internal.Types where
 
 import           Control.Lens           hiding ((.=))
 import           Data.Aeson

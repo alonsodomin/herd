@@ -1,8 +1,8 @@
+{-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE DeriveAnyClass     #-}
 
 module Herd.Storage
      ( StorageRequest
@@ -27,7 +27,7 @@ import           GHC.Generics
 
 import           Herd.Config
 import           Herd.Internal.Storage
-import           Herd.Types
+import           Herd.Internal.Types
 
 -- Protocol definition
 

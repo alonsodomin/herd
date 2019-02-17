@@ -3,10 +3,10 @@
 
 module Herd.API where
 
-import           Data.Time  (UTCTime)
+import           Data.Time           (UTCTime)
 import           Servant
 
-import           Herd.Types
+import           Herd.Internal.Types
 
 --type EventsAPI = "events" :> QueryParam "oldest" UTCTime :> Get '[JSON] [EventRecord]
 type EventsAPI = "events" :> Get '[JSON] [EventRecord]
