@@ -7,10 +7,12 @@ module Herd.Node
 import           Control.Concurrent                                 (threadDelay)
 import           Control.Distributed.Process                        hiding
                                                                      (Handler)
+import qualified Control.Distributed.Process.ManagedProcess as ManagedProcess
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
+import           Control.Monad.Logger
 import           Control.Monad.Morph
 import           Control.Monad.State
 import qualified Data.ByteString                                    as B
@@ -22,6 +24,7 @@ import           Servant
 
 import           Herd.API
 import           Herd.Config
+import           Herd.Data.Text
 import           Herd.Internal.Types
 import           Herd.Process.Storage
 
@@ -45,24 +48,24 @@ startHerdNode config = do
     httpServer systemRoot node
   where startNode :: IO LocalNode
         startNode = do
-          let host = T.unpack $ config ^. hcNetwork . ncCluster . nbHost
+          let host = config ^. hcNetwork . ncCluster . nbHost
           let port = show $ config ^. hcNetwork . ncCluster . nbPort
-          backend <- initializeBackend host port initRemoteTable
+          liftIO $ runStdoutLoggingT (logDebugN $ "Starting Herd node at host " <> host <> " and port " <> (toText port) <> "...")
+          backend <- initializeBackend (T.unpack host) port initRemoteTable
           newLocalNode backend
 
         launchSystem :: Process ProcessId
         launchSystem = do
           self       <- getSelfPid
           time1      <- liftIO $ getCurrentTime
-          storagePid <- storageProcess $ config ^. hcStorage
-          send storagePid (self, saveRecordMsg "foo-entity" B.empty time1)
+          storagePid <- spawnLocal $ startStorage (config ^. hcStorage)
+          _ <- saveRecord storagePid "foo-entity" B.empty time1
           liftIO $ threadDelay 10000
           time2      <- liftIO $ getCurrentTime
-          send storagePid (self, saveRecordMsg "foo-entity" B.empty time2)
-          send storagePid (self, saveRecordMsg "bar-entity" B.empty time1)
-          send storagePid (self, loadRecordsMsg "foo-entity" time1)
-          response <- (expect :: Process StorageResponse)
-          liftIO $ print response
+          _ <- saveRecord storagePid "foo-entity" B.empty time2
+          _ <- saveRecord storagePid "bar-entity" B.empty time1
+          fooRecs <- loadRecords storagePid "foo-entity" time1
+          liftIO $ print fooRecs
           return self
 
         httpServer :: ProcessId -> LocalNode -> Process ()

@@ -20,7 +20,7 @@ import           Herd.Data.Text
 import           Herd.Internal.Storage.Class
 import           Herd.Internal.Types
 
-type StoreS = (Int, HashMap SubjectId [EventRecord])
+type StoreS = (Integer, HashMap SubjectId [EventRecord])
 type MemStore m = LoggingT (StateT StoreS m)
 
 instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorage m where
@@ -39,7 +39,7 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
     logDebugN $ "Loading records for persistence ID '" <> (toText pid) <> "' starting at: " <> (toText oldest)
     (_, allRecords) <- get
     entityRecords <- pure . maybe [] id $ Map.lookup pid allRecords
-    foundRecs <- pure $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erPersistenceId) == pid) entityRecords
+    foundRecs <- pure $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erSubjectId) == pid) entityRecords
     logDebugN $ "Found " <> (toText $ length foundRecs) <> " records at entity ID '" <> (toText pid) <> "'"
     return foundRecs
 

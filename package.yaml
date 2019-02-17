@@ -48,6 +48,9 @@ library:
   dependencies:
   - conduit-extra
   - distributed-process
+  - distributed-process-async
+  - distributed-process-client-server
+  - distributed-process-extras
   - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - directory
