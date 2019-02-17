@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -12,6 +13,7 @@ import           Data.Binary.Orphans    ()
 import           Data.ByteString        (ByteString)
 import qualified Data.ByteString        as BS
 import qualified Data.ByteString.Base64 as Base64
+import           Data.Hashable          (Hashable)
 import           Data.String
 import           Data.Text              (Text)
 import qualified Data.Text              as T
@@ -22,11 +24,7 @@ import           GHC.Generics           hiding (to)
 import           Herd.Data.Text
 
 newtype PersistenceId = PersistenceId Text
-  deriving (Eq, Show, Generic, Typeable)
-
-instance Binary PersistenceId
-
-instance ToJSON PersistenceId
+  deriving (Eq, Show, Generic, Typeable, Hashable, Binary, ToJSON)
 
 instance IsString PersistenceId where
   fromString = PersistenceId . T.pack
@@ -35,11 +33,7 @@ instance ToText PersistenceId where
   toText (PersistenceId txt) = txt
 
 data EventId = EventId PersistenceId Int
-  deriving (Eq, Show, Generic, Typeable)
-
-instance Binary EventId
-
-instance ToJSON EventId
+  deriving (Eq, Binary, Show, Generic, Typeable, ToJSON)
 
 instance ToText EventId where
   toText (EventId persistenceId seqNum) =
@@ -49,14 +43,12 @@ data EventRecord = EventRecord
   { _erEventId :: EventId
   , _erPayload :: ByteString
   , _erTime    :: UTCTime
-  } deriving (Eq, Show, Generic, Typeable)
+  } deriving (Eq, Show, Binary, Generic, Typeable)
 
 makeLenses ''EventRecord
 
 erPersistenceId :: Getter EventRecord PersistenceId
 erPersistenceId = erEventId . (to $ \(EventId pid _) -> pid)
-
-instance Binary EventRecord
 
 instance ToJSON EventRecord where
   toJSON record = object

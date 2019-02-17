@@ -5,13 +5,14 @@ module Herd.Node
      ) where
 
 import           Control.Concurrent                                 (threadDelay)
-import           Control.Monad.State
-import           Control.Distributed.Process hiding (Handler)
+import           Control.Distributed.Process                        hiding
+                                                                     (Handler)
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
-import Control.Monad.Morph
+import           Control.Monad.Morph
+import           Control.Monad.State
 import qualified Data.ByteString                                    as B
 import qualified Data.Text                                          as T
 import           Data.Time.Clock

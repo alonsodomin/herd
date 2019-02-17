@@ -27,6 +27,7 @@ dependencies:
 - binary-orphans
 - bytestring
 - free
+- hashable
 - mmorph
 - monad-logger
 - mtl >= 2.2.2 && < 2.3
@@ -35,6 +36,7 @@ dependencies:
 - text-binary
 - transformers
 - time
+- unordered-containers
 - yaml
 
 library:
