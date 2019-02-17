@@ -64,9 +64,6 @@ data StorageResponse = FoundRecords [EventRecord]
 
 -- Message handlers
 
-runInMemory :: MemStore Process a -> Process a
-runInMemory memStore = evalStateT (runStdoutLoggingT memStore) initialMemStore
-
 saveRecord' :: SaveRecord -> MemStore Process ()
 saveRecord' (SaveRecord' persistenceId payload time) = do
   saveRecord persistenceId payload time

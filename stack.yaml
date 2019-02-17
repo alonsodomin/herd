@@ -39,7 +39,9 @@ packages:
 - .
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-# extra-deps: []
+extra-deps:
+- avro-0.4.1.2@sha256:b5352bd5e30953bd8bc72826d7306b9a156a480dd534ef43cf58effdb0ce7aed
+- pure-zlib-0.6.4@sha256:1ec97bd76f0b56f3183a3fec9e06ba7caaf145584ed6af3ec9d57eb10d474c52
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

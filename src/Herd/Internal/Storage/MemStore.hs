@@ -4,7 +4,10 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
-module Herd.Internal.Storage.MemStore where
+module Herd.Internal.Storage.MemStore
+     ( MemStore
+     , runInMemory
+     ) where
 
 import           Control.Lens
 import           Control.Monad.Logger
@@ -42,3 +45,6 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
 
 initialMemStore :: StoreS
 initialMemStore = (0, Map.empty)
+
+runInMemory :: MonadIO m => MemStore m a -> m a
+runInMemory memStore = evalStateT (runStdoutLoggingT memStore) initialMemStore

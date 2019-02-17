@@ -8,7 +8,7 @@ module Herd.Internal.Storage.LocalStore
      ( ShardId (..)
      , Shard
      , createShard
-     , LocalStore
+     , LocalStoreT
      ) where
 
 import           Control.Lens
@@ -47,10 +47,10 @@ createShard shardId basePath = do
   createDirectoryIfMissing True location
   return $ Shard shardId location 0
 
-newtype LocalStore m a = LocalStore
+newtype LocalStoreT m a = LocalStoreT
   { unLocalStore :: ReaderT Shard m a }
   deriving (Functor, Applicative, Monad)
 
-instance (Monad m, MonadLogger m, MonadIO m) => MonadStorage (LocalStore m) where
+instance (Monad m, MonadLogger m, MonadIO m) => MonadStorage (LocalStoreT m) where
   saveRecord = undefined
   loadRecords = undefined
