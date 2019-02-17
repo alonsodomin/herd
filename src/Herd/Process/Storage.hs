@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE RankNTypes         #-}
 
 module Herd.Process.Storage
      ( saveRecord
@@ -12,7 +12,7 @@ module Herd.Process.Storage
      , startStorage
      ) where
 
-import           Control.Distributed.Process hiding (call)
+import           Control.Distributed.Process                hiding (call)
 import           Control.Distributed.Process.Extras.Time
 import           Control.Distributed.Process.ManagedProcess
 import           Control.Lens                               hiding ((<|))

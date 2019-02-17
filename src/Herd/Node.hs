@@ -7,8 +7,8 @@ module Herd.Node
 import           Control.Concurrent                                 (threadDelay)
 import           Control.Distributed.Process                        hiding
                                                                      (Handler)
-import qualified Control.Distributed.Process.ManagedProcess as ManagedProcess
 import           Control.Distributed.Process.Backend.SimpleLocalnet
+import qualified Control.Distributed.Process.ManagedProcess         as ManagedProcess
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
