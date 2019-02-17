@@ -59,15 +59,13 @@ startHerdNode config = do
           self       <- getSelfPid
           time1      <- liftIO $ getCurrentTime
           storagePid <- spawnLocal $ startStorage (config ^. hcStorage)
-          record <- saveRecordAction storagePid "foo-entity" B.empty time1
-          liftIO $ print record
-          -- liftIO $ threadDelay 10000
-          -- time2      <- liftIO $ getCurrentTime
-          -- send storagePid $ saveRecordMsg "foo-entity" B.empty time2
-          -- send storagePid $ saveRecordMsg "bar-entity" B.empty time1
-          -- send storagePid $ loadRecordsMsg "foo-entity" time1
-          -- response <- (expect :: Process StorageResponse)
-          -- liftIO $ print response
+          _ <- saveRecord storagePid "foo-entity" B.empty time1
+          liftIO $ threadDelay 10000
+          time2      <- liftIO $ getCurrentTime
+          _ <- saveRecord storagePid "foo-entity" B.empty time2
+          _ <- saveRecord storagePid "bar-entity" B.empty time1
+          fooRecs <- loadRecords storagePid "foo-entity" time1
+          liftIO $ print fooRecs
           return self
 
         httpServer :: ProcessId -> LocalNode -> Process ()
