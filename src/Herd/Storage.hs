@@ -2,9 +2,11 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE DeriveAnyClass     #-}
 
 module Herd.Storage
-     ( StorageProtocol
+     ( StorageRequest
+     , StorageResponse
      , _SaveRecord
      , _LoadRecords
      , saveRecordMsg
@@ -29,39 +31,36 @@ import           Herd.Types
 
 -- Protocol definition
 
-data StorageProtocol =
+data StorageRequest =
     SaveRecord SaveRecord
   | LoadRecords LoadRecords
-  deriving (Eq, Show, Generic, Typeable)
-
-instance Binary StorageProtocol
+  deriving (Eq, Show, Generic, Typeable, Binary)
 
 data SaveRecord = SaveRecord' PersistenceId ByteString UTCTime
-  deriving (Eq, Show, Generic, Typeable)
+  deriving (Eq, Show, Generic, Typeable, Binary)
 
-instance Binary SaveRecord
-
-saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageProtocol
+saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageRequest
 saveRecordMsg pid payload time =
   SaveRecord $ SaveRecord' pid payload time
 
 data LoadRecords = LoadRecords' PersistenceId UTCTime
-  deriving (Eq, Show, Generic, Typeable)
+  deriving (Eq, Show, Generic, Typeable, Binary)
 
-instance Binary LoadRecords
-
-loadRecordsMsg :: PersistenceId -> UTCTime -> StorageProtocol
+loadRecordsMsg :: PersistenceId -> UTCTime -> StorageRequest
 loadRecordsMsg pid oldest = LoadRecords $ LoadRecords' pid oldest
 
-_SaveRecord :: Prism' StorageProtocol SaveRecord
+_SaveRecord :: Prism' StorageRequest SaveRecord
 _SaveRecord = prism' SaveRecord $ \case
   SaveRecord x -> Just x
   _            -> Nothing
 
-_LoadRecords :: Prism' StorageProtocol LoadRecords
+_LoadRecords :: Prism' StorageRequest LoadRecords
 _LoadRecords = prism' LoadRecords $ \case
   LoadRecords x -> Just x
   _             -> Nothing
+
+data StorageResponse = FoundRecords [EventRecord]
+  deriving (Eq, Show, Generic, Typeable, Binary)
 
 -- Message handlers
 
@@ -76,11 +75,11 @@ saveRecord' (SaveRecord' persistenceId payload time) = do
 loadRecords' :: ProcessId -> LoadRecords -> MemStore Process ()
 loadRecords' sender (LoadRecords' pid oldest) = do
   records <- loadRecords pid oldest
-  lift . lift $ send sender records
+  lift . lift $ send sender (FoundRecords records)
 
 -- Process behaviour
 
-storageBehaviour :: ProcessId -> (ProcessId, StorageProtocol) -> MemStore Process ()
+storageBehaviour :: ProcessId -> (ProcessId, StorageRequest) -> MemStore Process ()
 storageBehaviour _ (sender, msg) = case msg of
   SaveRecord  msg' -> saveRecord' msg'
   LoadRecords msg' -> loadRecords' sender msg'
@@ -93,5 +92,5 @@ storageProcess cfg = spawnLocal $ do
     loop pid
   where loop :: ProcessId -> MemStore Process ()
         loop self = forever $ do
-          msg <- lift $ lift (expect :: Process (ProcessId, StorageProtocol))
+          msg <- lift $ lift (expect :: Process (ProcessId, StorageRequest))
           storageBehaviour self msg

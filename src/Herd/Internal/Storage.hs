@@ -42,7 +42,9 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
     logDebugN $ "Loading records for persistence ID '" <> (toText pid) <> "' starting at: " <> (toText oldest)
     (_, allRecords) <- get
     entityRecords <- pure . maybe [] id $ Map.lookup pid allRecords
-    return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erPersistenceId) == pid) entityRecords
+    foundRecs <- pure $ takeWhile (\x -> (x ^. erTime) >= oldest) $ filter (\x -> (x ^. erPersistenceId) == pid) entityRecords
+    logDebugN $ "Found " <> (toText $ length foundRecs) <> " records at entity ID '" <> (toText pid) <> "'"
+    return foundRecs
 
 initialMemStore :: StoreS
 initialMemStore = (0, Map.empty)

@@ -60,14 +60,17 @@ launch config = do
 
         launchSystem :: Process ProcessId
         launchSystem = do
-          time       <- liftIO $ getCurrentTime
           self       <- getSelfPid
+          time1      <- liftIO $ getCurrentTime
           storagePid <- storageProcess $ config ^. hcStorage
-          send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
-          send storagePid (self, saveRecordMsg "foo-entity" B.empty time)
-          send storagePid (self, saveRecordMsg "bar-entity" B.empty time)
-          send storagePid (self, loadRecordsMsg "foo-entity" time)
-          liftIO $ threadDelay 50000
+          send storagePid (self, saveRecordMsg "foo-entity" B.empty time1)
+          liftIO $ threadDelay 10000
+          time2      <- liftIO $ getCurrentTime
+          send storagePid (self, saveRecordMsg "foo-entity" B.empty time2)
+          send storagePid (self, saveRecordMsg "bar-entity" B.empty time1)
+          send storagePid (self, loadRecordsMsg "foo-entity" time1)
+          response <- (expect :: Process StorageResponse)
+          liftIO $ print response
           return self
 
         httpServer :: ProcessId -> Process ()
