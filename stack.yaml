@@ -41,6 +41,9 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - distributed-process-0.7.4@sha256:9e43cb9a27e976e3e4c054e783bdfbd6140760e70997448da66993f4674a6409
+- distributed-process-async-0.2.6@sha256:42d6b759da0990c91303cc589ed02fe38d57973410f02f5fdabb1e135a943514
+- distributed-process-client-server-0.2.5.1@sha256:6e29e84673f689e85f49a51b86901077039965fd2340e0002527e8332463c178
+- distributed-process-extras-0.3.5@sha256:aa1789b3af8f7a9921c8723b27c3520d88bf9b14613b27ce2deefe48a3c9ac88
 - distributed-process-monad-control-0.5.1.3@sha256:72f0c212135ddaf9c7613499f9612855f2470e4ec6b8aa3447781fa2a5dbd260
 - distributed-process-simplelocalnet-0.2.4@sha256:044a003f81a648f9fb9b1c7ae9cd8f753f5f1c32d9db5ff8b31e91e91f525ed7
 - network-transport-tcp-0.6.0@sha256:077b733c97db7949d18d09877e847fae117cc6e4e5c35941442f52debbd32452

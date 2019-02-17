@@ -38,7 +38,7 @@ newtype Version = Version Integer
 instance ToText Version where
   toText (Version v) = toText v
 
-data EventId = EventId SubjectId Int
+data EventId = EventId SubjectId Integer
   deriving (Eq, Binary, Show, Generic, Typeable, ToJSON)
 
 instance ToText EventId where
@@ -53,8 +53,8 @@ data EventRecord = EventRecord
 
 makeLenses ''EventRecord
 
-erPersistenceId :: Getter EventRecord SubjectId
-erPersistenceId = erEventId . (to $ \(EventId pid _) -> pid)
+erSubjectId :: Getter EventRecord SubjectId
+erSubjectId = erEventId . (to $ \(EventId pid _) -> pid)
 
 instance ToJSON EventRecord where
   toJSON record = object
