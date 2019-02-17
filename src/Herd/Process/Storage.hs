@@ -4,7 +4,7 @@
 {-# LANGUAGE LambdaCase         #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
-module Herd.Storage
+module Herd.Process.Storage
      ( StorageRequest
      , StorageResponse
      , _SaveRecord
@@ -36,17 +36,17 @@ data StorageRequest =
   | LoadRecords LoadRecords
   deriving (Eq, Show, Generic, Typeable, Binary)
 
-data SaveRecord = SaveRecord' PersistenceId ByteString UTCTime
+data SaveRecord = SaveRecord' SubjectId ByteString UTCTime
   deriving (Eq, Show, Generic, Typeable, Binary)
 
-saveRecordMsg :: PersistenceId -> ByteString -> UTCTime -> StorageRequest
+saveRecordMsg :: SubjectId -> ByteString -> UTCTime -> StorageRequest
 saveRecordMsg pid payload time =
   SaveRecord $ SaveRecord' pid payload time
 
-data LoadRecords = LoadRecords' PersistenceId UTCTime
+data LoadRecords = LoadRecords' SubjectId UTCTime
   deriving (Eq, Show, Generic, Typeable, Binary)
 
-loadRecordsMsg :: PersistenceId -> UTCTime -> StorageRequest
+loadRecordsMsg :: SubjectId -> UTCTime -> StorageRequest
 loadRecordsMsg pid oldest = LoadRecords $ LoadRecords' pid oldest
 
 _SaveRecord :: Prism' StorageRequest SaveRecord
@@ -84,7 +84,7 @@ storageBehaviour _ (sender, msg) = case msg of
 storageProcess :: StorageConfig -> Process ProcessId
 storageProcess cfg = spawnLocal $ do
   pid <- getSelfPid
-  runInMemory $ do
+  runMemStore $ do
     logDebugN "Starting storage process"
     loop pid
   where loop :: ProcessId -> MemStore Process ()

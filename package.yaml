@@ -1,6 +1,6 @@
 name:                herd
 version:             0.1.0.0
-github:              "githubuser/herd"
+github:              "alonsodomin/herd"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"
@@ -32,7 +32,9 @@ dependencies:
 - mmorph
 - monad-logger
 - mtl >= 2.2.2 && < 2.3
+- nonempty-containers
 - lens
+- semigroups
 - text
 - text-binary
 - transformers

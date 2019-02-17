@@ -15,7 +15,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-10.8
+resolver: lts-12.26
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -40,8 +40,10 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- avro-0.4.1.2@sha256:b5352bd5e30953bd8bc72826d7306b9a156a480dd534ef43cf58effdb0ce7aed
-- pure-zlib-0.6.4@sha256:1ec97bd76f0b56f3183a3fec9e06ba7caaf145584ed6af3ec9d57eb10d474c52
+- distributed-process-0.7.4@sha256:9e43cb9a27e976e3e4c054e783bdfbd6140760e70997448da66993f4674a6409
+- distributed-process-simplelocalnet-0.2.4@sha256:044a003f81a648f9fb9b1c7ae9cd8f753f5f1c32d9db5ff8b31e91e91f525ed7
+- network-transport-tcp-0.6.0@sha256:077b733c97db7949d18d09877e847fae117cc6e4e5c35941442f52debbd32452
+- nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

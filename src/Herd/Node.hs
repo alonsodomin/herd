@@ -25,7 +25,7 @@ import           Servant
 import           Herd.API
 import           Herd.Config
 import           Herd.Internal.Types
-import           Herd.Storage
+import           Herd.Process.Storage
 
 parseConfig :: FilePath -> IO (Either ParseException HerdConfig)
 parseConfig = decodeFileEither

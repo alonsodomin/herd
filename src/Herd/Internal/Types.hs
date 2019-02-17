@@ -23,16 +23,22 @@ import           GHC.Generics           hiding (to)
 
 import           Herd.Data.Text
 
-newtype PersistenceId = PersistenceId Text
+newtype SubjectId = SubjectId Text
   deriving (Eq, Show, Generic, Typeable, Hashable, Binary, ToJSON)
 
-instance IsString PersistenceId where
-  fromString = PersistenceId . T.pack
+instance IsString SubjectId where
+  fromString = SubjectId . T.pack
 
-instance ToText PersistenceId where
-  toText (PersistenceId txt) = txt
+instance ToText SubjectId where
+  toText (SubjectId txt) = txt
 
-data EventId = EventId PersistenceId Int
+newtype Version = Version Integer
+  deriving (Eq, Show, Ord, Generic, Typeable, Hashable, Binary)
+
+instance ToText Version where
+  toText (Version v) = toText v
+
+data EventId = EventId SubjectId Int
   deriving (Eq, Binary, Show, Generic, Typeable, ToJSON)
 
 instance ToText EventId where
@@ -47,7 +53,7 @@ data EventRecord = EventRecord
 
 makeLenses ''EventRecord
 
-erPersistenceId :: Getter EventRecord PersistenceId
+erPersistenceId :: Getter EventRecord SubjectId
 erPersistenceId = erEventId . (to $ \(EventId pid _) -> pid)
 
 instance ToJSON EventRecord where

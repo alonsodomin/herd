@@ -6,7 +6,7 @@
 
 module Herd.Internal.Storage.MemStore
      ( MemStore
-     , runInMemory
+     , runMemStore
      ) where
 
 import           Control.Lens
@@ -20,7 +20,7 @@ import           Herd.Data.Text
 import           Herd.Internal.Storage.Class
 import           Herd.Internal.Types
 
-type StoreS = (Int, HashMap PersistenceId [EventRecord])
+type StoreS = (Int, HashMap SubjectId [EventRecord])
 type MemStore m = LoggingT (StateT StoreS m)
 
 instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorage m where
@@ -46,5 +46,5 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
 initialMemStore :: StoreS
 initialMemStore = (0, Map.empty)
 
-runInMemory :: MonadIO m => MemStore m a -> m a
-runInMemory memStore = evalStateT (runStdoutLoggingT memStore) initialMemStore
+runMemStore :: MonadIO m => MemStore m a -> m a
+runMemStore memStore = evalStateT (runStdoutLoggingT memStore) initialMemStore
