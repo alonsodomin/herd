@@ -64,13 +64,17 @@ getSchema pid sid v = call pid $ GetSchema sid v
 -- Handlers
 
 handleGetSubjects :: RegistryState -> GetSubjects -> Process (ProcessReply [SubjectId] RegistryState)
-handleGetSubjects = undefined
+handleGetSubjects registry GetSubjects = reply (Map.keys registry) registry
 
 handleGetVersions :: RegistryState -> GetVersions -> Process (ProcessReply [Version] RegistryState)
-handleGetVersions = undefined
+handleGetVersions registry (GetVersions subjectId) = do
+  versions <- pure $ maybe [] (NEL.toList . NEM.keys) $ Map.lookup subjectId registry
+  reply versions registry
 
 handleGetSchema :: RegistryState -> GetSchema -> Process (ProcessReply (Maybe Schema) RegistryState)
-handleGetSchema = undefined
+handleGetSchema registry (GetSchema subjectId version) = do
+  versions <- pure $ Map.lookup subjectId registry
+  reply (NEM.lookup version =<< versions) registry
 
 -- Registry server
 
