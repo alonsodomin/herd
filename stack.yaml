@@ -8,13 +8,6 @@
 # A snapshot resolver dictates the compiler version and the set of packages
 # to be used for project dependencies. For example:
 #
-# resolver: lts-3.5
-# resolver: nightly-2015-09-21
-# resolver: ghc-7.10.2
-# resolver: ghcjs-0.1.0_ghc-7.10.2
-# resolver:
-#  name: custom-snapshot
-#  location: "./custom-snapshot.yaml"
 resolver: lts-12.26
 
 # User packages to be built.
@@ -36,7 +29,9 @@ resolver: lts-12.26
 # non-dependency (i.e. a user package), and its test suites and benchmarks
 # will not be run. This is useful for tweaking upstream packages.
 packages:
-- .
+- node
+- client
+
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:

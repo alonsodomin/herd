@@ -1,14 +1,10 @@
-name:                herd
+name:                herd-client
 version:             0.1.0.0
 github:              "alonsodomin/herd"
 license:             BSD3
 author:              "Author name here"
 maintainer:          "example@example.com"
 copyright:           "2018 Author name here"
-
-extra-source-files:
-- README.md
-- ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -46,34 +42,8 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
-  - conduit-extra
-  - distributed-process
-  - distributed-process-async
-  - distributed-process-client-server
-  - distributed-process-extras
-  - distributed-process-monad-control
-  - distributed-process-simplelocalnet
-  - directory
   - json-rpc
-  - network-transport-tcp
   - optparse-applicative >= 0.14.2 && < 0.15
-  - servant
-  - servant-server
-  - wai
-  - warp
-  exposed-modules:
-  - Herd.CLI
-
-executables:
-  herd:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - herd
 
 tests:
   herd-test:
@@ -84,4 +54,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - herd
+    - herd-client

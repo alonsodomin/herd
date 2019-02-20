@@ -1,0 +1,83 @@
+name:                herd-node
+version:             0.1.0.0
+github:              "alonsodomin/herd"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2018 Author name here"
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/githubuser/herd#readme>
+
+dependencies:
+- aeson
+- avro
+- base >= 4.7 && < 5
+- base64-bytestring
+- binary
+- binary-orphans
+- bytestring
+- free
+- hashable
+- mmorph
+- monad-logger
+- mtl >= 2.2.2 && < 2.3
+- nonempty-containers
+- lens
+- semigroups
+- text
+- text-binary
+- transformers
+- transformers-base
+- time
+- unordered-containers
+- yaml
+
+library:
+  source-dirs: src
+  dependencies:
+  - conduit-extra
+  - distributed-process
+  - distributed-process-async
+  - distributed-process-client-server
+  - distributed-process-extras
+  - distributed-process-monad-control
+  - distributed-process-simplelocalnet
+  - directory
+  - json-rpc
+  - network-transport-tcp
+  - optparse-applicative >= 0.14.2 && < 0.15
+  - servant
+  - servant-server
+  - wai
+  - warp
+  exposed-modules:
+  - Herd.CLI
+
+executables:
+  herd:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - herd-node
+
+tests:
+  herd-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - herd-node
