@@ -8,11 +8,11 @@ import           Servant
 
 import           Herd.Internal.Types
 
---type EventsAPI = "events" :> QueryParam "oldest" UTCTime :> Get '[JSON] [EventRecord]
-type EventsAPI = "events" :> Get '[JSON] [EventRecord]
+--type EventsAPI = "events" :> QueryParam "oldest" UTCTime :> Get '[JSON] [SubjectRecord]
+type RecordsAPI = "records" :> Get '[JSON] [SubjectRecord]
 
-eventsAPI :: Proxy EventsAPI
-eventsAPI = Proxy
+recordsAPI :: Proxy RecordsAPI
+recordsAPI = Proxy
 
-fetchEvents :: Maybe UTCTime -> Handler [EventRecord]
-fetchEvents _ = return []
+fetchRecords :: Maybe UTCTime -> Handler [SubjectRecord]
+fetchRecords _ = return []

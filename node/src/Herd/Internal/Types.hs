@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
 {-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Herd.Internal.Types where
 
@@ -23,7 +24,7 @@ import           Data.Typeable
 import           GHC.Generics           hiding (to)
 
 newtype SubjectId = SubjectId Text
-  deriving (Eq, Show, Generic, Typeable, Hashable, Binary, ToJSON)
+  deriving (Eq, Show, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
 instance IsString SubjectId where
   fromString = SubjectId . T.pack
@@ -32,33 +33,39 @@ instance ToText SubjectId where
   toText (SubjectId txt) = txt
 
 newtype Version = Version Integer
-  deriving (Eq, Show, Ord, Generic, Typeable, Hashable, Binary)
+  deriving (Eq, Show, Ord, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
 instance ToText Version where
   toText (Version v) = toText v
 
-data EventId = EventId SubjectId Integer
-  deriving (Eq, Binary, Show, Generic, Typeable, ToJSON)
+data SubjectRecordId = SubjectRecordId SubjectId Integer
+  deriving (Eq, Binary, Show, Generic, Typeable, FromJSON, ToJSON)
 
-instance ToText EventId where
-  toText (EventId persistenceId seqNum) =
-    T.concat [toText persistenceId, "#", toText seqNum]
+instance ToText SubjectRecordId where
+  toText (SubjectRecordId subjectId seqNum) =
+    T.concat [toText subjectId, "#", toText seqNum]
 
-data EventRecord = EventRecord
-  { _erEventId :: EventId
-  , _erPayload :: ByteString
-  , _erTime    :: UTCTime
+data SubjectRecord = SubjectRecord
+  { _erSubjectRecordId :: SubjectRecordId
+  , _erPayload         :: ByteString
+  , _erTime            :: UTCTime
   } deriving (Eq, Show, Binary, Generic, Typeable)
 
-makeLenses ''EventRecord
+makeLenses ''SubjectRecord
 
-erSubjectId :: Getter EventRecord SubjectId
-erSubjectId = erEventId . (to $ \(EventId pid _) -> pid)
+erSubjectId :: Getter SubjectRecord SubjectId
+erSubjectId = erSubjectRecordId . (to $ \(SubjectRecordId pid _) -> pid)
 
-instance ToJSON EventRecord where
+instance ToJSON SubjectRecord where
   toJSON record = object
-    [ "eventId" .= (record ^. erEventId)
+    [ "id"      .= (record ^. erSubjectRecordId)
     , "payload" .= (BS.unpack $ Base64.encode (record ^. erPayload))
     , "time"    .= (record ^. erTime)
     ]
 
+instance FromJSON SubjectRecord where
+  parseJSON = withObject "subject-record" $ \o -> do
+    _erSubjectRecordId <- o .: "id"
+    _erPayload         <- (Base64.encode . BS.pack) <$> o .: "payload"
+    _erTime            <- o .: "time"
+    return SubjectRecord{..}

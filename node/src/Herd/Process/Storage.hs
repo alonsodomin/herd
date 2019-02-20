@@ -43,33 +43,33 @@ data SaveRecord = SaveRecord SubjectId ByteString UTCTime
 data LoadRecords = LoadRecords SubjectId UTCTime
   deriving (Eq, Show, Generic, Typeable, Binary)
 
-type StoreState = HashMap SubjectId (Integer, NonEmpty EventRecord)
+type StoreState = HashMap SubjectId (Integer, NonEmpty SubjectRecord)
 
 -- Client API
 
-saveRecord :: ProcessId -> SubjectId -> ByteString -> UTCTime -> Process EventRecord
+saveRecord :: ProcessId -> SubjectId -> ByteString -> UTCTime -> Process SubjectRecord
 saveRecord pid subjectId payload time = call pid $ SaveRecord subjectId payload time
 
-loadRecords :: ProcessId -> SubjectId -> UTCTime -> Process [EventRecord]
+loadRecords :: ProcessId -> SubjectId -> UTCTime -> Process [SubjectRecord]
 loadRecords pid subjectId oldest = call pid $ LoadRecords subjectId oldest
 
 -- Message handlers
 
-handleSaveRecord :: StoreState -> SaveRecord -> Process (ProcessReply EventRecord StoreState)
+handleSaveRecord :: StoreState -> SaveRecord -> Process (ProcessReply SubjectRecord StoreState)
 handleSaveRecord state (SaveRecord subjectId payload time) = do
   (record, newState) <- runStdoutLoggingT $ do
     logDebugN $ "Going to store event record for subject ID '" <> (toText subjectId) <> "'"
     subjectQueue <- pure $ Map.lookup subjectId state
     let newOffset = maybe 0 (+1) $ fst <$> subjectQueue
-    let eventId   = EventId subjectId newOffset
-    let record    = EventRecord eventId payload time
+    let eventId   = SubjectRecordId subjectId newOffset
+    let record    = SubjectRecord eventId payload time
     let newQueue  = maybe (record :| []) ((<|) record) $ snd <$> subjectQueue
     let newState  = Map.insert subjectId (newOffset, newQueue) state
     logDebugN $ "Event record for subject ID '" <> (toText subjectId) <> "' successfully stored with id: " <> (toText eventId)
     return (record, newState)
   reply record newState
 
-handleLoadRecords :: StoreState -> LoadRecords -> Process (ProcessReply [EventRecord] StoreState)
+handleLoadRecords :: StoreState -> LoadRecords -> Process (ProcessReply [SubjectRecord] StoreState)
 handleLoadRecords state (LoadRecords subjectId oldest) = do
   subjectData <- pure $ Map.lookup subjectId state
   let recordQueue  = maybe [] NEL.toList $ snd <$> subjectData

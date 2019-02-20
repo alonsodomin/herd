@@ -20,7 +20,7 @@ import           Data.Text.Extra
 import           Herd.Internal.Storage.Class
 import           Herd.Internal.Types
 
-type StoreS = (Integer, HashMap SubjectId [EventRecord])
+type StoreS = (Integer, HashMap SubjectId [SubjectRecord])
 type MemStore m = LoggingT (StateT StoreS m)
 
 instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorage m where
@@ -28,8 +28,8 @@ instance (Monad m, MonadLogger m, MonadState StoreS m, MonadIO m) => MonadStorag
     logDebugN $ "Going to store event record for persistence ID '" <> (toText pid) <> "'"
     (lastSeqNum, allRecords) <- get
     let newSeqNum = lastSeqNum + 1
-    let eventId   = EventId pid newSeqNum
-    let record    = EventRecord eventId payload time
+    let eventId   = SubjectRecordId pid newSeqNum
+    let record    = SubjectRecord eventId payload time
     newRecords <- pure $ Map.alter (Just . maybe [record] ((:) record)) pid allRecords
     put (newSeqNum, newRecords)
     logDebugN $ "Event record for persistence ID '" <> (toText pid) <> "' successfully stored with id: " <> (toText eventId)

@@ -8,11 +8,11 @@ import           Herd.API
 import           Herd.Config
 import           Herd.Internal.Types
 
-httpServer :: Server EventsAPI
-httpServer = fetchEvents'
+httpServer :: Server RecordsAPI
+httpServer = fetchRecords'
 
-fetchEvents' :: Handler [EventRecord]
-fetchEvents' = undefined
+fetchRecords' :: Handler [SubjectRecord]
+fetchRecords' = undefined
 -- fetchEvents' systemRoot node = liftIO $ runProcess node $ do
 --   self       <- getSelfPid
 --   time       <- liftIO $ getCurrentTime
@@ -23,4 +23,4 @@ fetchEvents' = undefined
 startHttpServer :: NetworkBinding -> IO ()
 startHttpServer net = do
   let httpPort = net ^. nbPort
-  Wai.run httpPort $ serve eventsAPI httpServer
+  Wai.run httpPort $ serve recordsAPI httpServer
