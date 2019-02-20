@@ -17,11 +17,11 @@ import           Control.Monad.Reader
 import           Data.Hashable               (Hashable)
 import           Data.Semigroup              ((<>))
 import qualified Data.Text                   as T
+import           Data.Text.Extra
 import           Data.Typeable
 import           GHC.Generics
 import           System.Directory
 
-import           Herd.Data.Text
 import           Herd.Internal.Storage.Class
 import           Herd.Internal.Types
 

@@ -27,12 +27,12 @@ import           Data.List.NonEmpty                         (NonEmpty (..),
                                                              (<|))
 import qualified Data.List.NonEmpty                         as NEL
 import qualified Data.Text                                  as T
+import           Data.Text.Extra
 import           Data.Time.Clock                            (UTCTime)
 import           Data.Typeable
 import           GHC.Generics
 
 import           Herd.Config
-import           Herd.Data.Text
 import           Herd.Internal.Types
 
 -- Protocol definition

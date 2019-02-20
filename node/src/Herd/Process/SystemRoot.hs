@@ -4,20 +4,20 @@ module Herd.Process.SystemRoot where
 
 import           Control.Concurrent                                 (threadDelay)
 import           Control.Distributed.Process                        hiding
-                                                                      (Handler)
+                                                                     (Handler)
 import           Control.Distributed.Process.Backend.SimpleLocalnet
 import qualified Control.Distributed.Process.ManagedProcess         as ManagedProcess
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
-                                                                      runProcess)
+                                                                     runProcess)
 import           Control.Lens
 import           Control.Monad.Logger
 import qualified Data.ByteString                                    as B
 import qualified Data.Text                                          as T
+import           Data.Text.Extra
 import           Data.Time.Clock
 
-import Herd.Config
-import Herd.Data.Text
-import Herd.Process.Storage
+import           Herd.Config
+import           Herd.Process.Storage
 
 startLocalNode :: HerdConfig -> IO ()
 startLocalNode config = do

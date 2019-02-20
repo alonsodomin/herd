@@ -17,11 +17,10 @@ import           Data.Hashable          (Hashable)
 import           Data.String
 import           Data.Text              (Text)
 import qualified Data.Text              as T
+import           Data.Text.Extra
 import           Data.Time.Clock        (UTCTime)
 import           Data.Typeable
 import           GHC.Generics           hiding (to)
-
-import           Herd.Data.Text
 
 newtype SubjectId = SubjectId Text
   deriving (Eq, Show, Generic, Typeable, Hashable, Binary, ToJSON)

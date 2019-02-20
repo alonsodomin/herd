@@ -15,8 +15,8 @@ import           Control.Monad.State
 import           Data.HashMap.Lazy           (HashMap)
 import qualified Data.HashMap.Lazy           as Map
 import           Data.Semigroup              ((<>))
+import           Data.Text.Extra
 
-import           Herd.Data.Text
 import           Herd.Internal.Storage.Class
 import           Herd.Internal.Types
 

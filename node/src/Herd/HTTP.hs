@@ -1,12 +1,12 @@
 module Herd.HTTP where
 
-import Control.Lens
-import qualified Network.Wai.Handler.Warp                           as Wai
+import           Control.Lens
+import qualified Network.Wai.Handler.Warp as Wai
 import           Servant
 
 import           Herd.API
-import Herd.Config
-import Herd.Internal.Types
+import           Herd.Config
+import           Herd.Internal.Types
 
 httpServer :: Server EventsAPI
 httpServer = fetchEvents'
