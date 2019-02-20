@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cf2631a8b3825a3e938377a14a9d495b61fc943c5ded70b88637ece50c12faaf
+-- hash: 75b87705306c0155d716f2f2221dab7afe48f00e754ad46142a1f60aaf550733
 
 name:           herd-client
 version:        0.1.0.0
@@ -22,6 +22,8 @@ source-repository head
   location: https://github.com/alonsodomin/herd
 
 library
+  exposed-modules:
+      Herd.Client
   other-modules:
       Paths_herd_client
   hs-source-dirs:
