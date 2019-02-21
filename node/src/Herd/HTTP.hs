@@ -1,4 +1,6 @@
-module Herd.HTTP where
+module Herd.HTTP
+     ( startHttpServer
+     ) where
 
 import           Control.Lens
 import qualified Network.Wai.Handler.Warp as Wai
@@ -8,8 +10,8 @@ import           Herd.API
 import           Herd.Config
 import           Herd.Internal.Types
 
-httpServer :: Server RecordsAPI
-httpServer = fetchRecords'
+httpServer :: Server HerdAPI
+httpServer = fetchSubjects
 
 fetchRecords' :: Handler [SubjectRecord]
 fetchRecords' = undefined
@@ -23,4 +25,4 @@ fetchRecords' = undefined
 startHttpServer :: NetworkBinding -> IO ()
 startHttpServer net = do
   let httpPort = net ^. nbPort
-  Wai.run httpPort $ serve recordsAPI httpServer
+  Wai.run httpPort $ serve herdAPI httpServer
