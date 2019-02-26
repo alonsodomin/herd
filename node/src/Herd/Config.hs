@@ -31,8 +31,8 @@ instance FromJSON NetworkBinding where
     return NetworkBinding{..}
 
 data NetworkConfig = NetworkConfig
-  { _ncHttp    :: NetworkBinding
-  , _ncBroker  :: NetworkBinding
+  { _ncHttp   :: NetworkBinding
+  , _ncBroker :: NetworkBinding
   } deriving (Eq, Show, Generic)
 
 makeLenses ''NetworkConfig

@@ -2,8 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
 {-# LANGUAGE TemplateHaskell    #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Herd.Internal.Types where
 

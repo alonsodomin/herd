@@ -10,10 +10,10 @@ network:
 cluster:
   binding:
     host: "0.0.0.0"
-    port: 9002
+    port: 9003
   seed-nodes:
     - host: "localhost"
-      port: 9001
+      port: 9002
 
 storage:
-  location: "./sandbox/var/node2/db"
+  location: "./sandbox/var/node3/db"

@@ -30,6 +30,7 @@ dependencies:
 - mtl >= 2.2.2 && < 2.3
 - nonempty-containers
 - lens
+- random
 - semigroups
 - text
 - text-binary
@@ -37,6 +38,7 @@ dependencies:
 - transformers-base
 - time
 - unordered-containers
+- uuid
 - yaml
 
 library:

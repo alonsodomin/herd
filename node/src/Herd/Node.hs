@@ -3,34 +3,39 @@ module Herd.Node
      , startHerdNode'
      ) where
 
-import Control.Lens
-import Control.Applicative
-import Control.Monad
-import Control.Monad.IO.Class (liftIO)
-import Control.Concurrent(threadDelay)
-import Data.Semigroup ((<>))
-import Transient.Base
-import Transient.Move
-import qualified Data.Text as T
+import           Control.Applicative
+import           Control.Concurrent     (threadDelay)
+import           Control.Lens
+import           Control.Monad
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Semigroup         ((<>))
+import qualified Data.Text              as T
+import           Transient.Base
+import           Transient.Move
+import           Transient.Move.Utils
 
 import           Herd.Config
-import Herd.HTTP
+import           Herd.HTTP
 
 herdNode :: HerdConfig -> TransIO ()
-herdNode config = runCloud $ do
-  listen =<< (mkNode $ config ^. hcCluster . ccBinding)
-  seedNodes <- mapM (mkNode >=> connect') $ config ^. hcCluster . ccSeedNodes
-  return ()
+herdNode config = do
+  localNode <- mkNode $ config ^. hcCluster . ccBinding
+  initWebApp localNode connectToSibilings
 
-  where mkNode :: NetworkBinding -> Cloud Node
+  where mkNode :: NetworkBinding -> TransIO Node
         mkNode binding = do
           let host = T.unpack $ binding ^. nbHost
           let port = binding ^. nbPort
-          localIO $ createNode host port
+          liftIO $ createNode host port
+
+        connectToSibilings :: Cloud ()
+        connectToSibilings = do
+          seedNodes <- local $ mapM mkNode $ config ^. hcCluster . ccSeedNodes
+          forM_ seedNodes connect'
 
 startHerdNode :: HerdConfig -> IO ()
-startHerdNode config = void . keep $ do    
-    herdNode config <|> listNodes
+startHerdNode config = void . keep $ do
+  listNodes <|> herdNode config
 
   where listNodes :: TransIO ()
         listNodes = do

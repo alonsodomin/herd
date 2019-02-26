@@ -6,6 +6,7 @@ network:
   broker:
     host: "0.0.0.0"
     port: 9010
+
 cluster:
   binding:
     host: "0.0.0.0"
@@ -13,5 +14,6 @@ cluster:
   seed-nodes:
     - host: "localhost"
       port: 9001
+
 storage:
-  location: "./sandbox/var/db"
+  location: "./sandbox/var/node1/db"
