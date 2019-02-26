@@ -14,7 +14,8 @@ import           Herd.Config
 import           Herd.Node
 
 data HerdOpts = HerdOpts
-  { _hoConfigFile :: FilePath
+  { _hoConfigFile  :: FilePath
+  , _hoInteractive :: Bool
   } deriving (Eq, Show)
 
 makeLenses ''HerdOpts
@@ -27,9 +28,16 @@ configFileOpt = strOption
              <> value defaultConfigFile
              <> help "Herd configuration file" )
 
+interactiveOpt :: Parser Bool
+interactiveOpt = switch
+               ( long "interactive"
+              <> short 'i'
+              <> help "Run the server interactively" )
+
 herdOpts :: Parser HerdOpts
 herdOpts = HerdOpts
        <$> configFileOpt
+       <*> interactiveOpt
 
 loadHerdConf :: FilePath -> IO HerdConfig
 loadHerdConf configFile = do
@@ -45,7 +53,9 @@ loadHerdConf configFile = do
 herd :: HerdOpts -> IO ()
 herd opts = do
   config <- loadHerdConf (opts ^. hoConfigFile)
-  startHerdNode config
+  if opts ^. hoInteractive
+    then startHerdNode config
+    else startHerdNode' config
 
 herdCli :: IO ()
 herdCli = herd =<< execParser opts

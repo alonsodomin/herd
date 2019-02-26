@@ -55,7 +55,8 @@ library:
   - optparse-applicative >= 0.14.2 && < 0.15
   - servant
   - servant-server
-  - transient
+  - transient >= 0.6 && < 0.7
+  - transient-universe >= 0.5 && < 0.6
   - wai
   - warp
   exposed-modules:

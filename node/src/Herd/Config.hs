@@ -31,8 +31,7 @@ instance FromJSON NetworkBinding where
     return NetworkBinding{..}
 
 data NetworkConfig = NetworkConfig
-  { _ncCluster :: NetworkBinding
-  , _ncHttp    :: NetworkBinding
+  { _ncHttp    :: NetworkBinding
   , _ncBroker  :: NetworkBinding
   } deriving (Eq, Show, Generic)
 
@@ -40,7 +39,6 @@ makeLenses ''NetworkConfig
 
 instance FromJSON NetworkConfig where
   parseJSON = withObject "network config" $ \o -> do
-    _ncCluster <- o .: "cluster"
     _ncHttp    <- o .: "http"
     _ncBroker  <- o .: "broker"
     return NetworkConfig{..}
@@ -72,6 +70,19 @@ instance FromJSON LoggingConfig where
 defaultLoggingConfig :: LoggingConfig
 defaultLoggingConfig = LoggingConfig defaultLoggingDriver
 
+data ClusterConfig = ClusterConfig
+  { _ccBinding   :: NetworkBinding
+  , _ccSeedNodes :: [NetworkBinding]
+  } deriving (Eq, Show, Generic)
+
+makeLenses ''ClusterConfig
+
+instance FromJSON ClusterConfig where
+  parseJSON = withObject "cluster config" $ \o -> do
+    _ccBinding   <- o .: "binding"
+    _ccSeedNodes <- maybe [] id <$> o .:? "seed-nodes"
+    return ClusterConfig{..}
+
 data StorageConfig = StorageConfig
   { _scDataLocation :: FilePath
   } deriving (Eq, Show, Generic)
@@ -86,6 +97,7 @@ instance FromJSON StorageConfig where
 data HerdConfig = HerdConfig
   { _hcNetwork :: NetworkConfig
   , _hcLogging :: LoggingConfig
+  , _hcCluster :: ClusterConfig
   , _hcStorage :: StorageConfig
   , _hcVersion :: Text
   } deriving (Eq, Show, Generic)
@@ -96,6 +108,7 @@ instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
     _hcNetwork <- o .: "network"
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
+    _hcCluster <- o .: "cluster"
     _hcStorage <- o .: "storage"
     _hcVersion <- o .: "version"
     return HerdConfig{..}
