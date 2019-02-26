@@ -18,7 +18,7 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - aeson
 - avro
-- base >= 4.7 && < 5
+- base >= 4.9 && < 4.11
 - base64-bytestring
 - binary
 - binary-orphans
@@ -43,18 +43,19 @@ library:
   source-dirs: src
   dependencies:
   - conduit-extra
-  - distributed-process
-  - distributed-process-async
-  - distributed-process-client-server
-  - distributed-process-extras
-  - distributed-process-monad-control
-  - distributed-process-simplelocalnet
+  # - distributed-process
+  # - distributed-process-async
+  # - distributed-process-client-server
+  # - distributed-process-extras
+  # - distributed-process-monad-control
+  # - distributed-process-simplelocalnet
   - directory
   - json-rpc
-  - network-transport-tcp
+  # - network-transport-tcp
   - optparse-applicative >= 0.14.2 && < 0.15
   - servant
   - servant-server
+  - transient
   - wai
   - warp
   exposed-modules:

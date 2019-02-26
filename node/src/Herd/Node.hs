@@ -8,4 +8,5 @@ import           Herd.Config
 import Herd.HTTP
 
 startHerdNode :: HerdConfig -> IO ()
-startHerdNode config = startHttpServer $ config ^. hcNetwork . ncHttp
+--startHerdNode config = startHttpServer $ config ^. hcNetwork . ncHttp
+startHerdNode config = undefined
