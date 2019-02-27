@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Herd.HTTP
      ( startHttpServer
@@ -6,11 +6,11 @@ module Herd.HTTP
 
 import           Control.Lens
 import           Control.Monad.IO.Class   (liftIO)
+import qualified Data.ByteString.Lazy     as BS
+import           Data.Semigroup
+import           Data.Text.Encoding       (encodeUtf8)
+import           Data.Text.Extra
 import           Data.Time                (UTCTime)
-import Data.Semigroup
-import Data.Text.Extra
-import Data.Text.Encoding (encodeUtf8)
-import qualified Data.ByteString.Lazy as BS
 import qualified Network.Wai.Handler.Warp as Wai
 import           Servant
 import           Transient.Move
