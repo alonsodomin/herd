@@ -1,9 +1,9 @@
 module Herd.HTTP.Storage where
 
-import           Data.Time                (UTCTime)
-import Servant
+import           Data.Time           (UTCTime)
+import           Servant
 
-import Herd.Internal.Types
+import           Herd.Internal.Types
 
 fetchRecords' :: Handler [SubjectRecord]
 fetchRecords' = undefined

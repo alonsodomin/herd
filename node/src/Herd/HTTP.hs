@@ -7,10 +7,10 @@ import qualified Network.Wai.Handler.Warp as Wai
 import           Servant
 import           Transient.Move
 
-import           Herd.HTTP.API
-import Herd.HTTP.Registry
 import           Herd.Config
 import           Herd.Core
+import           Herd.HTTP.API
+import           Herd.HTTP.Registry
 
 httpServer :: Node -> Server HerdAPI
 httpServer node = (fetchSubjects node)

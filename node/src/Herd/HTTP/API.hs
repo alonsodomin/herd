@@ -3,8 +3,8 @@
 
 module Herd.HTTP.API where
 
+import           Data.Avro.Schema    (Schema)
 import           Data.Time           (UTCTime)
-import           Data.Avro.Schema (Schema)
 import           Servant
 
 import           Herd.Internal.Types

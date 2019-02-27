@@ -2,17 +2,17 @@
 
 module Herd.HTTP.Registry where
 
-import Data.Semigroup
-import           Control.Monad.IO.Class   (liftIO)
-import Transient.Move
-import qualified Data.ByteString.Lazy     as BS
-import           Servant
-import           Data.Avro.Schema (Schema)
-import           Data.Text.Encoding       (encodeUtf8)
+import           Control.Monad.IO.Class (liftIO)
+import           Data.Avro.Schema       (Schema)
+import qualified Data.ByteString.Lazy   as BS
+import           Data.Semigroup
+import           Data.Text.Encoding     (encodeUtf8)
 import           Data.Text.Extra
+import           Servant
+import           Transient.Move
 
-import Herd.Internal.Types
-import Herd.Core
+import           Herd.Core
+import           Herd.Internal.Types
 
 fetchSubjects :: Node -> Handler [SubjectId]
 fetchSubjects = liftIO . getSubjects

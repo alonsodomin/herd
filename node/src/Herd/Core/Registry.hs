@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable   #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Core.Registry
@@ -12,10 +12,10 @@ import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.State
 import           Control.Monad.Trans
+import           Data.Avro.Schema       (Schema)
 import           Data.Typeable
 import           Transient.Base
 import           Transient.Move
-import           Data.Avro.Schema (Schema)
 
 import           Herd.Core.Base
 import           Herd.Internal.Registry (MemRegistry)
