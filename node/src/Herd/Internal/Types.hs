@@ -14,7 +14,7 @@ import           Data.Binary.Orphans    ()
 import           Data.ByteString        (ByteString)
 import qualified Data.ByteString        as BS
 import qualified Data.ByteString.Base64 as Base64
-import           Data.Hashable          (Hashable)
+import           Data.Hashable          (Hashable, hashWithSalt)
 import           Data.String
 import           Data.Text              (Text)
 import qualified Data.Text              as T

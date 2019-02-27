@@ -4,8 +4,9 @@
 
 module Herd.Internal.Registry.MemRegistry
      ( RegistryState
-     , initial
      , MemRegistry
+     , empty
+     , initial
      , getSubjects
      , getVersions
      , getLatestVersion
@@ -72,8 +73,13 @@ size = do
   allSubjects <- get
   return $ foldr (+) 0 $ Map.elems $ Map.map (fromIntegral . NEM.size) allSubjects
 
-initial :: RegistryState
-initial = Map.empty
+empty :: RegistryState
+empty = Map.empty
+{-# INLINE empty #-}
+
+initial = empty
+{-# DEPRECATED initial "Use 'empty' instead" #-}
+{-# INLINE initial #-}
 
 runMemRegistry :: Monad m => MemRegistry m a -> m a
 runMemRegistry registry = evalStateT registry initial

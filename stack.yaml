@@ -36,11 +36,11 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - avro-0.4.2.0@sha256:42cc7a5508eda5fea85d020f2a3a976602387b573d756b41be0d98549d3f17cc
-- transient-0.6.0.1@sha256:6b90d2a1430ab58f047b4076324fcada6517938c8de1475b400e00a9d3a4db65
-- transient-universe-0.5.0.0@sha256:6c689a27f59b631d516af4f096f93a6832d61054e1036f88a880ea01e3af72ce
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 - pure-zlib-0.6.4@sha256:1ec97bd76f0b56f3183a3fec9e06ba7caaf145584ed6af3ec9d57eb10d474c52
+- transient-0.6.0.1@sha256:6b90d2a1430ab58f047b4076324fcada6517938c8de1475b400e00a9d3a4db65
+- transient-universe-0.5.0.0@sha256:6c689a27f59b631d516af4f096f93a6832d61054e1036f88a880ea01e3af72ce
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

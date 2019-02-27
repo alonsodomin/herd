@@ -24,15 +24,17 @@ data HerdState = HerdState
 makeLenses ''HerdState
 
 initialHerdState :: HerdState
-initialHerdState = HerdState Registry.initial
+initialHerdState = HerdState Registry.empty
 
 type HerdBehaviour = StateT HerdState TransIO ()
 
-dispatch :: (Typeable req, Typeable res, Show res, Read res) => Node -> req -> IO (Maybe res)
-dispatch self req =
-  keep' . oneThread . runCloud $ wormhole self handler
-  where
-    handler = local $ do
-      putMailbox req
-      res <- getMailbox
-      exit res
+dispatch :: (Typeable req, Typeable res, Show res, Read res) => Node -> req -> IO res
+dispatch self req = do
+  output <- keep' . oneThread . runCloud $ wormhole self handler
+  case output of
+    Just out -> return out
+    Nothing  -> fail "impossible!"
+  where handler = local $ do
+          putMailbox req
+          res <- getMailbox
+          exit res

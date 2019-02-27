@@ -66,10 +66,10 @@ herdRegistry = handleGetSubjects <|> handleGetVersions <|> handleGetSchema
 -- Client API
 
 getSubjects :: Node -> IO [SubjectId]
-getSubjects self = maybe [] id <$> dispatch self GetSubjects
+getSubjects self = dispatch self GetSubjects
 
 getVersions :: Node -> SubjectId -> IO (Maybe [Version])
-getVersions self subjectId = join <$> dispatch self (GetVersions subjectId)
+getVersions self subjectId = dispatch self (GetVersions subjectId)
 
 getSchema :: Node -> SubjectId -> Version -> IO (Maybe Schema)
-getSchema self sid v = join <$> dispatch self (GetSchema sid v)
+getSchema self sid v = dispatch self (GetSchema sid v)
