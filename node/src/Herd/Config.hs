@@ -1,14 +1,16 @@
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 module Herd.Config where
 
 import           Control.Lens
 import           Data.Aeson
-import           Data.Text    (Text)
-import qualified Data.Text    as T
+import           Data.Text     (Text)
+import qualified Data.Text     as T
+import           Data.Typeable
 import           GHC.Generics
 
 defaultClusterPort :: Int
@@ -20,7 +22,7 @@ defaultHttpPort = 8081
 data NetworkBinding = NetworkBinding
   { _nbHost :: Text
   , _nbPort :: Int
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''NetworkBinding
 
@@ -33,7 +35,7 @@ instance FromJSON NetworkBinding where
 data NetworkConfig = NetworkConfig
   { _ncHttp   :: NetworkBinding
   , _ncBroker :: NetworkBinding
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''NetworkConfig
 
@@ -45,7 +47,7 @@ instance FromJSON NetworkConfig where
 
 data LoggingDriver =
   LoggingStdOut
-  deriving (Eq, Show, Generic, Enum, Ord)
+  deriving (Eq, Show, Generic, Enum, Ord, Typeable)
 
 instance FromJSON LoggingDriver where
   parseJSON = withText "logging driver" $ \txt ->
@@ -58,7 +60,7 @@ defaultLoggingDriver = LoggingStdOut
 
 data LoggingConfig = LoggingConfig
   { _lcDriver :: LoggingDriver
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''LoggingConfig
 
@@ -73,7 +75,7 @@ defaultLoggingConfig = LoggingConfig defaultLoggingDriver
 data ClusterConfig = ClusterConfig
   { _ccBinding   :: NetworkBinding
   , _ccSeedNodes :: [NetworkBinding]
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''ClusterConfig
 
@@ -84,14 +86,16 @@ instance FromJSON ClusterConfig where
     return ClusterConfig{..}
 
 data StorageConfig = StorageConfig
-  { _scDataLocation :: FilePath
-  } deriving (Eq, Show, Generic)
+  { _scDataLocation      :: FilePath
+  , _scReplicationFactor :: Integer
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''StorageConfig
 
 instance FromJSON StorageConfig where
   parseJSON = withObject "storage config" $ \o -> do
-    _scDataLocation <- o .: "location"
+    _scDataLocation      <- o .: "location"
+    _scReplicationFactor <- maybe 1 id <$> o .:? "replication-factor"
     return StorageConfig{..}
 
 data HerdConfig = HerdConfig
@@ -100,7 +104,7 @@ data HerdConfig = HerdConfig
   , _hcCluster :: ClusterConfig
   , _hcStorage :: StorageConfig
   , _hcVersion :: Text
-  } deriving (Eq, Show, Generic)
+  } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''HerdConfig
 

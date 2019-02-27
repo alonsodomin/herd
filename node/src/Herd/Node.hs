@@ -15,12 +15,13 @@ import           Transient.Move
 import           Transient.Move.Utils
 
 import           Herd.Config
+import           Herd.Core
 import           Herd.HTTP
 
 herdNode :: HerdConfig -> TransIO ()
 herdNode config = do
   localNode <- mkNode $ config ^. hcCluster . ccBinding
-  initWebApp localNode connectToSibilings
+  initWebApp localNode (httpApi localNode <|> run)
 
   where mkNode :: NetworkBinding -> TransIO Node
         mkNode binding = do
@@ -28,10 +29,14 @@ herdNode config = do
           let port = binding ^. nbPort
           liftIO $ createNode host port
 
-        connectToSibilings :: Cloud ()
-        connectToSibilings = do
+        httpApi :: Node -> Cloud ()
+        httpApi self = local . async $ startHttpServer self (config ^. hcNetwork . ncHttp)
+
+        run :: Cloud ()
+        run = do
           seedNodes <- local $ mapM mkNode $ config ^. hcCluster . ccSeedNodes
           forM_ seedNodes connect'
+          herdApp
 
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = void . keep $ do
