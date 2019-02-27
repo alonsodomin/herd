@@ -14,6 +14,7 @@ import           Transient.Base
 import           Transient.Move
 import           Transient.Move.Utils
 
+import           Herd.Broker
 import           Herd.Config
 import           Herd.Core
 import           Herd.HTTP
@@ -21,7 +22,7 @@ import           Herd.HTTP
 herdNode :: HerdConfig -> TransIO ()
 herdNode config = do
   localNode <- mkNode $ config ^. hcCluster . ccBinding
-  initWebApp localNode (httpApi localNode <|> run)
+  initWebApp localNode (httpApi localNode <|> broker <|> run)
 
   where mkNode :: NetworkBinding -> TransIO Node
         mkNode binding = do
@@ -31,6 +32,9 @@ herdNode config = do
 
         httpApi :: Node -> Cloud ()
         httpApi self = local . async $ startHttpServer self (config ^. hcNetwork . ncHttp)
+
+        broker :: Cloud ()
+        broker = local . async $ startBroker (config ^. hcNetwork . ncBroker)
 
         run :: Cloud ()
         run = do
