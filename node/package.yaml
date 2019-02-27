@@ -18,7 +18,7 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - aeson
 - avro
-- base >= 4.7 && < 5
+- base >= 4.9 && < 4.11
 - base64-bytestring
 - binary
 - binary-orphans
@@ -30,6 +30,7 @@ dependencies:
 - mtl >= 2.2.2 && < 2.3
 - nonempty-containers
 - lens
+- random
 - semigroups
 - text
 - text-binary
@@ -37,24 +38,20 @@ dependencies:
 - transformers-base
 - time
 - unordered-containers
+- uuid
 - yaml
 
 library:
   source-dirs: src
   dependencies:
   - conduit-extra
-  - distributed-process
-  - distributed-process-async
-  - distributed-process-client-server
-  - distributed-process-extras
-  - distributed-process-monad-control
-  - distributed-process-simplelocalnet
   - directory
   - json-rpc
-  - network-transport-tcp
   - optparse-applicative >= 0.14.2 && < 0.15
   - servant
   - servant-server
+  - transient >= 0.6 && < 0.7
+  - transient-universe >= 0.5 && < 0.6
   - wai
   - warp
   exposed-modules:

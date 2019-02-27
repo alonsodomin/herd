@@ -2,8 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RecordWildCards    #-}
 {-# LANGUAGE TemplateHaskell    #-}
-{-# LANGUAGE RecordWildCards #-}
 
 module Herd.Internal.Types where
 
@@ -24,22 +24,22 @@ import           Data.Typeable
 import           GHC.Generics           hiding (to)
 
 newtype SubjectId = SubjectId Text
-  deriving (Eq, Show, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
+  deriving (Eq, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
+
+instance ToText SubjectId where
+  toText (SubjectId x) = x
 
 instance IsString SubjectId where
   fromString = SubjectId . T.pack
 
-instance ToText SubjectId where
-  toText (SubjectId txt) = txt
-
 newtype Version = Version Integer
-  deriving (Eq, Show, Ord, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
+  deriving (Eq, Show, Read, Ord, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
 instance ToText Version where
-  toText (Version v) = toText v
+  toText (Version x) = toText x
 
 data SubjectRecordId = SubjectRecordId SubjectId Integer
-  deriving (Eq, Binary, Show, Generic, Typeable, FromJSON, ToJSON)
+  deriving (Eq, Binary, Show, Read, Generic, Typeable, FromJSON, ToJSON)
 
 instance ToText SubjectRecordId where
   toText (SubjectRecordId subjectId seqNum) =

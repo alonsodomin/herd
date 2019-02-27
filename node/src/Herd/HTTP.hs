@@ -5,24 +5,19 @@ module Herd.HTTP
 import           Control.Lens
 import qualified Network.Wai.Handler.Warp as Wai
 import           Servant
+import           Transient.Move
 
-import           Herd.API
 import           Herd.Config
-import           Herd.Internal.Types
+import           Herd.Core
+import           Herd.HTTP.API
+import           Herd.HTTP.Registry
 
-httpServer :: Server HerdAPI
-httpServer = fetchSubjects
+httpServer :: Node -> Server HerdAPI
+httpServer node = (fetchSubjects node)
+             :<|> (fetchVersions node)
+             :<|> (fetchSchema node)
 
-fetchRecords' :: Handler [SubjectRecord]
-fetchRecords' = undefined
--- fetchEvents' systemRoot node = liftIO $ runProcess node $ do
---   self       <- getSelfPid
---   time       <- liftIO $ getCurrentTime
---   send systemRoot (self, loadRecordsMsg "foo-entity" time)
---   response   <- (expect :: Process StorageResponse)
---   return $ getRecords response
-
-startHttpServer :: NetworkBinding -> IO ()
-startHttpServer net = do
+startHttpServer :: Node -> NetworkBinding -> IO ()
+startHttpServer node net = do
   let httpPort = net ^. nbPort
-  Wai.run httpPort $ serve herdAPI httpServer
+  Wai.run httpPort $ serve herdAPI (httpServer node)

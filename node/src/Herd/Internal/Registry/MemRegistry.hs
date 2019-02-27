@@ -3,8 +3,12 @@
 {-# LANGUAGE DeriveGeneric      #-}
 
 module Herd.Internal.Registry.MemRegistry
-     ( Version (..)
+     ( RegistryState
+     , initial
      , MemRegistry
+     , getSubjects
+     , getVersions
+     , getSchema
      , runMemRegistry
      ) where
 
@@ -22,18 +26,18 @@ import           GHC.Generics
 
 import           Herd.Internal.Types
 
-type RegistryS = HashMap SubjectId (NEMap Version Schema)
-type MemRegistry m = StateT RegistryS m
+type RegistryState = HashMap SubjectId (NEMap Version Schema)
+type MemRegistry m = StateT RegistryState m
 
 getSubjects :: Monad m => MemRegistry m [SubjectId]
 getSubjects = do
   allSubjects <- get
   return $ Map.keys allSubjects
 
-getVersions :: Monad m => SubjectId -> MemRegistry m [Version]
+getVersions :: Monad m => SubjectId -> MemRegistry m (Maybe [Version])
 getVersions subjectId = do
   allSubjects <- get
-  return $ maybe [] (NEL.toList . NEM.keys) $ Map.lookup subjectId allSubjects
+  return $ (NEL.toList . NEM.keys) <$> Map.lookup subjectId allSubjects
 
 getSchema :: Monad m => SubjectId -> Version -> MemRegistry m (Maybe Schema)
 getSchema subjectId version = do
@@ -41,8 +45,8 @@ getSchema subjectId version = do
   versions    <- pure $ Map.lookup subjectId allSubjects
   return $ NEM.lookup version =<< versions
 
-initialMemRegistry :: RegistryS
-initialMemRegistry = Map.empty
+initial :: RegistryState
+initial = Map.empty
 
 runMemRegistry :: Monad m => MemRegistry m a -> m a
-runMemRegistry registry = evalStateT registry initialMemRegistry
+runMemRegistry registry = evalStateT registry initial
