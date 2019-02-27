@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds     #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Herd.API where
+module Herd.HTTP.API where
 
 import           Data.Time           (UTCTime)
 import           Data.Avro.Schema (Schema)
@@ -17,3 +17,9 @@ type RecordsAPI = "records" :> Get '[JSON] [SubjectRecord]
 
 herdAPI :: Proxy HerdAPI
 herdAPI = Proxy
+
+instance FromHttpApiData SubjectId where
+  parseUrlPiece = Right . SubjectId
+
+instance FromHttpApiData Version where
+  parseUrlPiece x = Version <$> parseUrlPiece x
