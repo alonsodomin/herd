@@ -17,6 +17,8 @@ import           Transient.Move
 import           Herd.Core.Base
 import           Herd.Core.Registry
 
-herdApp :: Cloud ()
-herdApp = local $ evalStateT herdRegistry initialHerdState
+herdBehaviour :: HerdBehaviour
+herdBehaviour = zoom hsRegistry herdRegistry
 
+herdApp :: Cloud ()
+herdApp = local $ evalStateT herdBehaviour initialHerdState

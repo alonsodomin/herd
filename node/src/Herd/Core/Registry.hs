@@ -1,9 +1,11 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Core.Registry
      ( herdRegistry
      , getSubjects
      , getVersions
+     , getSchema
      ) where
 
 import           Control.Applicative
@@ -13,37 +15,61 @@ import           Control.Monad.Trans
 import           Data.Typeable
 import           Transient.Base
 import           Transient.Move
+import           Data.Avro.Schema (Schema)
 
 import           Herd.Core.Base
-import           Herd.Internal.Registry (RegistryState)
+import           Herd.Internal.Registry (MemRegistry)
 import qualified Herd.Internal.Registry as Registry
 import           Herd.Internal.Types
+
+type RegistryBehaviour = MemRegistry TransIO ()
+
+instance Read Schema
+
+-- Requests and handlers
 
 data GetSubjects = GetSubjects
   deriving (Eq, Show, Read, Typeable)
 
-handleGetSubjects :: HerdApp ()
+handleGetSubjects :: RegistryBehaviour
 handleGetSubjects = do
   _        <- lift (getMailbox :: TransIO GetSubjects)
   state    <- get
-  subjects <- lift $ evalStateT Registry.getSubjects (state ^. hsRegistry)
+  subjects <- lift $ evalStateT Registry.getSubjects state
   lift $ putMailbox subjects
 
 data GetVersions = GetVersions SubjectId
   deriving (Eq, Show, Read, Typeable)
 
-handleGetVersions :: HerdApp ()
+handleGetVersions :: RegistryBehaviour
 handleGetVersions = do
   (GetVersions subjectId) <- lift (getMailbox :: TransIO GetVersions)
   state                   <- get
-  versions                <- lift $ evalStateT (Registry.getVersions subjectId) (state ^. hsRegistry)
+  versions                <- lift $ evalStateT (Registry.getVersions subjectId) state
   lift $ putMailbox versions
 
-herdRegistry :: HerdApp ()
-herdRegistry = handleGetSubjects <|> handleGetVersions
+data GetSchema = GetSchema SubjectId Version
+  deriving (Eq, Show, Read, Typeable)
+
+handleGetSchema :: RegistryBehaviour
+handleGetSchema = do
+  (GetSchema sid v) <- lift (getMailbox :: TransIO GetSchema)
+  state             <- get
+  maybeSchema       <- lift $ evalStateT (Registry.getSchema sid v) state
+  lift $ putMailbox maybeSchema
+
+-- Registry module definition
+
+herdRegistry :: RegistryBehaviour
+herdRegistry = handleGetSubjects <|> handleGetVersions <|> handleGetSchema
+
+-- Client API
 
 getSubjects :: Node -> IO [SubjectId]
 getSubjects self = maybe [] id <$> dispatch self GetSubjects
 
 getVersions :: Node -> SubjectId -> IO (Maybe [Version])
 getVersions self subjectId = join <$> dispatch self (GetVersions subjectId)
+
+getSchema :: Node -> SubjectId -> Version -> IO (Maybe Schema)
+getSchema self sid v = join <$> dispatch self (GetSchema sid v)

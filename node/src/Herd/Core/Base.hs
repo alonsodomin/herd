@@ -4,7 +4,7 @@ module Herd.Core.Base
      ( HerdState
      , initialHerdState
      , hsRegistry
-     , HerdApp
+     , HerdBehaviour
      , dispatch
      ) where
 
@@ -26,7 +26,7 @@ makeLenses ''HerdState
 initialHerdState :: HerdState
 initialHerdState = HerdState Registry.initial
 
-type HerdApp = StateT HerdState TransIO
+type HerdBehaviour = StateT HerdState TransIO ()
 
 dispatch :: (Typeable req, Typeable res, Show res, Read res) => Node -> req -> IO (Maybe res)
 dispatch self req =

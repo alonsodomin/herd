@@ -8,6 +8,7 @@ module Herd.Internal.Registry.MemRegistry
      , MemRegistry
      , getSubjects
      , getVersions
+     , getSchema
      , runMemRegistry
      ) where
 
