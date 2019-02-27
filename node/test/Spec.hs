@@ -1,2 +1,4 @@
+import Test.Herd.Internal.Registry
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = describeRegistry

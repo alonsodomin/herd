@@ -8,14 +8,16 @@ module Herd.Internal.Registry.MemRegistry
      , MemRegistry
      , getSubjects
      , getVersions
+     , getLatestVersion
      , getSchema
      , deleteSchema
-     , publishSchema
+     , registerSchema
+     , size
      , runMemRegistry
      ) where
 
 import           Control.Monad.State
-import           Data.Avro.Schema
+import           Data.Avro.Schema (Schema)
 import           Data.Binary         (Binary)
 import           Data.Hashable       (Hashable)
 import           Data.HashMap.Lazy   (HashMap)
@@ -41,6 +43,11 @@ getVersions subjectId = do
   allSubjects <- get
   return $ (NEL.toList . NEM.keys) <$> Map.lookup subjectId allSubjects
 
+getLatestVersion :: Monad m => SubjectId -> MemRegistry m (Maybe Version)
+getLatestVersion subjectId = do
+  allSubjects <- get
+  return $ (NEL.last . NEM.keys) <$> Map.lookup subjectId allSubjects
+
 getSchema :: Monad m => SubjectId -> Version -> MemRegistry m (Maybe Schema)
 getSchema subjectId version = do
   allSubjects <- get
@@ -51,14 +58,19 @@ deleteSchema :: Monad m => SubjectId -> Version -> MemRegistry m ()
 deleteSchema subjectId version =
   modify (Map.update (NEM.nonEmptyMap . NEM.delete version) subjectId)
 
-publishSchema :: Monad m => SubjectId -> Schema -> MemRegistry m ()
-publishSchema subjectId schema =
+registerSchema :: Monad m => SubjectId -> Schema -> MemRegistry m ()
+registerSchema subjectId schema =
   modify (Map.alter populateSchema subjectId)
   where populateSchema :: Maybe (NEMap Version Schema) -> Maybe (NEMap Version Schema)
-        populateSchema Nothing     = Just $ NEM.singleton firstVersion schema
+        populateSchema Nothing     = Just $ NEM.singleton initialVersion schema
         populateSchema (Just prev) = Just $
           let latestV = NEL.head . NEL.sort $ NEM.keys prev
           in NEM.insert (nextVersion latestV) schema prev
+
+size :: Monad m => MemRegistry m Integer
+size = do
+  allSubjects <- get
+  return $ foldr (+) 0 $ Map.elems $ Map.map (fromIntegral . NEM.size) allSubjects
 
 initial :: RegistryState
 initial = Map.empty
