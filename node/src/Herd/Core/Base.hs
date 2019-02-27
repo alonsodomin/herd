@@ -30,7 +30,7 @@ type HerdBehaviour = StateT HerdState TransIO ()
 
 dispatch :: (Typeable req, Typeable res, Show res, Read res) => Node -> req -> IO (Maybe res)
 dispatch self req =
-  keep' . oneThread . runCloud $  wormhole self handler
+  keep' . oneThread . runCloud $ wormhole self handler
   where
     handler = local $ do
       putMailbox req

@@ -35,6 +35,12 @@ instance IsString SubjectId where
 newtype Version = Version Integer
   deriving (Eq, Show, Read, Ord, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
+firstVersion :: Version
+firstVersion = Version 1
+
+nextVersion :: Version -> Version
+nextVersion (Version x) = Version (x + 1)
+
 instance ToText Version where
   toText (Version x) = toText x
 

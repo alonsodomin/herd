@@ -9,6 +9,8 @@ module Herd.Internal.Registry.MemRegistry
      , getSubjects
      , getVersions
      , getSchema
+     , deleteSchema
+     , publishSchema
      , runMemRegistry
      ) where
 
@@ -42,8 +44,21 @@ getVersions subjectId = do
 getSchema :: Monad m => SubjectId -> Version -> MemRegistry m (Maybe Schema)
 getSchema subjectId version = do
   allSubjects <- get
-  versions    <- pure $ Map.lookup subjectId allSubjects
+  let versions = Map.lookup subjectId allSubjects
   return $ NEM.lookup version =<< versions
+
+deleteSchema :: Monad m => SubjectId -> Version -> MemRegistry m ()
+deleteSchema subjectId version =
+  modify (Map.update (NEM.nonEmptyMap . NEM.delete version) subjectId)
+
+publishSchema :: Monad m => SubjectId -> Schema -> MemRegistry m ()
+publishSchema subjectId schema =
+  modify (Map.alter populateSchema subjectId)
+  where populateSchema :: Maybe (NEMap Version Schema) -> Maybe (NEMap Version Schema)
+        populateSchema Nothing     = Just $ NEM.singleton firstVersion schema
+        populateSchema (Just prev) = Just $
+          let latestV = NEL.head . NEL.sort $ NEM.keys prev
+          in NEM.insert (nextVersion latestV) schema prev
 
 initial :: RegistryState
 initial = Map.empty
