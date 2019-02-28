@@ -13,33 +13,16 @@ import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.State
 import           Control.Monad.Trans
-import qualified Data.Aeson                   as JSON
-import           Data.Avro.Schema             (Schema)
 import           Data.Typeable
-import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 import           Transient.Base
 import           Transient.Move
 
 import           Herd.Core.Base
-import           Herd.Internal.Registry       (MemRegistry)
-import qualified Herd.Internal.Registry       as Registry
+import           Herd.Internal.Registry (MemRegistry)
+import qualified Herd.Internal.Registry as Registry
 import           Herd.Internal.Types
 
 type RegistryBehaviour = MemRegistry TransIO ()
-
-newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
-  deriving Eq
-
-instance Show AvroSchema where
-  showsPrec p (AvroSchema sch) = showsPrec p (JSON.encode sch)
-
-instance Read AvroSchema where
-  readsPrec p = readP_to_S $ AvroSchema <$> do
-    bs <- readS_to_P $ readsPrec p
-    let decoded = JSON.eitherDecode bs
-    case decoded of
-      Right x  -> return x
-      Left _   -> pfail
 
 -- Requests and handlers
 
