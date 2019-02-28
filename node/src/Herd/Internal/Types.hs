@@ -55,7 +55,7 @@ data SubjectRecord = SubjectRecord
   { _erSubjectRecordId :: SubjectRecordId
   , _erPayload         :: ByteString
   , _erTime            :: UTCTime
-  } deriving (Eq, Show, Binary, Generic, Typeable)
+  } deriving (Eq, Show, Read, Binary, Generic, Typeable)
 
 makeLenses ''SubjectRecord
 

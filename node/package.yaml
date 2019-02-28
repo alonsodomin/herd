@@ -41,8 +41,8 @@ dependencies:
 - uuid
 - yaml
 
-# default-extensions:
-# - OverloadedStrings
+default-extensions:
+- DeriveDataTypeable
 
 library:
   source-dirs: src

@@ -6,6 +6,7 @@ module Herd.Core.Base
      ( HerdState
      , initialHerdState
      , hsRegistry
+     , hsStore
      , HerdBehaviour
      , Dispatch
      , dispatch
@@ -23,15 +24,18 @@ import qualified Transient.Move         as Move
 
 import           Herd.Internal.Registry (RegistryState)
 import qualified Herd.Internal.Registry as Registry
+import           Herd.Internal.Storage  (StoreState)
+import qualified Herd.Internal.Storage  as Store
 
 data HerdState = HerdState
   { _hsRegistry :: RegistryState
+  , _hsStore    :: StoreState
   } deriving (Eq, Show)
 
 makeLenses ''HerdState
 
 initialHerdState :: HerdState
-initialHerdState = HerdState Registry.empty
+initialHerdState = HerdState Registry.empty Store.empty
 
 type HerdBehaviour = StateT HerdState TransIO ()
 

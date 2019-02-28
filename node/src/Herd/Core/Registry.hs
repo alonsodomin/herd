@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable   #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Core.Registry
