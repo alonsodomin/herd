@@ -1,15 +1,15 @@
-{-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Test.Herd.Internal.Registry where
 
 import           Control.Monad.State
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Avro.Schema (Schema)
-import qualified Data.Avro.Schema as Avro
-import Test.Hspec
+import           Data.Avro.Schema       (Schema)
+import qualified Data.Avro.Schema       as Avro
+import           Data.List.NonEmpty     (NonEmpty (..))
+import           Test.Hspec
 
-import Herd.Internal.Registry
-import Herd.Internal.Types
+import           Herd.Internal.Registry
+import           Herd.Internal.Types
 
 describeRegistry :: IO ()
 describeRegistry = hspec $ do
@@ -17,7 +17,7 @@ describeRegistry = hspec $ do
     it "should return an empty list of subjects" $ do
       subjects <- evalStateT getSubjects initial
       subjects `shouldBe` []
-    
+
     it "should return no list of versions" $ do
       let subjectId = SubjectId "foo"
       versions <- evalStateT (getVersions subjectId) initial
@@ -40,7 +40,7 @@ describeRegistry = hspec $ do
       let registerAndRetrieve = do
             registerSchema subjectId schema
             getSchema subjectId initialVersion
-      
+
       retrieved <- evalStateT registerAndRetrieve initial
       retrieved `shouldBe` (Just schema)
 

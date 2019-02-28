@@ -13,9 +13,7 @@ import           Herd.HTTP.API
 import           Herd.HTTP.Registry
 
 httpServer :: Node -> Server HerdAPI
-httpServer node = (fetchSubjects node)
-             :<|> (fetchVersions node)
-             :<|> (fetchSchema node)
+httpServer = httpRegistry
 
 startHttpServer :: Node -> NetworkBinding -> IO ()
 startHttpServer node net = do

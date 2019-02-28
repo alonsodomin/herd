@@ -1,8 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell    #-}
-
 module Herd.Core
-     ( herdApp
+     ( Dispatch
+     , runDispatch
+     , herdApp
      , module Herd.Core.Registry
      ) where
 

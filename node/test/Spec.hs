@@ -1,4 +1,4 @@
-import Test.Herd.Internal.Registry
+import           Test.Herd.Internal.Registry
 
 main :: IO ()
 main = describeRegistry

@@ -41,6 +41,9 @@ dependencies:
 - uuid
 - yaml
 
+# default-extensions:
+# - OverloadedStrings
+
 library:
   source-dirs: src
   dependencies:

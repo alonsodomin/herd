@@ -1,7 +1,3 @@
-{-# LANGUAGE DeriveAnyClass     #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric      #-}
-
 module Herd.Internal.Registry.MemRegistry
      ( RegistryState
      , MemRegistry
@@ -18,7 +14,7 @@ module Herd.Internal.Registry.MemRegistry
      ) where
 
 import           Control.Monad.State
-import           Data.Avro.Schema (Schema)
+import           Data.Avro.Schema    (Schema)
 import           Data.Binary         (Binary)
 import           Data.Hashable       (Hashable)
 import           Data.HashMap.Lazy   (HashMap)

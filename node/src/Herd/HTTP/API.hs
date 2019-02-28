@@ -13,6 +13,8 @@ import           Herd.Internal.Types
 type RegistryAPI = "schemas" :> Get '[JSON] [SubjectId]
               :<|> "schemas" :> Capture "subjectId" SubjectId :> Get '[JSON] [Version]
               :<|> "schemas" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Get '[JSON] Schema
+              :<|> "schemas" :> Capture "subjectId" SubjectId :> ReqBody '[JSON] Schema :> Put '[JSON] Version
+              :<|> "schemas" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Delete '[JSON] Schema
 
 type HerdAPI = RegistryAPI
 
