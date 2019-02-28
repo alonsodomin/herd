@@ -1,10 +1,10 @@
-{-# LANGUAGE TypeSynonymInstances #-}
-
 module Herd.Core.Registry
-     ( herdRegistry
+     ( AvroSchema (..)
+     , herdRegistry
      , getSubjects
      , getVersions
      , getSchema
+     , getLatestSchema
      , deleteSchema
      , registerSchema
      ) where
@@ -13,19 +13,33 @@ import           Control.Applicative
 import           Control.Lens
 import           Control.Monad.State
 import           Control.Monad.Trans
-import           Data.Avro.Schema       (Schema)
+import qualified Data.Aeson                   as JSON
+import           Data.Avro.Schema             (Schema)
 import           Data.Typeable
+import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 import           Transient.Base
 import           Transient.Move
 
 import           Herd.Core.Base
-import           Herd.Internal.Registry (MemRegistry)
-import qualified Herd.Internal.Registry as Registry
+import           Herd.Internal.Registry       (MemRegistry)
+import qualified Herd.Internal.Registry       as Registry
 import           Herd.Internal.Types
 
 type RegistryBehaviour = MemRegistry TransIO ()
 
-instance Read Schema
+newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
+  deriving Eq
+
+instance Show AvroSchema where
+  showsPrec p (AvroSchema sch) = showsPrec p (JSON.encode sch)
+
+instance Read AvroSchema where
+  readsPrec p = readP_to_S $ AvroSchema <$> do
+    bs <- readS_to_P $ readsPrec p
+    let decoded = JSON.eitherDecode bs
+    case decoded of
+      Right x  -> return x
+      Left _   -> pfail
 
 -- Requests and handlers
 
@@ -57,7 +71,22 @@ handleGetSchema = do
   (GetSchema sid v) <- lift (getMailbox :: TransIO GetSchema)
   state             <- get
   maybeSchema       <- lift $ evalStateT (Registry.getSchema sid v) state
-  lift $ putMailbox maybeSchema
+  lift . putMailbox $ AvroSchema <$> maybeSchema
+
+data GetLatestSchema = GetLatestSchema SubjectId
+  deriving (Eq, Show, Read, Typeable)
+
+handleGetLatestSchema :: RegistryBehaviour
+handleGetLatestSchema = do
+  (GetLatestSchema sid) <- lift (getMailbox :: TransIO GetLatestSchema)
+  state                 <- get
+  maybeSchema           <- lift $ evalStateT (findLatest sid) state
+  lift . putMailbox $ AvroSchema <$> maybeSchema
+  where findLatest sid = do
+          latestV <- Registry.getLatestVersion sid
+          case latestV of
+            Just v  -> Registry.getSchema sid v
+            Nothing -> return Nothing
 
 data DeleteSchema = DeleteSchema SubjectId Version
   deriving (Eq, Show, Read, Typeable)
@@ -68,21 +97,21 @@ handleDeleteSchema = do
   state                <- get
   (maybeSch, newState) <- lift $ runStateT (getAndDelete sid v) state
   put newState
-  lift $ putMailbox maybeSch
+  lift . putMailbox $ AvroSchema <$> maybeSch
   where getAndDelete sid v = do
           schema <- Registry.getSchema sid v
           case schema of
             Just s  -> Registry.deleteSchema sid v >> return schema
             Nothing -> return Nothing
 
-data RegisterSchema = RegisterSchema SubjectId Schema
+data RegisterSchema = RegisterSchema SubjectId AvroSchema
   deriving (Eq, Show, Read, Typeable)
 
 handleRegisterSchema :: RegistryBehaviour
 handleRegisterSchema = do
   (RegisterSchema sid sch) <- lift $ (getMailbox :: TransIO RegisterSchema)
   state                    <- get
-  (latestV, newState)      <- lift $ runStateT (registerAndGetVersion sid sch) state
+  (latestV, newState)      <- lift $ runStateT (registerAndGetVersion sid $ unwrapSchema sch) state
   put newState
   lift $ putMailbox latestV
   where registerAndGetVersion sid sch = do
@@ -95,6 +124,7 @@ herdRegistry :: RegistryBehaviour
 herdRegistry = handleGetSubjects
            <|> handleGetVersions
            <|> handleGetSchema
+           <|> handleGetLatestSchema
            <|> handleDeleteSchema
            <|> handleRegisterSchema
 
@@ -106,11 +136,14 @@ getSubjects = dispatch GetSubjects
 getVersions :: SubjectId -> Dispatch (Maybe [Version])
 getVersions subjectId = dispatch (GetVersions subjectId)
 
-getSchema :: SubjectId -> Version -> Dispatch (Maybe Schema)
+getSchema :: SubjectId -> Version -> Dispatch (Maybe AvroSchema)
 getSchema sid v = dispatch (GetSchema sid v)
 
-deleteSchema :: SubjectId -> Version -> Dispatch (Maybe Schema)
+getLatestSchema :: SubjectId -> Dispatch (Maybe AvroSchema)
+getLatestSchema sid = dispatch (GetLatestSchema sid)
+
+deleteSchema :: SubjectId -> Version -> Dispatch (Maybe AvroSchema)
 deleteSchema sid v = dispatch (DeleteSchema sid v)
 
-registerSchema :: SubjectId -> Schema -> Dispatch (Maybe Version)
+registerSchema :: SubjectId -> AvroSchema -> Dispatch (Maybe Version)
 registerSchema sid sch = dispatch (RegisterSchema sid sch)

@@ -10,6 +10,7 @@ module Herd.Internal.Storage.MemStore
      , empty
      , MemStore
      , runMemStore
+     , evalMemStore
      ) where
 
 import           Control.Lens

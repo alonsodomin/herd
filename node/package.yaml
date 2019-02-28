@@ -2,8 +2,8 @@ name:                herd-node
 version:             0.1.0.0
 github:              "alonsodomin/herd"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
+author:              "A. Alonso Dominguez"
+maintainer:          "alonso.domin@pm.me"
 copyright:           "2018 Author name here"
 
 # Metadata used when publishing your package
@@ -43,6 +43,9 @@ dependencies:
 
 default-extensions:
 - DeriveDataTypeable
+- DeriveGeneric
+- StandaloneDeriving
+- TypeSynonymInstances
 
 library:
   source-dirs: src

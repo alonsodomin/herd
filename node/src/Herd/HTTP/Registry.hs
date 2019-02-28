@@ -17,41 +17,49 @@ import           Herd.Core
 import           Herd.HTTP.API
 import           Herd.Internal.Types
 
-fetchSubjects :: Node -> Handler [SubjectId]
-fetchSubjects = liftIO . (runDispatch getSubjects)
+getSubjects' :: Node -> Handler [SubjectId]
+getSubjects' = liftIO . (runDispatch getSubjects)
 
-fetchVersions :: Node -> SubjectId -> Handler [Version]
-fetchVersions node subjectId = do
+getVersions' :: Node -> SubjectId -> Handler [Version]
+getVersions' node subjectId = do
   foundSubject <- liftIO $ runDispatch (getVersions subjectId) node
   case foundSubject of
       Just vs -> return vs
       Nothing -> throwError $ err404 { errBody = BS.fromStrict . encodeUtf8 $ "Subject '" <> (toText subjectId) <> "' not found." }
 
-fetchSchema :: Node -> SubjectId -> Version -> Handler Schema
-fetchSchema node sid v = do
+getSchema' :: Node -> SubjectId -> Version -> Handler Schema
+getSchema' node sid v = do
   foundSchema <- liftIO $ runDispatch (getSchema sid v) node
   case foundSchema of
-    Just sch -> return sch
+    Just sch -> return $ unwrapSchema sch
     Nothing  -> throwError $ err404 { errBody = BS.fromStrict . encodeUtf8 $ "Schema for subject '" <> (toText sid) <> "' with version " <> (toText v) <> " not found." }
+
+getLatestSchema' :: Node -> SubjectId -> Handler Schema
+getLatestSchema' node sid = do
+  foundSchema <- liftIO $ runDispatch (getLatestSchema sid) node
+  case foundSchema of
+    Just sch -> return $ unwrapSchema sch
+    Nothing  -> throwError $ err404 { errBody = BS.fromStrict . encodeUtf8 $ "No schema for subject '" <> (toText sid) <> "' could be found." }
 
 deleteSchema' :: Node -> SubjectId -> Version -> Handler Schema
 deleteSchema' node sid v = do
   foundSchema <- liftIO $ runDispatch (deleteSchema sid v) node
   case foundSchema of
-    Just sch -> return sch
+    Just sch -> return $ unwrapSchema sch
     Nothing  -> throwError $ err404 { errBody = BS.fromStrict . encodeUtf8 $ "Schema for subject '" <> (toText sid) <> "' with version " <> (toText v) <> " not found." }
 
 registerSchema' :: Node -> SubjectId -> Schema -> Handler Version
 registerSchema' node sid sch = do
-  foundVersion <- liftIO $ runDispatch (registerSchema sid sch) node
+  foundVersion <- liftIO $ runDispatch (registerSchema sid $ AvroSchema sch) node
   case foundVersion of
     Just v -> return v
     Nothing -> throwError $ err400 { errBody = BS.fromStrict . encodeUtf8 $ "Schema for subject '" <> (toText sid) <> "' could not be registered." }
 
 httpRegistry :: Node -> Server RegistryAPI
-httpRegistry node = (fetchSubjects node)
-               :<|> (fetchVersions node)
-               :<|> (fetchSchema node)
+httpRegistry node = (getSubjects' node)
+               :<|> (getVersions' node)
+               :<|> (getSchema' node)
+               :<|> (getLatestSchema' node)
                :<|> (registerSchema' node)
                :<|> (deleteSchema' node)
 
