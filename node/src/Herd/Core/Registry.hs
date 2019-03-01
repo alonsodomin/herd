@@ -30,41 +30,35 @@ data GetSubjects = GetSubjects
   deriving (Eq, Show, Read, Typeable)
 
 handleGetSubjects :: RegistryBehaviour
-handleGetSubjects = do
-  _        <- lift (getMailbox :: TransIO GetSubjects)
-  state    <- get
-  subjects <- lift $ evalStateT Registry.getSubjects state
-  lift $ putMailbox subjects
+handleGetSubjects = behaviour $ \(GetSubjects) -> do
+  state <- get
+  lift $ evalStateT Registry.getSubjects state
 
 data GetVersions = GetVersions SubjectId
   deriving (Eq, Show, Read, Typeable)
 
 handleGetVersions :: RegistryBehaviour
-handleGetVersions = do
-  (GetVersions subjectId) <- lift (getMailbox :: TransIO GetVersions)
-  state                   <- get
-  versions                <- lift $ evalStateT (Registry.getVersions subjectId) state
-  lift $ putMailbox versions
+handleGetVersions = behaviour $ \(GetVersions subjectId) -> do
+  state <- get
+  lift $ evalStateT (Registry.getVersions subjectId) state
 
 data GetSchema = GetSchema SubjectId Version
   deriving (Eq, Show, Read, Typeable)
 
 handleGetSchema :: RegistryBehaviour
-handleGetSchema = do
-  (GetSchema sid v) <- lift (getMailbox :: TransIO GetSchema)
-  state             <- get
-  maybeSchema       <- lift $ evalStateT (Registry.getSchema sid v) state
-  lift . putMailbox $ AvroSchema <$> maybeSchema
+handleGetSchema = behaviour $ \(GetSchema sid v) -> do
+  state       <- get
+  maybeSchema <- lift $ evalStateT (Registry.getSchema sid v) state
+  return $ AvroSchema <$> maybeSchema
 
 data GetLatestSchema = GetLatestSchema SubjectId
   deriving (Eq, Show, Read, Typeable)
 
 handleGetLatestSchema :: RegistryBehaviour
-handleGetLatestSchema = do
-  (GetLatestSchema sid) <- lift (getMailbox :: TransIO GetLatestSchema)
-  state                 <- get
-  maybeSchema           <- lift $ evalStateT (findLatest sid) state
-  lift . putMailbox $ AvroSchema <$> maybeSchema
+handleGetLatestSchema = behaviour $ \(GetLatestSchema sid) -> do
+  state       <- get
+  maybeSchema <- lift $ evalStateT (findLatest sid) state
+  return $ AvroSchema <$> maybeSchema
   where findLatest sid = do
           latestV <- Registry.getLatestVersion sid
           case latestV of
@@ -75,12 +69,11 @@ data DeleteSchema = DeleteSchema SubjectId Version
   deriving (Eq, Show, Read, Typeable)
 
 handleDeleteSchema :: RegistryBehaviour
-handleDeleteSchema = do
-  (DeleteSchema sid v) <- lift (getMailbox :: TransIO DeleteSchema)
+handleDeleteSchema = behaviour $ \(DeleteSchema sid v) -> do
   state                <- get
   (maybeSch, newState) <- lift $ runStateT (getAndDelete sid v) state
   put newState
-  lift . putMailbox $ AvroSchema <$> maybeSch
+  return $ AvroSchema <$> maybeSch
   where getAndDelete sid v = do
           schema <- Registry.getSchema sid v
           case schema of
@@ -91,12 +84,11 @@ data RegisterSchema = RegisterSchema SubjectId AvroSchema
   deriving (Eq, Show, Read, Typeable)
 
 handleRegisterSchema :: RegistryBehaviour
-handleRegisterSchema = do
-  (RegisterSchema sid sch) <- lift $ (getMailbox :: TransIO RegisterSchema)
-  state                    <- get
-  (latestV, newState)      <- lift $ runStateT (registerAndGetVersion sid $ unwrapSchema sch) state
+handleRegisterSchema = behaviour $ \(RegisterSchema sid sch) -> do
+  state               <- get
+  (latestV, newState) <- lift $ runStateT (registerAndGetVersion sid $ unwrapSchema sch) state
   put newState
-  lift $ putMailbox latestV
+  return latestV
   where registerAndGetVersion sid sch = do
           Registry.registerSchema sid sch
           Registry.getLatestVersion sid

@@ -1,6 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE FlexibleContexts            #-}
 
 module Herd.Core.Base
      ( HerdState
@@ -11,9 +12,11 @@ module Herd.Core.Base
      , Dispatch
      , dispatch
      , runDispatch
+     , behaviour
      ) where
 
 import           Control.Lens
+import           Control.Monad.Base
 import           Control.Monad.IO.Class
 import           Control.Monad.Reader
 import           Control.Monad.State
@@ -37,6 +40,9 @@ makeLenses ''HerdState
 initialHerdState :: HerdState
 initialHerdState = HerdState Registry.empty Store.empty
 
+instance MonadBase TransIO TransIO where
+  liftBase = id
+
 type HerdBehaviour = StateT HerdState TransIO ()
 
 newtype Dispatch a = Dispatch { unDispatch :: ReaderT Node IO a }
@@ -56,3 +62,9 @@ dispatch req = do
 
 runDispatch :: Dispatch a -> Node -> IO a
 runDispatch = runReaderT . unDispatch
+
+behaviour :: (Typeable req, Typeable res, MonadBase TransIO m) => (req -> m res) -> m ()
+behaviour f = do
+  req <- liftBase $ getMailbox
+  res <- f req
+  liftBase $ putMailbox res

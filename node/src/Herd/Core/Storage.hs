@@ -26,22 +26,19 @@ data SaveRecord = SaveRecord SubjectId ByteString UTCTime
   deriving (Eq, Show, Read, Typeable)
 
 handleSaveRecord :: StorageBehaviour
-handleSaveRecord = do
-  (SaveRecord sid payload time) <- lift $ (getMailbox :: TransIO SaveRecord)
-  state                         <- get
-  (r, newState)                 <- lift $ runMemStore (Storage.saveRecord sid payload time) state
+handleSaveRecord = behaviour $ \(SaveRecord sid payload time) -> do
+  state         <- get
+  (r, newState) <- lift $ runMemStore (Storage.saveRecord sid payload time) state
   put newState
-  lift $ putMailbox r
+  return r
 
 data LoadRecords = LoadRecords SubjectId UTCTime
   deriving (Eq, Show, Read, Typeable)
 
 handleLoadRecords :: StorageBehaviour
-handleLoadRecords = do
-  (LoadRecords sid oldest) <- lift $ (getMailbox :: TransIO LoadRecords)
-  state                    <- get
-  records                  <- lift $ evalMemStore (Storage.loadRecords sid oldest) state
-  lift $ putMailbox records
+handleLoadRecords = behaviour $ \(LoadRecords sid oldest) -> do
+  state <- get
+  lift $ evalMemStore (Storage.loadRecords sid oldest) state
 
 -- Storage module definition
 
