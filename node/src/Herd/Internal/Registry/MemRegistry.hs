@@ -61,7 +61,7 @@ registerSchema subjectId schema =
   where populateSchema :: Maybe (NEMap Version Schema) -> Maybe (NEMap Version Schema)
         populateSchema Nothing     = Just $ NEM.singleton initialVersion schema
         populateSchema (Just prev) = Just $
-          let latestV = NEL.head . NEL.sort $ NEM.keys prev
+          let latestV = NEL.last . NEM.keys $ prev
           in NEM.insert (nextVersion latestV) schema prev
 
 size :: Monad m => MemRegistry m Integer
