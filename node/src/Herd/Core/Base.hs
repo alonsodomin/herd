@@ -1,7 +1,7 @@
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE FlexibleContexts            #-}
 
 module Herd.Core.Base
      ( HerdState
