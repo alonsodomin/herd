@@ -62,7 +62,8 @@ library:
   - warp
   exposed-modules:
   - Herd.CLI
-  - Herd.Internal.Registry
+  - Herd.Data.SchemaRegistry
+  - Herd.Data.SubjectLog
   - Herd.Internal.Types
 
 executables:

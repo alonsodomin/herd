@@ -19,10 +19,12 @@ import           Herd.Core.Storage
 
 herdBehaviour :: HerdBehaviour
 herdBehaviour = do
-  zoom hsRegistry herdRegistry <|> zoom hsStore herdStorage
+  --zoom hsRegistry herdRegistry <|> zoom hsStore herdStorage
+  herdRegistry <|> herdStorage
   herdBehaviour
 
 herdApp :: Cloud ()
 herdApp = local $ do
-  --setState initialHerdState
-  evalStateT herdBehaviour initialHerdState
+  setState initialHerdState
+  herdBehaviour
+  --evalStateT herdBehaviour initialHerdState

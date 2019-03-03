@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.Herd.Internal.Registry where
+module Test.Herd.Data.SchemaRegistry where
 
 import           Control.Monad.State
 import           Data.Avro.Schema       (Schema)
@@ -8,29 +8,29 @@ import qualified Data.Avro.Schema       as Avro
 import           Data.List.NonEmpty     (NonEmpty (..))
 import           Test.Hspec
 
-import           Herd.Internal.Registry
+import           Herd.Data.SchemaRegistry
 import           Herd.Internal.Types
 
 describeRegistry :: IO ()
 describeRegistry = hspec $ do
   describe "empty registry" $ do
     it "should return an empty list of subjects" $ do
-      subjects <- evalStateT getSubjects initial
+      let subjects = getSubjects empty
       subjects `shouldBe` []
 
     it "should return no list of versions" $ do
       let subjectId = SubjectId "foo"
-      versions <- evalStateT (getVersions subjectId) initial
+      let versions  = getVersions subjectId empty
       versions `shouldBe` Nothing
 
     it "should return no schema" $ do
       let subjectId = SubjectId "bar"
       let version   = initialVersion
-      schema <- evalStateT (getSchema subjectId version) initial
+      let schema    = getSchema subjectId version empty
       schema `shouldBe` Nothing
 
     it "should have a zero size" $ do
-      totalItems <- evalStateT size initial
+      let totalItems = size empty
       totalItems `shouldBe` 0
 
     it "should register a new schema with the initial version" $ do
@@ -38,10 +38,10 @@ describeRegistry = hspec $ do
       let schema    = Avro.Boolean
 
       let registerAndRetrieve = do
-            registerSchema subjectId schema
-            getSchema subjectId initialVersion
+            modify $ registerSchema subjectId schema
+            getSchema subjectId initialVersion <$> get
 
-      retrieved <- evalStateT registerAndRetrieve initial
+      retrieved <- evalStateT registerAndRetrieve empty
       retrieved `shouldBe` (Just schema)
 
     it "should bump schema version when registering a new one" $ do
@@ -52,13 +52,16 @@ describeRegistry = hspec $ do
       let expectedVersion = Just $ nextVersion initialVersion
 
       let registerTwoSchemas = do
-            registerSchema subjectId schema1
-            registerSchema subjectId schema2
-            finalSize     <- size
-            latestVersion <- getLatestVersion subjectId
+            modify $ registerSchema subjectId schema1
+            modify $ registerSchema subjectId schema2
+
+            reg <- get
+            let finalSize     = size reg
+            let latestVersion = getLatestVersion subjectId reg
+
             return (finalSize, latestVersion)
 
-      (sz, v) <- evalStateT registerTwoSchemas initial
+      (sz, v) <- evalStateT registerTwoSchemas empty
       sz `shouldBe` 2
       v  `shouldBe` expectedVersion
 
@@ -67,9 +70,9 @@ describeRegistry = hspec $ do
       let schema    = Avro.Boolean
 
       let registerAndDelete = do
-            registerSchema subjectId schema
-            deleteSchema subjectId initialVersion
-            size
+            modify $ registerSchema subjectId schema
+            modify $ deleteSchema subjectId initialVersion
+            size <$> get
 
-      finalSize <- evalStateT registerAndDelete initial
+      finalSize <- evalStateT registerAndDelete empty
       finalSize `shouldBe` 0

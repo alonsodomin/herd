@@ -9,11 +9,11 @@ import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString.Lazy   as BS
 import           Data.Semigroup
 import           Data.Text.Encoding     (encodeUtf8)
-import           Data.Text.Extra
 import           Servant
 import           Transient.Move
 
 import           Herd.Core
+import           Herd.Data.Text
 import           Herd.HTTP.API
 import           Herd.Internal.Types
 

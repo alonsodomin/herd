@@ -43,7 +43,7 @@ herdNode config = do
           herdApp
 
 startHerdNode :: HerdConfig -> IO ()
-startHerdNode config = void . keep $ do
+startHerdNode config = void . keep . freeThreads $ do
   listNodes <|> herdNode config
 
   where listNodes :: TransIO ()
@@ -57,4 +57,4 @@ startHerdNode config = void . keep $ do
         printNode node = liftIO . putStrLn $ "- " <> (nodeHost node) <> ":" <> (show $ nodePort node)
 
 startHerdNode' :: HerdConfig -> IO ()
-startHerdNode' = void . keep' . herdNode
+startHerdNode' = void . keep' . freeThreads . herdNode
