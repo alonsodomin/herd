@@ -5,20 +5,21 @@ module Herd.Core.Storage
      ) where
 
 import           Control.Applicative
+import           Control.Lens
 import           Control.Monad.State
 import           Control.Monad.Trans
-import           Data.ByteString       (ByteString)
-import           Data.Time.Clock       (UTCTime)
+import           Data.ByteString      (ByteString)
+import           Data.Time.Clock      (UTCTime)
 import           Data.Typeable
 import           Transient.Base
 import           Transient.Move
 
 import           Herd.Core.Base
-import           Herd.Internal.Storage (MemStore, evalMemStore, runMemStore)
-import qualified Herd.Internal.Storage as Storage
+import           Herd.Data.SubjectLog (SubjectLog)
+import qualified Herd.Data.SubjectLog as SLog
 import           Herd.Internal.Types
 
-type StorageBehaviour = MemStore TransIO ()
+type StorageBehaviour = TransIO ()
 
 -- Requests and handlers
 
@@ -27,9 +28,9 @@ data SaveRecord = SaveRecord SubjectId ByteString UTCTime
 
 handleSaveRecord :: StorageBehaviour
 handleSaveRecord = behaviour $ \(SaveRecord sid payload time) -> do
-  state         <- get
-  (r, newState) <- lift $ runMemStore (Storage.saveRecord sid payload time) state
-  put newState
+  state        <- getState
+  (r, newSLog) <- pure $ SLog.addRecord sid payload time (state ^. hsSubjectLog)
+  setState (hsSubjectLog .~ newSLog $ state)
   return r
 
 data LoadRecords = LoadRecords SubjectId UTCTime
@@ -37,8 +38,8 @@ data LoadRecords = LoadRecords SubjectId UTCTime
 
 handleLoadRecords :: StorageBehaviour
 handleLoadRecords = behaviour $ \(LoadRecords sid oldest) -> do
-  state <- get
-  lift $ evalMemStore (Storage.loadRecords sid oldest) state
+  state <- getState
+  return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ SLog.getRecords sid (state ^. hsSubjectLog)
 
 -- Storage module definition
 

@@ -64,7 +64,6 @@ library:
   - Herd.CLI
   - Herd.Data.SchemaRegistry
   - Herd.Data.SubjectLog
-  - Herd.Internal.Registry
   - Herd.Internal.Types
 
 executables:
