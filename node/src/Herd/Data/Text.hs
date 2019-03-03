@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Data.Text.Extra where
+module Herd.Data.Text where
 
 import           Data.Text        (Text)
 import qualified Data.Text        as T

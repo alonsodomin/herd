@@ -20,11 +20,12 @@ import           Data.Hashable                (Hashable, hashWithSalt)
 import           Data.String
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
-import           Data.Text.Extra
 import           Data.Time.Clock              (UTCTime)
 import           Data.Typeable
 import           GHC.Generics                 (Generic)
 import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
+
+import           Herd.Data.Text
 
 newtype SubjectId = SubjectId Text
   deriving (Eq, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
