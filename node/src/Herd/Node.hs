@@ -22,7 +22,7 @@ import           Herd.HTTP
 herdNode :: HerdConfig -> TransIO ()
 herdNode config = do
   localNode <- mkNode $ config ^. hcCluster . ccBinding
-  initWebApp localNode (httpApi localNode <|> broker <|> run)
+  initWebApp localNode (httpApi localNode <|> broker <|> run localNode)
 
   where mkNode :: NetworkBinding -> TransIO Node
         mkNode binding = do
@@ -36,14 +36,14 @@ herdNode config = do
         broker :: Cloud ()
         broker = local . async $ startBroker (config ^. hcNetwork . ncBroker)
 
-        run :: Cloud ()
-        run = do
+        run :: Node -> Cloud ()
+        run node = do
           seedNodes <- local $ mapM mkNode $ config ^. hcCluster . ccSeedNodes
           forM_ seedNodes connect'
-          herdApp
+          runAt node . local $ herdApp
 
 startHerdNode :: HerdConfig -> IO ()
-startHerdNode config = void . keep . freeThreads $ do
+startHerdNode config = void . keep $ do
   listNodes <|> herdNode config
 
   where listNodes :: TransIO ()
@@ -57,4 +57,4 @@ startHerdNode config = void . keep . freeThreads $ do
         printNode node = liftIO . putStrLn $ "- " <> (nodeHost node) <> ":" <> (show $ nodePort node)
 
 startHerdNode' :: HerdConfig -> IO ()
-startHerdNode' = void . keep' . freeThreads . herdNode
+startHerdNode' = void . keep' . herdNode

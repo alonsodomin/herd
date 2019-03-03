@@ -45,8 +45,7 @@ initialHerdState = HerdState Registry.empty SLog.empty
 instance MonadBase TransIO TransIO where
   liftBase = id
 
---type HerdBehaviour = StateT HerdState TransIO ()
-type HerdBehaviour = TransIO ()
+type HerdBehaviour = StateT HerdState TransIO ()
 
 newtype Dispatch a = Dispatch { unDispatch :: ReaderT Node IO a }
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader Node)
@@ -54,7 +53,7 @@ newtype Dispatch a = Dispatch { unDispatch :: ReaderT Node IO a }
 dispatch :: (Typeable req, Typeable res, Loggable res) => req -> Dispatch res
 dispatch req = do
   self   <- ask
-  output <- liftIO $ keep' . oneThread . runCloud $ wormhole self handler
+  output <- liftIO $ keep' . oneThread . runCloud $ runAt self handler
   case output of
     Just out -> return out
     Nothing  -> fail "impossible!"
@@ -66,8 +65,9 @@ dispatch req = do
 runDispatch :: Dispatch a -> Node -> IO a
 runDispatch = runReaderT . unDispatch
 
-behaviour :: (Typeable req, Typeable res) => (req -> TransIO res) -> TransIO ()
+behaviour :: (Typeable req, Typeable res, MonadBase TransIO m) => (req -> m res) -> m ()
 behaviour f = do
-  req <- try getMailbox
+  req <- liftBase getMailbox
+  --liftBase $ cleanMailbox req
   res <- f req
-  putMailbox res
+  liftBase $ putMailbox res

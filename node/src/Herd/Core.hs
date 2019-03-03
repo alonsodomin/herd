@@ -6,7 +6,7 @@ module Herd.Core
      ) where
 
 import           Control.Applicative
-import           Control.Lens
+import           Control.Lens (zoom)
 import           Control.Monad
 import           Control.Monad.State
 import           Data.Typeable
@@ -19,12 +19,13 @@ import           Herd.Core.Storage
 
 herdBehaviour :: HerdBehaviour
 herdBehaviour = do
-  --zoom hsRegistry herdRegistry <|> zoom hsStore herdStorage
-  herdRegistry <|> herdStorage
+  mapStateT single $ zoom hsRegistry herdRegistry <|> zoom hsSubjectLog herdStorage
+  --zoom hsRegistry herdRegistry <|> zoom hsSubjectLog herdStorage
+  --single $ herdRegistry <|> herdStorage
   herdBehaviour
 
-herdApp :: Cloud ()
-herdApp = local $ do
-  setState initialHerdState
-  herdBehaviour
-  --evalStateT herdBehaviour initialHerdState
+herdApp :: TransIO ()
+herdApp = do
+  --setState initialHerdState
+  --herdBehaviour
+  evalStateT herdBehaviour initialHerdState

@@ -22,7 +22,8 @@ import           Herd.Data.SchemaRegistry (SchemaRegistry)
 import qualified Herd.Data.SchemaRegistry as Registry
 import           Herd.Internal.Types
 
-type RegistryBehaviour = TransIO ()
+--type RegistryBehaviour = TransIO ()
+type RegistryBehaviour = StateT SchemaRegistry TransIO ()
 
 -- Requests and handlers
 
@@ -31,24 +32,24 @@ data GetSubjects = GetSubjects
 
 handleGetSubjects :: RegistryBehaviour
 handleGetSubjects = behaviour $ \(GetSubjects) -> do
-  state <- getState
-  return $ Registry.getSubjects (state ^. hsRegistry)
+  registry <- get
+  return $ Registry.getSubjects registry
 
 data GetVersions = GetVersions SubjectId
   deriving (Eq, Show, Read, Typeable)
 
 handleGetVersions :: RegistryBehaviour
 handleGetVersions = behaviour $ \(GetVersions subjectId) -> do
-  state <- getState
-  return $ Registry.getVersions subjectId (state ^. hsRegistry)
+  registry <- get
+  return $ Registry.getVersions subjectId registry
 
 data GetSchema = GetSchema SubjectId Version
   deriving (Eq, Show, Read, Typeable)
 
 handleGetSchema :: RegistryBehaviour
 handleGetSchema = behaviour $ \(GetSchema sid v) -> do
-  state    <- getState
-  maybeSchema <- pure $ Registry.getSchema sid v (state ^. hsRegistry)
+  registry    <- get
+  maybeSchema <- pure $ Registry.getSchema sid v registry
   return $ AvroSchema <$> maybeSchema
 
 data GetLatestSchema = GetLatestSchema SubjectId
@@ -56,8 +57,8 @@ data GetLatestSchema = GetLatestSchema SubjectId
 
 handleGetLatestSchema :: RegistryBehaviour
 handleGetLatestSchema = behaviour $ \(GetLatestSchema sid) -> do
-  state       <- getState
-  maybeSchema <- pure $ findLatest sid (state ^. hsRegistry)
+  registry    <- get
+  maybeSchema <- pure $ findLatest sid registry
   return $ AvroSchema <$> maybeSchema
   where findLatest sid = do
           latestV <- Registry.getLatestVersion sid
@@ -70,9 +71,9 @@ data DeleteSchema = DeleteSchema SubjectId Version
 
 handleDeleteSchema :: RegistryBehaviour
 handleDeleteSchema = behaviour $ \(DeleteSchema sid v) -> do
-  state              <- getState
-  (maybeSch, newReg) <- pure $ getAndDelete sid v (state ^. hsRegistry)
-  setState (hsRegistry .~ newReg $ state)
+  registry           <- get
+  (maybeSch, newReg) <- pure $ getAndDelete sid v registry
+  put newReg
   return $ AvroSchema <$> maybeSch
   where getAndDelete sid v reg =
           let foundSchema = Registry.getSchema sid v reg
@@ -87,9 +88,9 @@ data RegisterSchema = RegisterSchema SubjectId AvroSchema
 
 handleRegisterSchema :: RegistryBehaviour
 handleRegisterSchema = behaviour $ \(RegisterSchema sid sch) -> do
-  state             <- getState
-  (latestV, newReg) <- pure $ registerAndGetVersion sid (unwrapSchema sch) (state ^. hsRegistry)
-  setState (hsRegistry .~ newReg $ state)
+  registry          <- get
+  (latestV, newReg) <- pure $ registerAndGetVersion sid (unwrapSchema sch) registry
+  put newReg
   return latestV
   where registerAndGetVersion sid sch reg =
           let newReg  = Registry.registerSchema sid sch reg

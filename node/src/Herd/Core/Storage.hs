@@ -19,7 +19,7 @@ import           Herd.Data.SubjectLog (SubjectLog)
 import qualified Herd.Data.SubjectLog as SLog
 import           Herd.Internal.Types
 
-type StorageBehaviour = TransIO ()
+type StorageBehaviour = StateT SubjectLog TransIO ()
 
 -- Requests and handlers
 
@@ -28,9 +28,9 @@ data SaveRecord = SaveRecord SubjectId ByteString UTCTime
 
 handleSaveRecord :: StorageBehaviour
 handleSaveRecord = behaviour $ \(SaveRecord sid payload time) -> do
-  state        <- getState
-  (r, newSLog) <- pure $ SLog.addRecord sid payload time (state ^. hsSubjectLog)
-  setState (hsSubjectLog .~ newSLog $ state)
+  slog         <- get
+  (r, newSlog) <- pure $ SLog.addRecord sid payload time slog
+  put newSlog
   return r
 
 data LoadRecords = LoadRecords SubjectId UTCTime
@@ -38,8 +38,8 @@ data LoadRecords = LoadRecords SubjectId UTCTime
 
 handleLoadRecords :: StorageBehaviour
 handleLoadRecords = behaviour $ \(LoadRecords sid oldest) -> do
-  state <- getState
-  return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ SLog.getRecords sid (state ^. hsSubjectLog)
+  slog <- get
+  return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ SLog.getRecords sid slog
 
 -- Storage module definition
 
