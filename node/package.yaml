@@ -54,6 +54,7 @@ library:
   - directory
   - json-rpc
   - optparse-applicative >= 0.14.2 && < 0.15
+  - rocksdb-haskell
   - servant
   - servant-server
   - transient >= 0.6 && < 0.7
