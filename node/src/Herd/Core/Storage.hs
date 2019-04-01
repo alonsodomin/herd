@@ -39,7 +39,7 @@ data LoadRecords = LoadRecords SubjectId UTCTime
 handleLoadRecords :: StorageBehaviour
 handleLoadRecords = behaviour $ \(LoadRecords sid oldest) -> do
   slog <- get
-  return $ takeWhile (\x -> (x ^. erTime) >= oldest) $ SLog.getRecords sid slog
+  return $ takeWhile (\x -> (x ^. srTime) >= oldest) $ SLog.getRecords sid slog
 
 -- Storage module definition
 

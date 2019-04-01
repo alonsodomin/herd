@@ -56,28 +56,28 @@ instance ToText SubjectRecordId where
     T.concat [toText subjectId, "#", toText seqNum]
 
 data SubjectRecord = SubjectRecord
-  { _erSubjectRecordId :: SubjectRecordId
-  , _erPayload         :: ByteString
-  , _erTime            :: UTCTime
+  { _srSubjectRecordId :: SubjectRecordId
+  , _srPayload         :: ByteString
+  , _srTime            :: UTCTime
   } deriving (Eq, Show, Read, Binary, Generic, Typeable)
 
 makeLenses ''SubjectRecord
 
-erSubjectId :: Getter SubjectRecord SubjectId
-erSubjectId = erSubjectRecordId . (to $ \(SubjectRecordId pid _) -> pid)
+srSubjectId :: Getter SubjectRecord SubjectId
+srSubjectId = srSubjectRecordId . (to $ \(SubjectRecordId pid _) -> pid)
 
 instance ToJSON SubjectRecord where
   toJSON record = object
-    [ "id"      .= (record ^. erSubjectRecordId)
-    , "payload" .= (BS.unpack $ Base64.encode (record ^. erPayload))
-    , "time"    .= (record ^. erTime)
+    [ "id"      .= (record ^. srSubjectRecordId)
+    , "payload" .= (BS.unpack $ Base64.encode (record ^. srPayload))
+    , "time"    .= (record ^. srTime)
     ]
 
 instance FromJSON SubjectRecord where
   parseJSON = withObject "subject-record" $ \o -> do
-    _erSubjectRecordId <- o .: "id"
-    _erPayload         <- (Base64.encode . BS.pack) <$> o .: "payload"
-    _erTime            <- o .: "time"
+    _srSubjectRecordId <- o .: "id"
+    _srPayload         <- (Base64.encode . BS.pack) <$> o .: "payload"
+    _srTime            <- o .: "time"
     return SubjectRecord{..}
 
 newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
