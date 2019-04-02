@@ -1,10 +1,10 @@
 name:                herd-client
 version:             0.1.0.0
 github:              "alonsodomin/herd"
-license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+license:             GPL-3
+author:              "A. Alonso Dominguez"
+maintainer:          "alonso.domin@pm.me"
+copyright:           "2019 A. Alonso Dominguez"
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package

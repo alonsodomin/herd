@@ -13,6 +13,12 @@ import           Options.Applicative
 import           Herd.Config
 import           Herd.Node
 
+licensePreamble :: String
+licensePreamble = "Herd  Copyright (C) 2019  A. Alonso Dominguez\n"
+               ++ "This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n"
+               ++ "This is free software, and you are welcome to redistribute it\n"
+               ++ "under certain conditions; type `show c' for details."
+
 data HerdOpts = HerdOpts
   { _hoConfigFile  :: FilePath
   , _hoInteractive :: Bool
@@ -58,7 +64,9 @@ herd opts = do
     else startHerdNode' config
 
 herdCli :: IO ()
-herdCli = herd =<< execParser opts
+herdCli = do
+  putStrLn licensePreamble
+  herd =<< execParser opts
   where opts = info (herdOpts <**> helper)
              ( fullDesc
             <> progDesc "Event Store Distributed Database"
