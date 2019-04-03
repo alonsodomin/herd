@@ -59,9 +59,7 @@ loadHerdConf configFile = do
 herd :: HerdOpts -> IO ()
 herd opts = do
   config <- loadHerdConf (opts ^. hoConfigFile)
-  if opts ^. hoInteractive
-    then startHerdNode config
-    else startHerdNode' config
+  startHerdNode config
 
 herdCli :: IO ()
 herdCli = do

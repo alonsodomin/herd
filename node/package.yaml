@@ -18,7 +18,7 @@ description:         Please see the README on Github at <https://github.com/gith
 dependencies:
 - aeson
 - avro
-- base >= 4.9 && < 4.11
+- base >= 4.9
 - base64-bytestring
 - binary
 - binary-orphans
@@ -52,15 +52,15 @@ library:
   dependencies:
   - conduit-extra
   - directory
-  - json-rpc
+  - distributed-process
+  - distributed-process-async
+  - distributed-process-client-server
+  - distributed-process-extras
+  - distributed-process-monad-control
+  - distributed-process-simplelocalnet
+  - distributed-process-supervisor
   - optparse-applicative >= 0.14.2 && < 0.15
   - rocksdb-haskell
-  - servant
-  - servant-server
-  - transient >= 0.6 && < 0.7
-  - transient-universe >= 0.5 && < 0.6
-  - wai
-  - warp
   exposed-modules:
   - Herd.CLI
   - Herd.Data.SchemaRegistry
