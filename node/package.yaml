@@ -32,6 +32,7 @@ dependencies:
 - lens
 - random
 - semigroups
+- stm
 - text
 - text-binary
 - transformers
@@ -59,7 +60,10 @@ library:
   - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
+  - json-rpc
   - optparse-applicative >= 0.14.2 && < 0.15
+  - network-transport
+  - network-transport-tcp
   - rocksdb-haskell
   exposed-modules:
   - Herd.CLI
