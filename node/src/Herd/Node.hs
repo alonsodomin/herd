@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+
 module Herd.Node
      ( startHerdNode
      ) where
@@ -8,10 +10,20 @@ import           Control.Distributed.Process.Backend.SimpleLocalnet (initializeB
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
+import           Control.Monad
+import           Data.Binary                                        (Binary (..))
 import qualified Data.Text                                          as T
+import           Data.Typeable
+import           GHC.Generics
 
 import           Herd.Config
 import           Herd.Process.SchemaRegistry
+
+data NodeCommand = ShutdownCmd
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+handleCmd :: NodeCommand -> Process ()
+handleCmd ShutdownCmd = say "Shutting down..."
 
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
@@ -28,4 +40,4 @@ startHerdNode config = do
         rootSupervisor :: Process ()
         rootSupervisor = do
           _ <- spawnLocal schemaRegistryProc
-          return ()
+          forever $ receiveWait [match handleCmd]
