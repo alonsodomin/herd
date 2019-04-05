@@ -2,12 +2,16 @@
 
 module Herd.Process.SchemaRegistry
      ( SchemaRegistryServer
-     , fetchSubjectIds
+     , getSubjectIds
+     , getVersions
+     , getSchema
      , registerSchema
+     , deleteSchema
      , spawnSchemaRegistry
      ) where
 
-import           Control.Distributed.Process
+import           Control.Distributed.Process                (Process, ProcessId,
+                                                             spawnLocal)
 import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
@@ -22,44 +26,65 @@ import           Herd.Types
 
 -- Protocol definition
 
-data SchemaRegistryReq =
-    GetSubjects !(SendPort [SubjectId])
-  | RegisterSchema !SubjectId !Schema !(SendPort ())
+data GetSubjectIds = GetSubjectIds
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+data GetVersions = GetVersions !SubjectId
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+data GetSchema = GetSchema !SubjectId !Version
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+data RegisterSchema = RegisterSchema !SubjectId !Schema
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+data DeleteSchema = DeleteSchema !SubjectId !Version
   deriving (Eq, Show, Generic, Typeable, Binary)
 
 -- Client API
 
-fetchSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
-fetchSubjectIds reg = do
-  (sp, rp) <- newChan
-  let req = GetSubjects sp
-  sendControlMessage (schemaRegistryInlet reg) req
-  receiveWait [ matchChan rp return ]
+getSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
+getSubjectIds reg = call reg GetSubjectIds
 
-registerSchema :: SubjectId -> Schema -> SchemaRegistryServer -> Process ()
-registerSchema subjectId schema reg = do
-  (sp, rp) <- newChan
-  let req = RegisterSchema subjectId schema sp
-  sendControlMessage (schemaRegistryInlet reg) req
-  receiveWait [ matchChan rp return ]
+getVersions :: SchemaRegistryServer -> SubjectId -> Process (Maybe [Version])
+getVersions reg = call reg . GetVersions
+
+getSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process (Maybe Schema)
+getSchema reg sid v = call reg $ GetSchema sid v
+
+registerSchema :: SchemaRegistryServer -> SubjectId -> Schema -> Process ()
+registerSchema reg sid sch = call reg $ RegisterSchema sid sch
+
+deleteSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process ()
+deleteSchema reg sid v = call reg $ DeleteSchema sid v
 
 -- Handlers
 
-schemaRegistryHandler :: SchemaRegistry -> SchemaRegistryReq -> Process (ProcessAction SchemaRegistry)
-schemaRegistryHandler registry (GetSubjects replyTo) = do
-  let subjectIds = Registry.getSubjects registry
-  replyChan replyTo subjectIds
-  continue registry
-schemaRegistryHandler registry (RegisterSchema subjectId schema replyTo) = do
-  let newRegistry = Registry.registerSchema subjectId schema registry
-  replyChan replyTo ()
-  continue newRegistry
+handleGetSubjectIds :: SchemaRegistry -> GetSubjectIds -> Process (ProcessReply [SubjectId] SchemaRegistry)
+handleGetSubjectIds reg _ = reply (Registry.getSubjects reg) reg
+
+handleGetVersions :: SchemaRegistry -> GetVersions -> Process (ProcessReply (Maybe [Version]) SchemaRegistry)
+handleGetVersions reg (GetVersions subjectId) =
+  reply (Registry.getVersions subjectId reg) reg
+
+handleGetSchema :: SchemaRegistry -> GetSchema -> Process (ProcessReply (Maybe Schema) SchemaRegistry)
+handleGetSchema reg (GetSchema subjectId version) =
+  reply (Registry.getSchema subjectId version reg) reg
+
+handleRegisterSchema :: SchemaRegistry -> RegisterSchema -> Process (ProcessReply () SchemaRegistry)
+handleRegisterSchema reg (RegisterSchema subjectId schema) =
+  let newRegistry = Registry.registerSchema subjectId schema reg
+  in reply () newRegistry
+
+handleDeleteSchema :: SchemaRegistry -> DeleteSchema -> Process (ProcessReply () SchemaRegistry)
+handleDeleteSchema reg (DeleteSchema subjectId version) =
+  let newRegistry = Registry.deleteSchema subjectId version reg
+  in reply () newRegistry
 
 -- Server definition
 
 data SchemaRegistryServer = SchemaRegistryServer
-  { schemaRegistryPid   :: ProcessId
-  , schemaRegistryInlet :: ControlPort SchemaRegistryReq }
+  { schemaRegistryPid :: ProcessId }
   deriving (Eq, Show, Generic, Typeable, Binary)
 
 instance Resolvable SchemaRegistryServer where
@@ -71,24 +96,19 @@ deriving instance Addressable SchemaRegistryServer
 
 spawnSchemaRegistry :: Process SchemaRegistryServer
 spawnSchemaRegistry = do
-  (sp, rp)  <- newChan
-  pid       <- spawnLocal $ runSchemaReg sp
-  inletPort <- receiveChan rp
-  return $ SchemaRegistryServer pid inletPort
+  pid <- spawnLocal $ serve () initRegistry registryDef
+  return $ SchemaRegistryServer pid
   where
     initRegistry :: InitHandler () SchemaRegistry
     initRegistry = \_ -> return $ InitOk Registry.empty Infinity
 
-    registryDef :: ControlChannel SchemaRegistryReq -> ProcessDefinition SchemaRegistry
-    registryDef chan = defaultProcess
-      { externHandlers = [
-          handleControlChan chan schemaRegistryHandler
+    registryDef :: ProcessDefinition SchemaRegistry
+    registryDef = defaultProcess
+      { apiHandlers = [
+          handleCall handleGetSubjectIds
+        , handleCall handleGetVersions
+        , handleCall handleGetSchema
+        , handleCall handleRegisterSchema
+        , handleCall handleDeleteSchema
         ]
       , unhandledMessagePolicy = Drop }
-
-    runSchemaReg :: SendPort (ControlPort SchemaRegistryReq) -> Process ()
-    runSchemaReg sendPort = do
-      inletChan <- newControlChan
-      inletPort <- pure $ channelControlPort inletChan
-      sendChan sendPort inletPort
-      runProcess (recvLoop $ registryDef inletChan) () initRegistry

@@ -27,11 +27,11 @@ import           Herd.Protocol
 import           Herd.Types
 
 fetchSubjectIds' :: HerdNode -> Process [SubjectId]
-fetchSubjectIds' node = fetchSubjectIds (node ^. hnSchemaRegistry)
+fetchSubjectIds' node = getSubjectIds (node ^. hnSchemaRegistry)
 
 registerSchema' :: SubjectId -> Schema -> HerdNode -> Process ()
 registerSchema' subjectId schema node =
-  registerSchema subjectId schema (node ^. hnSchemaRegistry)
+  registerSchema (node ^. hnSchemaRegistry) subjectId schema
 
 handle :: MonadLoggerIO m => HerdNode -> Respond HerdRequest m HerdResponse
 handle herdNode FetchSubjectIds = Right . FetchedSubjectIds <$> invoke fetchSubjectIds' herdNode
