@@ -49,8 +49,19 @@ library:
   - conduit-extra
   - json-rpc
 
+executables:
+  herd-client-example:
+    main:                Main.hs
+    source-dirs:         example
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - herd-client
+
 tests:
-  herd-test:
+  herd-client-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

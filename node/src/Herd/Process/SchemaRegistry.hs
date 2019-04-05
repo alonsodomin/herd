@@ -2,7 +2,7 @@
 
 module Herd.Process.SchemaRegistry
      ( SchemaRegistryServer
-     , getSubjects
+     , fetchSubjectIds
      , spawnSchemaRegistry
      ) where
 
@@ -25,8 +25,8 @@ data SchemaRegistryReq = GetSubjects !(SendPort [SubjectId])
 
 -- Client API
 
-getSubjects :: SchemaRegistryServer -> Process [SubjectId]
-getSubjects reg = do
+fetchSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
+fetchSubjectIds reg = do
   (sp, rp) <- newChan
   let req = GetSubjects sp
   sendControlMessage (schemaRegistryInlet reg) req

@@ -6,8 +6,7 @@ module Herd.Node
      , startHerdNode
      ) where
 
-import           Control.Concurrent.STM                             (atomically)
-import           Control.Concurrent.STM.TMVar
+
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Backend.SimpleLocalnet (initializeBackend,
                                                                      newLocalNode)
@@ -15,14 +14,16 @@ import           Control.Distributed.Process.Node                   (LocalNode, 
                                                                      runProcess)
 import           Control.Lens
 import           Control.Monad
-import           Control.Monad.IO.Class
+
 import           Data.Binary                                        (Binary (..))
 import qualified Data.Text                                          as T
 import           Data.Typeable
 import           GHC.Generics
 
 import           Herd.Config
-import           Herd.Process.SchemaRegistry
+import Herd.Node.Core
+import Herd.Node.JSONRPC
+import           Herd.Process.SchemaRegistry (spawnSchemaRegistry)
 
 data NodeCommand = ShutdownCmd
   deriving (Eq, Show, Generic, Typeable, Binary)
@@ -30,25 +31,10 @@ data NodeCommand = ShutdownCmd
 handleCmd :: NodeCommand -> Process ()
 handleCmd ShutdownCmd = say "Shutting down..."
 
-data HerdNode = HerdNode
-  { _hnLocalNode      :: LocalNode
-  , _hnSchemaRegistry :: SchemaRegistryServer
-  } deriving Typeable
-
-makeLenses ''HerdNode
-
-invoke :: MonadIO m => (HerdNode -> Process a) -> HerdNode -> m a
-invoke action node = liftIO $ do
-  tvar <- newEmptyTMVarIO
-  runProcess (node ^. hnLocalNode) $ do
-    result <- action node
-    liftIO $ atomically $ putTMVar tvar result
-  atomically $ readTMVar tvar
-
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
   node <- startNode
-  runProcess node rootSupervisor
+  runProcess node (rootSupervisor node)
 
   where startNode :: IO LocalNode
         startNode = do
@@ -57,7 +43,8 @@ startHerdNode config = do
           backend <- initializeBackend host port initRemoteTable
           newLocalNode backend
 
-        rootSupervisor :: Process ()
-        rootSupervisor = do
-          _ <- spawnSchemaRegistry
-          forever $ receiveWait [match handleCmd]
+        rootSupervisor :: LocalNode -> Process ()
+        rootSupervisor localNode = do
+          reg <- spawnSchemaRegistry
+          let herdNode = HerdNode localNode reg
+          liftIO $ startJsonRpc config herdNode
