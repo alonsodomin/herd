@@ -4,6 +4,7 @@
 
 module Herd.Client
      ( fetchSubjectIds
+     , registerSchema
      , runHerdClient
      ) where
 
@@ -12,6 +13,7 @@ import           Control.Lens
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Control.Monad.Reader
+import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString        as BS
 import           Data.Conduit.Network   (clientSettings)
 import           Data.Text              (Text)
@@ -43,8 +45,16 @@ fetchSubjectIds = do
     FetchedSubjectIds subjectIds -> return subjectIds
     _                            -> fail "invalid response"
 
+registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> HerdClientT m ()
+registerSchema subjectId schema = do
+  req <- sendRequest $ RegisterSchema subjectId schema
+  res <- handleResponse req
+  case res of
+    Done -> return ()
+    _    -> fail "invalid response"
+
 runHerdClient :: (MonadUnliftIO m, MonadLoggerIO m) => Text -> Int -> HerdClientT m a -> m a
 runHerdClient host port action = do
   --let jsonrcpSettings = clientSettings (settings ^. csPort) (settings ^. csHost)
-  let jsonrcpSettings = clientSettings port (T.encodeUtf8 host)
-  jsonrpcTCPClient V2 True jsonrcpSettings action
+  let cs = clientSettings port (T.encodeUtf8 host)
+  jsonrpcTCPClient V2 True cs action

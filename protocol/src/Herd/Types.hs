@@ -1,7 +1,8 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE DeriveAnyClass       #-}
+{-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE RecordWildCards      #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Types where
 
@@ -10,12 +11,15 @@ import           Data.Aeson                   (FromJSON, ToJSON, object,
                                                parseJSON, toJSON, withObject,
                                                (.:), (.:?), (.=))
 import qualified Data.Aeson                   as JSON
+import qualified Data.Aeson.Text              as JSON
 import           Data.Avro.Schema             (Schema)
-import           Data.Binary
+import           Data.Binary                  (Binary (..))
+import qualified Data.Binary                  as B
 import           Data.Binary.Orphans          ()
 import           Data.ByteString              (ByteString)
 import qualified Data.ByteString              as BS
 import qualified Data.ByteString.Base64       as Base64
+import qualified Data.ByteString.Lazy         as BSL
 import           Data.Hashable                (Hashable, hashWithSalt)
 import           Data.String
 import           Data.Text                    (Text)
@@ -80,8 +84,12 @@ instance FromJSON SubjectRecord where
     _srTime            <- o .: "time"
     return SubjectRecord{..}
 
+instance Binary Schema where
+  put = put . BSL.toStrict . JSON.encode
+  get = (get :: B.Get ByteString) >>= ((either fail pure) . JSON.eitherDecode' . BSL.fromStrict)
+
 newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
-  deriving Eq
+  deriving (Eq, Generic, Typeable, Binary)
 
 instance Show AvroSchema where
   showsPrec p (AvroSchema sch) = showsPrec p (JSON.encode sch)

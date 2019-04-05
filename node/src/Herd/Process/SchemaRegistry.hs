@@ -3,6 +3,7 @@
 module Herd.Process.SchemaRegistry
      ( SchemaRegistryServer
      , fetchSubjectIds
+     , registerSchema
      , spawnSchemaRegistry
      ) where
 
@@ -10,6 +11,7 @@ import           Control.Distributed.Process
 import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
+import           Data.Avro.Schema                           (Schema)
 import           Data.Binary                                (Binary (..))
 import           Data.Typeable
 import           GHC.Generics
@@ -20,7 +22,9 @@ import           Herd.Types
 
 -- Protocol definition
 
-data SchemaRegistryReq = GetSubjects !(SendPort [SubjectId])
+data SchemaRegistryReq =
+    GetSubjects !(SendPort [SubjectId])
+  | RegisterSchema !SubjectId !Schema !(SendPort ())
   deriving (Eq, Show, Generic, Typeable, Binary)
 
 -- Client API
@@ -32,13 +36,24 @@ fetchSubjectIds reg = do
   sendControlMessage (schemaRegistryInlet reg) req
   receiveWait [ matchChan rp return ]
 
+registerSchema :: SubjectId -> Schema -> SchemaRegistryServer -> Process ()
+registerSchema subjectId schema reg = do
+  (sp, rp) <- newChan
+  let req = RegisterSchema subjectId schema sp
+  sendControlMessage (schemaRegistryInlet reg) req
+  receiveWait [ matchChan rp return ]
+
 -- Handlers
 
-handleGetSubjects :: SchemaRegistry -> SchemaRegistryReq -> Process (ProcessAction SchemaRegistry)
-handleGetSubjects registry (GetSubjects replyTo) = do
+schemaRegistryHandler :: SchemaRegistry -> SchemaRegistryReq -> Process (ProcessAction SchemaRegistry)
+schemaRegistryHandler registry (GetSubjects replyTo) = do
   let subjectIds = Registry.getSubjects registry
   replyChan replyTo subjectIds
   continue registry
+schemaRegistryHandler registry (RegisterSchema subjectId schema replyTo) = do
+  let newRegistry = Registry.registerSchema subjectId schema registry
+  replyChan replyTo ()
+  continue newRegistry
 
 -- Server definition
 
@@ -67,7 +82,7 @@ spawnSchemaRegistry = do
     registryDef :: ControlChannel SchemaRegistryReq -> ProcessDefinition SchemaRegistry
     registryDef chan = defaultProcess
       { externHandlers = [
-          handleControlChan chan handleGetSubjects
+          handleControlChan chan schemaRegistryHandler
         ]
       , unhandledMessagePolicy = Drop }
 

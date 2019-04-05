@@ -21,9 +21,9 @@ import           Data.Typeable
 import           GHC.Generics
 
 import           Herd.Config
-import Herd.Node.Core
-import Herd.Node.JSONRPC
-import           Herd.Process.SchemaRegistry (spawnSchemaRegistry)
+import           Herd.Node.Core
+import           Herd.Node.JSONRPC
+import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
 
 data NodeCommand = ShutdownCmd
   deriving (Eq, Show, Generic, Typeable, Binary)

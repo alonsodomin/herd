@@ -2,15 +2,15 @@
 
 module Herd.Node.Core where
 
-import           Data.Typeable
-import Control.Lens
-import           Control.Monad.IO.Class
-import           Control.Concurrent.STM                             (atomically)
+import           Control.Concurrent.STM           (atomically)
 import           Control.Concurrent.STM.TMVar
-import           Control.Distributed.Process (Process)
-import           Control.Distributed.Process.Node                   (LocalNode, runProcess)
+import           Control.Distributed.Process      (Process)
+import           Control.Distributed.Process.Node (LocalNode, runProcess)
+import           Control.Lens
+import           Control.Monad.IO.Class
+import           Data.Typeable
 
-import Herd.Process.SchemaRegistry (SchemaRegistryServer)
+import           Herd.Process.SchemaRegistry      (SchemaRegistryServer)
 
 data HerdNode = HerdNode
   { _hnLocalNode      :: LocalNode

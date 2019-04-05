@@ -6,30 +6,38 @@ module Herd.Node.JSONRPC
      ( startJsonRpc
      ) where
 
+import           Control.Distributed.Process (Process)
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.Logger
-import           Control.Distributed.Process (Process)
 import           Data.Aeson
-import qualified Data.Foldable        as F
-import           Data.Maybe           (catMaybes)
-import qualified Data.Text            as T
-import           Data.Conduit.Network   (serverSettings)
-import Data.String
+import           Data.Avro.Schema            (Schema)
+import           Data.Conduit.Network        (serverSettings)
+import qualified Data.Foldable               as F
+import           Data.Maybe                  (catMaybes)
+import           Data.String
+import qualified Data.Text                   as T
 import           GHC.Generics
 import           Network.JSONRPC
 
 import           Herd.Config
+import           Herd.Node.Core
+import           Herd.Process.SchemaRegistry
 import           Herd.Protocol
-import Herd.Node.Core
-import Herd.Types
-import Herd.Process.SchemaRegistry
+import           Herd.Types
 
 fetchSubjectIds' :: HerdNode -> Process [SubjectId]
 fetchSubjectIds' node = fetchSubjectIds (node ^. hnSchemaRegistry)
 
+registerSchema' :: SubjectId -> Schema -> HerdNode -> Process ()
+registerSchema' subjectId schema node =
+  registerSchema subjectId schema (node ^. hnSchemaRegistry)
+
 handle :: MonadLoggerIO m => HerdNode -> Respond HerdRequest m HerdResponse
 handle herdNode FetchSubjectIds = Right . FetchedSubjectIds <$> invoke fetchSubjectIds' herdNode
+handle herdNode (RegisterSchema subjectId schema) = do
+  invoke (registerSchema' subjectId schema) herdNode
+  return $ Right Done
 
 broker :: MonadLoggerIO m => HerdNode -> JSONRPCT m ()
 broker herdNode = do
