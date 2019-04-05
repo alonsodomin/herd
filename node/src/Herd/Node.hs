@@ -1,7 +1,9 @@
-{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Herd.Node
-     ( startHerdNode
+     ( HerdNode
+     , startHerdNode
      ) where
 
 import           Control.Distributed.Process
@@ -10,7 +12,10 @@ import           Control.Distributed.Process.Backend.SimpleLocalnet (initializeB
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
+import           Control.Concurrent.STM           (atomically)
+import           Control.Concurrent.STM.TMVar
 import           Control.Monad
+import Control.Monad.IO.Class
 import           Data.Binary                                        (Binary (..))
 import qualified Data.Text                                          as T
 import           Data.Typeable
@@ -25,9 +30,20 @@ data NodeCommand = ShutdownCmd
 handleCmd :: NodeCommand -> Process ()
 handleCmd ShutdownCmd = say "Shutting down..."
 
-data NodeHandle = NodeHandle
-  { schemaRegistry :: SchemaRegistryServer
+data HerdNode = HerdNode
+  { _hnLocalNode      :: LocalNode
+  , _hnSchemaRegistry :: SchemaRegistryServer
   } deriving Typeable
+
+makeLenses ''HerdNode
+
+invoke :: MonadIO m => (HerdNode -> Process a) -> HerdNode -> m a
+invoke action node = liftIO $ do
+  tvar <- newEmptyTMVarIO
+  runProcess (node ^. hnLocalNode) $ do
+    result <- action node
+    liftIO $ atomically $ putTMVar tvar result
+  atomically $ readTMVar tvar
 
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
@@ -36,9 +52,9 @@ startHerdNode config = do
 
   where startNode :: IO LocalNode
         startNode = do
-          let host = config ^. hcCluster . ccBinding . nbHost
+          let host = T.unpack $ config ^. hcCluster . ccBinding . nbHost
           let port = show $ config ^. hcCluster . ccBinding . nbPort
-          backend <- initializeBackend (T.unpack host) port initRemoteTable
+          backend <- initializeBackend host port initRemoteTable
           newLocalNode backend
 
         rootSupervisor :: Process ()

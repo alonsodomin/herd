@@ -10,13 +10,11 @@ import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.Logger
 import           Data.Aeson
-import qualified Data.Foldable         as F
-import           Data.Maybe            (catMaybes)
-import qualified Data.Text             as T
+import qualified Data.Foldable                    as F
+import           Data.Maybe                       (catMaybes)
+import qualified Data.Text                        as T
 import           GHC.Generics
 import           Network.JSONRPC
-import           Network.Transport
-import           Network.Transport.TCP (createTransport, defaultTCPParameters)
 
 import           Herd.Config
 import           Herd.Internal.Types
@@ -64,10 +62,3 @@ broker = do
 
 startServer :: HerdConfig -> IO ()
 startServer config = undefined
-  where
-    openConnection = do
-      let host = T.unpack $ config ^. hcCluster . ccBinding . nbHost
-      let port = show $ config ^. hcCluster . ccBinding . nbPort
-      transport <- ExceptT $ createTransport host port (\_ -> (host, port)) defaultTCPParameters
-      --endpoint  <- ExceptT $ newEndPoint transport
-      return ()

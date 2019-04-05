@@ -6,8 +6,8 @@ module Herd.Process.SchemaRegistry
      , spawnSchemaRegistry
      ) where
 
-import           Control.Distributed.Process                
-import           Control.Distributed.Process.Extras hiding (sendChan)
+import           Control.Distributed.Process
+import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
 import           Data.Binary                                (Binary (..))
@@ -42,7 +42,7 @@ handleGetSubjects registry (GetSubjects replyTo) = do
 
 -- Server definition
 
-data SchemaRegistryServer = SchemaRegistryServer 
+data SchemaRegistryServer = SchemaRegistryServer
   { schemaRegistryPid   :: ProcessId
   , schemaRegistryInlet :: ControlPort SchemaRegistryReq }
   deriving (Eq, Show, Generic, Typeable, Binary)
