@@ -37,6 +37,7 @@ dependencies:
 - transformers-base
 - time
 - unordered-containers
+- unliftio
 - yaml
 # Herd dependencies
 - herd-protocol
@@ -44,8 +45,9 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
+  - conduit
+  - conduit-extra
   - json-rpc
-  - optparse-applicative >= 0.14.2 && < 0.15
 
 tests:
   herd-test:
