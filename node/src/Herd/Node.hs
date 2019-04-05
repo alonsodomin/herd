@@ -6,16 +6,16 @@ module Herd.Node
      , startHerdNode
      ) where
 
+import           Control.Concurrent.STM                             (atomically)
+import           Control.Concurrent.STM.TMVar
 import           Control.Distributed.Process
 import           Control.Distributed.Process.Backend.SimpleLocalnet (initializeBackend,
                                                                      newLocalNode)
 import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
                                                                      runProcess)
 import           Control.Lens
-import           Control.Concurrent.STM           (atomically)
-import           Control.Concurrent.STM.TMVar
 import           Control.Monad
-import Control.Monad.IO.Class
+import           Control.Monad.IO.Class
 import           Data.Binary                                        (Binary (..))
 import qualified Data.Text                                          as T
 import           Data.Typeable

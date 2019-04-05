@@ -16,7 +16,7 @@ import           GHC.Generics
 
 import           Herd.Data.SchemaRegistry                   (SchemaRegistry)
 import qualified Herd.Data.SchemaRegistry                   as Registry
-import           Herd.Internal.Types
+import           Herd.Types
 
 -- Protocol definition
 

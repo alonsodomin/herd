@@ -10,14 +10,14 @@ module Herd.Data.SchemaRegistry
      , size
      ) where
 
-import           Data.Avro.Schema    (Schema)
-import           Data.HashMap.Lazy   (HashMap)
-import qualified Data.HashMap.Lazy   as Map
-import qualified Data.List.NonEmpty  as NEL
-import           Data.Map.NonEmpty   (NEMap)
-import qualified Data.Map.NonEmpty   as NEM
+import           Data.Avro.Schema   (Schema)
+import           Data.HashMap.Lazy  (HashMap)
+import qualified Data.HashMap.Lazy  as Map
+import qualified Data.List.NonEmpty as NEL
+import           Data.Map.NonEmpty  (NEMap)
+import qualified Data.Map.NonEmpty  as NEM
 
-import           Herd.Internal.Types
+import           Herd.Types
 
 type SchemaRegistry = HashMap SubjectId (NEMap Version Schema)
 

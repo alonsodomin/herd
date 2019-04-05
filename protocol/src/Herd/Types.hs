@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Herd.Internal.Types where
+module Herd.Types where
 
 import           Control.Lens                 hiding ((.=))
 import           Data.Aeson                   (FromJSON, ToJSON, object,

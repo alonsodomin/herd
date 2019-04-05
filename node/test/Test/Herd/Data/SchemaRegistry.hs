@@ -9,7 +9,7 @@ import           Data.List.NonEmpty       (NonEmpty (..))
 import           Test.Hspec
 
 import           Herd.Data.SchemaRegistry
-import           Herd.Internal.Types
+import           Herd.Types
 
 describeRegistry :: IO ()
 describeRegistry = hspec $ do

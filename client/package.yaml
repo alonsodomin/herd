@@ -38,11 +38,13 @@ dependencies:
 - time
 - unordered-containers
 - yaml
+# Herd dependencies
+- herd-protocol
 
 library:
   source-dirs: src
   dependencies:
-  #- json-rpc
+  - json-rpc
   - optparse-applicative >= 0.14.2 && < 0.15
 
 tests:
