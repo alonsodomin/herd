@@ -14,7 +14,7 @@ import           Herd.Config
 import           Herd.Node
 
 licensePreamble :: String
-licensePreamble = "Herd  Copyright (C) 2019  A. Alonso Dominguez\n"
+licensePreamble = "Herd Copyright (C) 2019  A. Alonso Dominguez\n"
                ++ "This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.\n"
                ++ "This is free software, and you are welcome to redistribute it\n"
                ++ "under certain conditions; type `show c' for details."
@@ -59,9 +59,7 @@ loadHerdConf configFile = do
 herd :: HerdOpts -> IO ()
 herd opts = do
   config <- loadHerdConf (opts ^. hoConfigFile)
-  if opts ^. hoInteractive
-    then startHerdNode config
-    else startHerdNode' config
+  startHerdNode config
 
 herdCli :: IO ()
 herdCli = do

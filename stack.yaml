@@ -8,7 +8,7 @@
 # A snapshot resolver dictates the compiler version and the set of packages
 # to be used for project dependencies. For example:
 #
-resolver: lts-11.22
+resolver: lts-12.26
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -29,19 +29,24 @@ resolver: lts-11.22
 # non-dependency (i.e. a user package), and its test suites and benchmarks
 # will not be run. This is useful for tweaking upstream packages.
 packages:
+- protocol
 - node
 - client
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- avro-0.4.2.0@sha256:42cc7a5508eda5fea85d020f2a3a976602387b573d756b41be0d98549d3f17cc
+- distributed-process-0.7.4@sha256:9e43cb9a27e976e3e4c054e783bdfbd6140760e70997448da66993f4674a6409
+- distributed-process-async-0.2.6@sha256:42d6b759da0990c91303cc589ed02fe38d57973410f02f5fdabb1e135a943514
+- distributed-process-client-server-0.2.5.1@sha256:6e29e84673f689e85f49a51b86901077039965fd2340e0002527e8332463c178
+- distributed-process-extras-0.3.5@sha256:aa1789b3af8f7a9921c8723b27c3520d88bf9b14613b27ce2deefe48a3c9ac88
+- distributed-process-monad-control-0.5.1.3@sha256:72f0c212135ddaf9c7613499f9612855f2470e4ec6b8aa3447781fa2a5dbd260
+- distributed-process-simplelocalnet-0.2.4@sha256:044a003f81a648f9fb9b1c7ae9cd8f753f5f1c32d9db5ff8b31e91e91f525ed7
+- distributed-process-supervisor-0.2.1@sha256:dcd6ac3383eb45afd30705a9833930c8a33af8d8ef83aeb870f20600edcd8e32
+- network-transport-tcp-0.6.0@sha256:077b733c97db7949d18d09877e847fae117cc6e4e5c35941442f52debbd32452
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
-- pure-zlib-0.6.4@sha256:1ec97bd76f0b56f3183a3fec9e06ba7caaf145584ed6af3ec9d57eb10d474c52
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
-- transient-0.6.0.1@sha256:6b90d2a1430ab58f047b4076324fcada6517938c8de1475b400e00a9d3a4db65
-- transient-universe-0.5.0.0@sha256:6c689a27f59b631d516af4f096f93a6832d61054e1036f88a880ea01e3af72ce
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

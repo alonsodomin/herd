@@ -1,60 +1,50 @@
+{-# LANGUAGE DeriveAnyClass  #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Herd.Node
-     ( startHerdNode
-     , startHerdNode'
+     ( HerdNode
+     , startHerdNode
      ) where
 
-import           Control.Applicative
-import           Control.Concurrent     (threadDelay)
+
+import           Control.Distributed.Process
+import           Control.Distributed.Process.Backend.SimpleLocalnet (initializeBackend,
+                                                                     newLocalNode)
+import           Control.Distributed.Process.Node                   (LocalNode, initRemoteTable,
+                                                                     runProcess)
 import           Control.Lens
 import           Control.Monad
-import           Control.Monad.IO.Class (liftIO)
-import           Data.Semigroup         ((<>))
-import qualified Data.Text              as T
-import           Transient.Base
-import           Transient.Move
-import           Transient.Move.Utils
 
-import           Herd.Broker
+import           Data.Binary                                        (Binary (..))
+import qualified Data.Text                                          as T
+import           Data.Typeable
+import           GHC.Generics
+
 import           Herd.Config
-import           Herd.Core
-import           Herd.HTTP
+import           Herd.Node.Core
+import           Herd.Node.JSONRPC
+import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
 
-herdNode :: HerdConfig -> TransIO ()
-herdNode config = do
-  localNode <- mkNode $ config ^. hcCluster . ccBinding
-  initWebApp localNode (httpApi localNode <|> broker <|> run localNode)
+data NodeCommand = ShutdownCmd
+  deriving (Eq, Show, Generic, Typeable, Binary)
 
-  where mkNode :: NetworkBinding -> TransIO Node
-        mkNode binding = do
-          let host = T.unpack $ binding ^. nbHost
-          let port = binding ^. nbPort
-          liftIO $ createNode host port
-
-        httpApi :: Node -> Cloud ()
-        httpApi self = local . async $ startHttpServer self (config ^. hcNetwork . ncHttp)
-
-        broker :: Cloud ()
-        broker = local . async $ startBroker (config ^. hcNetwork . ncBroker)
-
-        run :: Node -> Cloud ()
-        run node = do
-          seedNodes <- local $ mapM mkNode $ config ^. hcCluster . ccSeedNodes
-          forM_ seedNodes connect'
-          runAt node . local $ herdApp
+handleCmd :: NodeCommand -> Process ()
+handleCmd ShutdownCmd = say "Shutting down..."
 
 startHerdNode :: HerdConfig -> IO ()
-startHerdNode config = void . keep $ do
-  listNodes <|> herdNode config
+startHerdNode config = do
+  node <- startNode
+  runProcess node (rootSupervisor node)
 
-  where listNodes :: TransIO ()
-        listNodes = do
-          _        <- option "nodes" "list currently connected nodes"
-          allNodes <- getNodes
-          forM_ allNodes printNode
-          empty
+  where startNode :: IO LocalNode
+        startNode = do
+          let host = T.unpack $ config ^. hcCluster . ccBinding . nbHost
+          let port = show $ config ^. hcCluster . ccBinding . nbPort
+          backend <- initializeBackend host port initRemoteTable
+          newLocalNode backend
 
-        printNode :: Node -> TransIO ()
-        printNode node = liftIO . putStrLn $ "- " <> (nodeHost node) <> ":" <> (show $ nodePort node)
-
-startHerdNode' :: HerdConfig -> IO ()
-startHerdNode' = void . keep' . herdNode
+        rootSupervisor :: LocalNode -> Process ()
+        rootSupervisor localNode = do
+          reg <- spawnSchemaRegistry
+          let herdNode = HerdNode localNode reg
+          liftIO $ startJsonRpc config herdNode

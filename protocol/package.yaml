@@ -1,4 +1,4 @@
-name:                herd-node
+name:                herd-protocol
 version:             0.1.0.0
 github:              "alonsodomin/herd"
 license:             GPL-3
@@ -30,63 +30,27 @@ dependencies:
 - mtl >= 2.2.2 && < 2.3
 - nonempty-containers
 - lens
-- random
 - semigroups
-- stm
 - text
 - text-binary
 - transformers
 - transformers-base
 - time
 - unordered-containers
-- uuid
 - yaml
-# Herd dependencies
-- herd-protocol
 
 default-extensions:
 - DeriveDataTypeable
 - DeriveGeneric
-- LambdaCase
 - StandaloneDeriving
-- RecordWildCards
-- TypeSynonymInstances
 
 library:
   source-dirs: src
   dependencies:
-  - conduit-extra
-  - directory
-  - distributed-process
-  - distributed-process-async
-  - distributed-process-client-server
-  - distributed-process-extras
-  - distributed-process-monad-control
-  - distributed-process-simplelocalnet
-  - distributed-process-supervisor
   - json-rpc
-  - optparse-applicative >= 0.14.2 && < 0.15
-  - network-transport
-  - network-transport-tcp
-  - rocksdb-haskell
-  exposed-modules:
-  - Herd.CLI
-  - Herd.Data.SchemaRegistry
-  - Herd.Data.SubjectLog
-
-executables:
-  herd:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - herd-node
 
 tests:
-  herd-test:
+  herd-protocol-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -94,7 +58,7 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - herd-node
+    - herd-protocol
     - hspec
     - QuickCheck
     - quickcheck-instances

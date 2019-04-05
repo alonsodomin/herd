@@ -3,13 +3,13 @@
 module Test.Herd.Data.SchemaRegistry where
 
 import           Control.Monad.State
-import           Data.Avro.Schema       (Schema)
-import qualified Data.Avro.Schema       as Avro
-import           Data.List.NonEmpty     (NonEmpty (..))
+import           Data.Avro.Schema         (Schema)
+import qualified Data.Avro.Schema         as Avro
+import           Data.List.NonEmpty       (NonEmpty (..))
 import           Test.Hspec
 
 import           Herd.Data.SchemaRegistry
-import           Herd.Internal.Types
+import           Herd.Types
 
 describeRegistry :: IO ()
 describeRegistry = hspec $ do

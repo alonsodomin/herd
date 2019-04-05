@@ -7,12 +7,12 @@ module Herd.Data.SubjectLog
      ) where
 
 import           Control.Lens
-import           Data.ByteString     (ByteString)
-import           Data.HashMap.Lazy   (HashMap)
-import qualified Data.HashMap.Lazy   as Map
-import           Data.Time.Clock     (UTCTime)
+import           Data.ByteString   (ByteString)
+import           Data.HashMap.Lazy (HashMap)
+import qualified Data.HashMap.Lazy as Map
+import           Data.Time.Clock   (UTCTime)
 
-import           Herd.Internal.Types
+import           Herd.Types
 
 data SubjectLog = SubjectLog (HashMap SubjectId [SubjectRecord]) Integer
   deriving (Eq, Show, Read)
