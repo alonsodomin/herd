@@ -1,19 +1,15 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
 module Herd.Process.SchemaRegistry
-     ( getSubjects
-     , schemaRegistryProc
+     ( SchemaRegistryServer
+     , getSubjects
+     , spawnSchemaRegistry
      ) where
 
-import           Control.Distributed.Process                (Process, ProcessId)
+import           Control.Distributed.Process                
+import           Control.Distributed.Process.Extras hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
-import           Control.Distributed.Process.ManagedProcess (InitResult (..), ProcessDefinition (..),
-                                                             ProcessReply,
-                                                             UnhandledMessagePolicy (..),
-                                                             call,
-                                                             defaultProcess,
-                                                             handleCall, reply,
-                                                             serve)
+import           Control.Distributed.Process.ManagedProcess
 import           Data.Binary                                (Binary (..))
 import           Data.Typeable
 import           GHC.Generics
@@ -24,30 +20,60 @@ import           Herd.Internal.Types
 
 -- Protocol definition
 
-data GetSubjects = GetSubjects
+data SchemaRegistryReq = GetSubjects !(SendPort [SubjectId])
   deriving (Eq, Show, Generic, Typeable, Binary)
 
 -- Client API
 
-getSubjects :: ProcessId -> Process [SubjectId]
-getSubjects pid = call pid GetSubjects
+getSubjects :: SchemaRegistryServer -> Process [SubjectId]
+getSubjects reg = do
+  (sp, rp) <- newChan
+  let req = GetSubjects sp
+  sendControlMessage (schemaRegistryInlet reg) req
+  receiveWait [ matchChan rp return ]
 
 -- Handlers
 
-handleGetSubjects :: SchemaRegistry -> GetSubjects -> Process (ProcessReply [SubjectId] SchemaRegistry)
-handleGetSubjects registry _ = reply (Registry.getSubjects registry) registry
+handleGetSubjects :: SchemaRegistry -> SchemaRegistryReq -> Process (ProcessAction SchemaRegistry)
+handleGetSubjects registry (GetSubjects replyTo) = do
+  let subjectIds = Registry.getSubjects registry
+  replyChan replyTo subjectIds
+  continue registry
 
--- Registry Process
+-- Server definition
 
-schemaRegistryProc :: Process ()
-schemaRegistryProc = serve () (\_ -> initRegistry) registryProc
+data SchemaRegistryServer = SchemaRegistryServer 
+  { schemaRegistryPid   :: ProcessId
+  , schemaRegistryInlet :: ControlPort SchemaRegistryReq }
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+instance Resolvable SchemaRegistryServer where
+  resolve = return . Just . schemaRegistryPid
+
+deriving instance Routable SchemaRegistryServer
+deriving instance Linkable SchemaRegistryServer
+deriving instance Addressable SchemaRegistryServer
+
+spawnSchemaRegistry :: Process SchemaRegistryServer
+spawnSchemaRegistry = do
+  (sp, rp)  <- newChan
+  pid       <- spawnLocal $ runSchemaReg sp
+  inletPort <- receiveChan rp
+  return $ SchemaRegistryServer pid inletPort
   where
-    initRegistry :: Process (InitResult SchemaRegistry)
-    initRegistry = return $ InitOk Registry.empty NoDelay
+    initRegistry :: InitHandler () SchemaRegistry
+    initRegistry = \_ -> return $ InitOk Registry.empty Infinity
 
-    registryProc :: ProcessDefinition SchemaRegistry
-    registryProc = defaultProcess
-      { apiHandlers = [
-          handleCall handleGetSubjects
+    registryDef :: ControlChannel SchemaRegistryReq -> ProcessDefinition SchemaRegistry
+    registryDef chan = defaultProcess
+      { externHandlers = [
+          handleControlChan chan handleGetSubjects
         ]
       , unhandledMessagePolicy = Drop }
+
+    runSchemaReg :: SendPort (ControlPort SchemaRegistryReq) -> Process ()
+    runSchemaReg sendPort = do
+      inletChan <- newControlChan
+      inletPort <- pure $ channelControlPort inletChan
+      sendChan sendPort inletPort
+      runProcess (recvLoop $ registryDef inletChan) () initRegistry

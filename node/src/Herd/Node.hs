@@ -25,6 +25,10 @@ data NodeCommand = ShutdownCmd
 handleCmd :: NodeCommand -> Process ()
 handleCmd ShutdownCmd = say "Shutting down..."
 
+data NodeHandle = NodeHandle
+  { schemaRegistry :: SchemaRegistryServer
+  } deriving Typeable
+
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
   node <- startNode
@@ -39,5 +43,5 @@ startHerdNode config = do
 
         rootSupervisor :: Process ()
         rootSupervisor = do
-          _ <- spawnLocal schemaRegistryProc
+          _ <- spawnSchemaRegistry
           forever $ receiveWait [match handleCmd]

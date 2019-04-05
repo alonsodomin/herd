@@ -45,7 +45,9 @@ dependencies:
 default-extensions:
 - DeriveDataTypeable
 - DeriveGeneric
+- LambdaCase
 - StandaloneDeriving
+- RecordWildCards
 - TypeSynonymInstances
 
 library:
