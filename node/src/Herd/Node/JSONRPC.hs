@@ -22,23 +22,41 @@ import           Network.JSONRPC
 
 import           Herd.Config
 import           Herd.Node.Core
-import           Herd.Process.SchemaRegistry
+import qualified Herd.Process.SchemaRegistry as R
 import           Herd.Protocol
 import           Herd.Types
 
-fetchSubjectIds' :: HerdNode -> Process [SubjectId]
-fetchSubjectIds' node = getSubjectIds (node ^. hnSchemaRegistry)
+-- Adapter methods
 
-registerSchema' :: SubjectId -> Schema -> HerdNode -> Process ()
-registerSchema' subjectId schema node =
-  registerSchema (node ^. hnSchemaRegistry) subjectId schema
+getSubjectIds :: HerdNode -> Process [SubjectId]
+getSubjectIds node = R.getSubjectIds (node ^. hnSchemaRegistry)
+
+getSchemaVersions :: SubjectId -> HerdNode -> Process (Maybe [Version])
+getSchemaVersions subjectId node = R.getVersions (node ^. hnSchemaRegistry) subjectId
+
+registerSchema :: SubjectId -> Schema -> HerdNode -> Process ()
+registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sch
+
+subjectNotFound :: SubjectId -> ErrorObj
+subjectNotFound subjectId@(SubjectId sid) = ErrorObj {
+    getErrMsg  = "Subject '" ++ (T.unpack sid) ++ "' not found."
+  , getErrCode = 101
+  , getErrData = toJSON $ SubjectNotFound subjectId
+  }
+
+-- JSON-RPC behaviour
 
 handle :: MonadLoggerIO m => HerdNode -> Respond HerdRequest m HerdResponse
-handle herdNode FetchSubjectIds = Right . FetchedSubjectIds <$> invoke fetchSubjectIds' herdNode
+handle herdNode GetSubjectIds = Right . SubjectIds <$> invoke getSubjectIds herdNode
+handle herdNode (GetSchemaVersions subjectId) = do
+  foundVersions <- invoke (getSchemaVersions subjectId) herdNode
+  return $ case foundVersions of
+    Nothing -> Left $ subjectNotFound subjectId
+    Just vs -> Right $ SchemaVersions vs
 handle herdNode (RegisterSchema subjectId schema) = do
-  invoke (registerSchema' subjectId schema) herdNode
+  invoke (registerSchema subjectId schema) herdNode
   return $ Right Done
-
+ 
 broker :: MonadLoggerIO m => HerdNode -> JSONRPCT m ()
 broker herdNode = do
   $(logDebug) "listening for new request"

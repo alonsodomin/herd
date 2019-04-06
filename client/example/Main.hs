@@ -20,8 +20,12 @@ main = do
           $(logDebug) "making some requests to the Herd server"
 
           let schema    = Avro.Boolean
-
           registerSchema "foo" schema
-          subjectIds <- fetchSubjectIds
 
-          liftIO $ print subjectIds
+          subjectIds <- getSubjectIds
+          liftIO . putStrLn $ "Subject IDs: " ++ (show subjectIds)
+
+          versions <- getSchemaVersions "foo"
+          liftIO . putStrLn $ "Versions: " ++ (show versions)
+
+

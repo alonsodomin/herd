@@ -3,7 +3,8 @@
 {-# LANGUAGE TemplateHaskell   #-}
 
 module Herd.Client
-     ( fetchSubjectIds
+     ( getSubjectIds
+     , getSchemaVersions
      , registerSchema
      , runHerdClient
      ) where
@@ -37,13 +38,21 @@ handleResponse Nothing          = fail "could not receive or parse response"
 handleResponse (Just (Left e))  = fail $ fromError e
 handleResponse (Just (Right r)) = return r
 
-fetchSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
-fetchSubjectIds = do
-  req <- sendRequest FetchSubjectIds
+getSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
+getSubjectIds = do
+  req <- sendRequest GetSubjectIds
   res <- handleResponse req
   case res of
-    FetchedSubjectIds subjectIds -> return subjectIds
-    _                            -> fail "invalid response"
+    SubjectIds subjectIds -> return subjectIds
+    _                     -> fail "invalid response"
+
+getSchemaVersions :: MonadLoggerIO m => SubjectId -> HerdClientT m [Version]
+getSchemaVersions subjectId = do
+  req <- sendRequest $ GetSchemaVersions subjectId
+  res <- handleResponse req
+  case res of
+    SchemaVersions versions -> return versions
+    _                       -> fail "invalid response"
 
 registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> HerdClientT m ()
 registerSchema subjectId schema = do

@@ -23,9 +23,7 @@ dependencies:
 - binary
 - binary-orphans
 - bytestring
-- free
 - hashable
-- mmorph
 - monad-logger
 - mtl >= 2.2.2 && < 2.3
 - nonempty-containers
@@ -42,6 +40,7 @@ dependencies:
 default-extensions:
 - DeriveDataTypeable
 - DeriveGeneric
+- LambdaCase
 - StandaloneDeriving
 
 library:
