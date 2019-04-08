@@ -29,5 +29,3 @@ main = do
 
           versions <- getSchemaVersions "foo"
           liftIO . T.putStrLn $ "Versions: " <> (toText versions)
-
-

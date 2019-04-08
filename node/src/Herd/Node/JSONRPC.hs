@@ -39,8 +39,8 @@ registerSchema :: SubjectId -> Schema -> HerdNode -> Process ()
 registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sch
 
 subjectNotFound :: SubjectId -> ErrorObj
-subjectNotFound subjectId@(SubjectId sid) = ErrorObj {
-    getErrMsg  = "Subject '" ++ (T.unpack sid) ++ "' not found."
+subjectNotFound subjectId = ErrorObj {
+    getErrMsg  = T.unpack $ "Subject '" <> (toText subjectId) <> "' not found"
   , getErrCode = 101
   , getErrData = toJSON $ SubjectNotFound subjectId
   }
