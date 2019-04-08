@@ -17,7 +17,6 @@ import qualified Data.Foldable               as F
 import           Data.Maybe                  (catMaybes)
 import           Data.String
 import qualified Data.Text                   as T
-import           GHC.Generics
 import           Network.JSONRPC
 
 import           Herd.Config
@@ -35,6 +34,9 @@ getSubjectIds node = R.getSubjectIds (node ^. hnSchemaRegistry)
 getSchemaVersions :: SubjectId -> HerdNode -> Process (Maybe [Version])
 getSchemaVersions subjectId node = R.getVersions (node ^. hnSchemaRegistry) subjectId
 
+getSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe Schema)
+getSchema subjectId version node = R.getSchema (node ^. hnSchemaRegistry) subjectId version
+
 registerSchema :: SubjectId -> Schema -> HerdNode -> Process ()
 registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sch
 
@@ -45,18 +47,30 @@ subjectNotFound subjectId = ErrorObj {
   , getErrData = toJSON $ SubjectNotFound subjectId
   }
 
+schemaNotFound :: SubjectId -> Version -> ErrorObj
+schemaNotFound subjectId version = ErrorObj {
+    getErrMsg = T.unpack $ "No schema for subject '" <> (toText subjectId) <> "' and version " <> (toText version)
+  , getErrCode = 102
+  , getErrData = toJSON $ SchemaNotFound subjectId version
+  }
+
 -- JSON-RPC behaviour
 
 handleRpc :: MonadLoggerIO m => HerdNode -> Respond HerdRequest m HerdResponse
-handleRpc herdNode GetSubjectIds = Right . SubjectIds <$> invokeHerd getSubjectIds herdNode
-handleRpc herdNode (GetSchemaVersions subjectId) = do
+handleRpc herdNode GetSubjectIdsReq = Right . GetSubjectIdsRes <$> invokeHerd getSubjectIds herdNode
+handleRpc herdNode (GetSchemaVersionsReq subjectId) = do
   foundVersions <- invokeHerd (getSchemaVersions subjectId) herdNode
   case foundVersions of
     Nothing -> return . Left $ subjectNotFound subjectId
     Just vs -> do
       $(logDebug) $ "found versions " <> (toText vs) <> " for subject " <> (toText subjectId)
-      return . Right $ SchemaVersions vs
-handleRpc herdNode (RegisterSchema subjectId schema) = do
+      return . Right $ GetSchemaVersionsRes vs
+handleRpc herdNode (GetSchemaReq subjectId version) = do
+  foundSchema <- invokeHerd (getSchema subjectId version) herdNode
+  case foundSchema of
+    Nothing -> return . Left $ schemaNotFound subjectId version
+    Just sc -> return . Right $ GetSchemaRes sc
+handleRpc herdNode (RegisterSchemaReq subjectId schema) = do
   invokeHerd (registerSchema subjectId schema) herdNode
   return $ Right Done
 

@@ -5,18 +5,20 @@
 module Herd.Client
      ( getSubjectIds
      , getSchemaVersions
+     , getSchema
      , registerSchema
      , runHerdClient
      ) where
 
 import           Conduit
-import           Control.Lens
+import           Control.Lens           (Getting, (^?))
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Control.Monad.Reader
 import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString        as BS
 import           Data.Conduit.Network   (clientSettings)
+import           Data.Monoid            (First)
 import           Data.Text              (Text)
 import qualified Data.Text.Encoding     as T
 import           Network.JSONRPC
@@ -33,34 +35,41 @@ import           Herd.Types
 
 type HerdClientT m = JSONRPCT m
 
-handleResponse :: MonadIO m => Maybe (Either ErrorObj HerdResponse) -> m HerdResponse
-handleResponse Nothing          = fail "could not receive or parse response"
-handleResponse (Just (Left e))  = fail $ fromError e
-handleResponse (Just (Right r)) = return r
-
 getSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
-getSubjectIds = do
-  req <- sendRequest GetSubjectIds
-  res <- handleResponse req
-  case res of
-    SubjectIds subjectIds -> return subjectIds
-    _                     -> fail "invalid response"
+getSubjectIds = sendToHerd' GetSubjectIdsReq _GetSubjectIdsRes
 
 getSchemaVersions :: MonadLoggerIO m => SubjectId -> HerdClientT m [Version]
-getSchemaVersions subjectId = do
-  req <- sendRequest $ GetSchemaVersions subjectId
-  res <- handleResponse req
-  case res of
-    SchemaVersions versions -> return versions
-    _                       -> fail "invalid response"
+getSchemaVersions subjectId = sendToHerd' (GetSchemaVersionsReq subjectId) _GetSchemaVersionsRes
+
+getSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m Schema
+getSchema subjectId version =
+  sendToHerd' (GetSchemaReq subjectId version) _GetSchemaRes
 
 registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> HerdClientT m ()
-registerSchema subjectId schema = do
-  req <- sendRequest $ RegisterSchema subjectId schema
-  res <- handleResponse req
-  case res of
-    Done -> return ()
-    _    -> fail "invalid response"
+registerSchema subjectId schema =
+  sendToHerd' (RegisterSchemaReq subjectId schema) _RegisterSchemaRes
+
+-- Manage the actual communication with the server
+
+sendToHerd :: (MonadLoggerIO m) => HerdRequest -> Getting (First a) HerdResponse a -> (a -> m r) -> HerdClientT m r
+sendToHerd req l f = do
+  rawRes <- sendRequest req
+  res    <- foldResponse rawRes
+
+  case (res ^? l) of
+    Nothing -> fail "invalid response"
+    Just r  -> lift $ f r
+
+  where
+    foldResponse :: MonadIO m => Maybe (Either ErrorObj HerdResponse) -> m HerdResponse
+    foldResponse Nothing          = fail "could not receive or parse response"
+    foldResponse (Just (Left e))  = fail $ fromError e
+    foldResponse (Just (Right r)) = return r
+
+sendToHerd' :: MonadLoggerIO m => HerdRequest -> Getting (First a) HerdResponse a -> HerdClientT m a
+sendToHerd' r l = sendToHerd r l return
+
+-- Run the Herd client monad
 
 runHerdClient :: (MonadUnliftIO m, MonadLoggerIO m) => Text -> Int -> HerdClientT m a -> m a
 runHerdClient host port action = do

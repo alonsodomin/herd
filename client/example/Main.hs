@@ -29,3 +29,6 @@ main = do
 
           versions <- getSchemaVersions "foo"
           liftIO . T.putStrLn $ "Versions: " <> (toText versions)
+
+          schema <- getSchema "foo" (head versions)
+          liftIO . putStrLn $ show schema
