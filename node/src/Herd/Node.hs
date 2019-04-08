@@ -46,5 +46,5 @@ startHerdNode config = do
         rootSupervisor :: LocalNode -> Process ()
         rootSupervisor localNode = do
           reg <- spawnSchemaRegistry
-          let herdNode = HerdNode localNode reg
-          liftIO $ startJsonRpc config herdNode
+          let herdNode = mkHerdNode localNode reg
+          liftIO $ startRpcServer config herdNode
