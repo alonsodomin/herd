@@ -15,6 +15,7 @@ import           Control.Distributed.Process                (Process, ProcessId,
 import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
+import           Control.Monad
 import           Data.Avro.Schema                           (Schema)
 import           Data.Binary                                (Binary (..))
 import           Data.Typeable
@@ -55,7 +56,7 @@ getSchema reg sid v = call reg $ GetSchema sid v
 registerSchema :: SchemaRegistryServer -> SubjectId -> Schema -> Process ()
 registerSchema reg sid sch = call reg $ RegisterSchema sid sch
 
-deleteSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process ()
+deleteSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process (Maybe ())
 deleteSchema reg sid v = call reg $ DeleteSchema sid v
 
 -- Handlers
@@ -76,10 +77,13 @@ handleRegisterSchema reg (RegisterSchema subjectId schema) =
   let newRegistry = Registry.registerSchema subjectId schema reg
   in reply () newRegistry
 
-handleDeleteSchema :: SchemaRegistry -> DeleteSchema -> Process (ProcessReply () SchemaRegistry)
-handleDeleteSchema reg (DeleteSchema subjectId version) =
-  let newRegistry = Registry.deleteSchema subjectId version reg
-  in reply () newRegistry
+handleDeleteSchema :: SchemaRegistry -> DeleteSchema -> Process (ProcessReply (Maybe ()) SchemaRegistry)
+handleDeleteSchema reg (DeleteSchema subjectId version) = do
+  currentSchema <- pure $ Registry.getSchema subjectId version reg
+  newRegistry   <- pure $ case currentSchema of
+    Nothing -> reg
+    Just _  -> Registry.deleteSchema subjectId version reg
+  reply (void currentSchema) newRegistry
 
 -- Server definition
 

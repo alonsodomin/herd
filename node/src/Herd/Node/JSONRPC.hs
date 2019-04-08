@@ -41,6 +41,9 @@ getSchema subjectId version node = R.getSchema (node ^. hnSchemaRegistry) subjec
 registerSchema :: SubjectId -> Schema -> HerdNode -> Process ()
 registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sch
 
+deleteSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe ())
+deleteSchema sid v node = R.deleteSchema (node ^. hnSchemaRegistry) sid v
+
 -- Errors
 
 subjectNotFound :: SubjectId -> ErrorObj
@@ -79,6 +82,11 @@ handleRpc (GetSchemaReq subjectId version) = do
 handleRpc (RegisterSchemaReq subjectId schema) = do
   invokeAction (registerSchema subjectId schema)
   return $ Right Done
+handleRpc (DeleteSchemaReq subjectId version) = do
+  deleted <- invokeAction (deleteSchema subjectId version)
+  case deleted of
+    Nothing -> return . Left $ schemaNotFound subjectId version
+    Just _  -> return $ Right Done
 
 rpcServer :: MonadLoggerIO m => RpcServerT m ()
 rpcServer = do

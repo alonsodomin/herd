@@ -7,6 +7,7 @@ module Herd.Client
      , getSchemaVersions
      , getSchema
      , registerSchema
+     , deleteSchema
      , runHerdClient
      ) where
 
@@ -48,6 +49,10 @@ getSchema subjectId version =
 registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> HerdClientT m ()
 registerSchema subjectId schema =
   sendToHerd' (RegisterSchemaReq subjectId schema) _RegisterSchemaRes
+
+deleteSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m ()
+deleteSchema subjectId version =
+  sendToHerd' (DeleteSchemaReq subjectId version) _DeleteSchemaRes
 
 -- Manage the actual communication with the server
 

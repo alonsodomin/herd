@@ -9,6 +9,7 @@ module Herd.Protocol
      , _GetSchemaVersionsRes
      , _GetSchemaRes
      , _RegisterSchemaRes
+     , _DeleteSchemaRes
      , HerdError (..)
      ) where
 
@@ -29,6 +30,7 @@ data HerdRequest =
   | GetSchemaVersionsReq SubjectId
   | GetSchemaReq SubjectId Version
   | RegisterSchemaReq SubjectId Schema
+  | DeleteSchemaReq SubjectId Version
   deriving (Eq, Show, Typeable, Generic)
 
 instance ToJSON HerdRequest where
@@ -44,12 +46,17 @@ instance ToJSON HerdRequest where
       "subject-id" .= subjectId
     , "schema"     .= schema
     ]
+  toJSON (DeleteSchemaReq subjectId version) = JSON.object [
+      "subject-id" .= subjectId
+    , "version"    .= version
+    ]
 
-mnGetSubjectIds, mnGetSchemaVersions, mnGetSchema, mnRegisterSchema :: Text
+mnGetSubjectIds, mnGetSchemaVersions, mnGetSchema, mnRegisterSchema, mnDeleteSchema :: Text
 mnGetSubjectIds     = "get-subject-ids"
 mnGetSchemaVersions = "get-schema-versions"
 mnGetSchema         = "get-schema"
 mnRegisterSchema    = "register-schema"
+mnDeleteSchema      = "delete-schema"
 
 instance FromRequest HerdRequest where
   parseParams method
@@ -72,6 +79,12 @@ instance FromRequest HerdRequest where
         schema    <- o .: "schema"
         return $ RegisterSchemaReq subjectId schema
 
+    | method == mnDeleteSchema = Just $
+      withObject "delete-schema-req" $ \o -> do
+        subjectId <- o .: "subject-id"
+        version   <- o .: "version"
+        return $ DeleteSchemaReq subjectId version
+
     | otherwise = Nothing
 
 instance ToRequest HerdRequest where
@@ -79,6 +92,7 @@ instance ToRequest HerdRequest where
   requestMethod (GetSchemaVersionsReq _) = mnGetSchemaVersions
   requestMethod (GetSchemaReq _ _)       = mnGetSchema
   requestMethod (RegisterSchemaReq _ _)  = mnRegisterSchema
+  requestMethod (DeleteSchemaReq _ _)    = mnDeleteSchema
 
   requestIsNotif = const False
 
@@ -109,11 +123,16 @@ _RegisterSchemaRes = prism (const Done) $ \case
   Done -> Right ()
   e    -> Left e
 
+_DeleteSchemaRes :: Prism' HerdResponse ()
+_DeleteSchemaRes = prism (const Done) $ \case
+  Done -> Right ()
+  e    -> Left e
+
 instance ToJSON HerdResponse where
-  toJSON Done                         = JSON.emptyArray
+  toJSON Done                            = JSON.emptyArray
   toJSON (GetSubjectIdsRes subjectIds)   = JSON.Array . Vector.fromList $ fmap toJSON subjectIds
   toJSON (GetSchemaVersionsRes versions) = JSON.Array . Vector.fromList $ fmap toJSON versions
-  toJSON (GetSchemaRes schema)        = toJSON schema
+  toJSON (GetSchemaRes schema)           = toJSON schema
 
 instance FromResponse HerdResponse where
   parseResult method
@@ -128,6 +147,7 @@ instance FromResponse HerdResponse where
     | method == mnGetSchema = Just $ \o -> GetSchemaRes <$> parseJSON o
 
     | method == mnRegisterSchema = Just . const $ return Done
+    | method == mnDeleteSchema = Just . const $ return Done
 
     | otherwise = Nothing
 
