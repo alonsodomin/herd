@@ -1,9 +1,13 @@
 {-# LANGUAGE DefaultSignatures    #-}
 {-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE OverloadedStrings    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Herd.Data.Text where
 
+import           Data.Foldable
+import           Data.List        (intersperse)
+import           Data.Semigroup
 import           Data.Text        (Text)
 import qualified Data.Text        as T
 import           Data.Time.Clock  (UTCTime)
@@ -29,3 +33,6 @@ instance ToText UTCTime where
 
 instance ToText Integer
 instance ToText Int
+
+instance (Foldable f, ToText a) => ToText (f a) where
+  toText xs = "[" <> (foldr T.append "" $ intersperse ", " $ map toText $ toList xs) <> "]"

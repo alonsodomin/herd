@@ -19,8 +19,8 @@ data HerdNode = HerdNode
 
 makeLenses ''HerdNode
 
-invoke :: MonadIO m => (HerdNode -> Process a) -> HerdNode -> m a
-invoke action node = liftIO $ do
+invokeHerd :: MonadIO m => (HerdNode -> Process a) -> HerdNode -> m a
+invokeHerd action node = liftIO $ do
   tvar <- newEmptyTMVarIO
   runProcess (node ^. hnLocalNode) $ do
     result <- action node
