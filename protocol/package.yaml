@@ -35,6 +35,7 @@ dependencies:
 - transformers-base
 - time
 - unordered-containers
+- vector
 - yaml
 
 default-extensions:

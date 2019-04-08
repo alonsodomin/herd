@@ -7,10 +7,10 @@ module Herd.Protocol
      , HerdError (..)
      ) where
 
-import           Control.Applicative
 import           Data.Aeson
 import qualified Data.Aeson.Types    as JSON
 import           Data.Avro.Schema    (Schema)
+import qualified Data.Vector as Vector
 import           Data.Typeable
 import           GHC.Generics
 import           Network.JSONRPC
@@ -21,26 +21,29 @@ data HerdRequest =
     GetSubjectIds
   | GetSchemaVersions SubjectId
   | RegisterSchema SubjectId Schema
-  deriving (Eq, Show, Typeable, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Typeable, Generic)
 
-parseGetSubjectIdsReq :: JSON.Value -> JSON.Parser HerdRequest
-parseGetSubjectIdsReq = const $ return GetSubjectIds
-
-parseGetSchemaVersionsReq :: JSON.Value -> JSON.Parser HerdRequest
-parseGetSchemaVersionsReq = withObject "get-schema-versions-req" $ \o -> do
-  subjectId <- o .: "subject-id"
-  return $ GetSchemaVersions subjectId
-
-parseRegisterSchemaReq :: JSON.Value -> JSON.Parser HerdRequest
-parseRegisterSchemaReq = withObject "register-schema-req" $ \o -> do
-  subjectId <- o .: "subject-id"
-  schema    <- o .: "schema"
-  return $ RegisterSchema subjectId schema
+instance ToJSON HerdRequest where
+  toJSON GetSubjectIds = JSON.emptyArray
+  toJSON (GetSchemaVersions subjectId) = JSON.object [
+      "subject-id" .= subjectId
+    ]
+  toJSON (RegisterSchema subjectId schema) = JSON.object [
+      "subject-id" .= subjectId
+    , "schema"     .= schema
+    ]
 
 instance FromRequest HerdRequest where
   parseParams "get-subject-ids"     = Just . const $ return GetSubjectIds
-  parseParams "get-schema-versions" = Just parseJSON
-  parseParams "register-schema"     = Just parseJSON
+  parseParams "get-schema-versions" = Just $
+    withObject "get-schema-versions-req" $ \o -> do
+      subjectId <- o .: "subject-id"
+      return $ GetSchemaVersions subjectId
+  parseParams "register-schema"     = Just $
+    withObject "register-schema-req" $ \o -> do
+      subjectId <- o .: "subject-id"
+      schema    <- o .: "schema"
+      return $ RegisterSchema subjectId schema
   parseParams _                     = Nothing
 
 instance ToRequest HerdRequest where
@@ -54,11 +57,20 @@ data HerdResponse =
     Done
   | SubjectIds [SubjectId]
   | SchemaVersions [Version]
-  deriving (Eq, Show, Typeable, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Typeable, Generic)
+
+instance ToJSON HerdResponse where
+  toJSON Done                      = JSON.emptyArray
+  toJSON (SubjectIds subjectIds)   = JSON.Array . Vector.fromList $ fmap toJSON subjectIds
+  toJSON (SchemaVersions versions) = JSON.Array . Vector.fromList $ fmap toJSON versions
 
 instance FromResponse HerdResponse where
-  parseResult "get-subject-ids"     = Just parseJSON
-  parseResult "get-schema-versions" = Just parseJSON
+  parseResult "get-subject-ids"     = Just $
+    withArray "subject-ids" $ \arr ->
+      SubjectIds <$> mapM parseJSON (Vector.toList arr)
+  parseResult "get-schema-versions" = Just $
+    withArray "schema-versions" $ \arr ->
+      SchemaVersions <$> mapM parseJSON (Vector.toList arr)
   parseResult "register-schema"     = Just . const $ return Done
   parseResult _                     = Nothing
 
