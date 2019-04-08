@@ -57,9 +57,10 @@ data HerdResponse =
   deriving (Eq, Show, Typeable, Generic, FromJSON, ToJSON)
 
 instance FromResponse HerdResponse where
-  parseResult "get-subject-ids" = Just parseJSON
-  parseResult "register-schema" = Just . const $ return Done
-  parseResult _                 = Nothing
+  parseResult "get-subject-ids"     = Just parseJSON
+  parseResult "get-schema-versions" = Just parseJSON
+  parseResult "register-schema"     = Just . const $ return Done
+  parseResult _                     = Nothing
 
 data HerdError =
   SubjectNotFound SubjectId
