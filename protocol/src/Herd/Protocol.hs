@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Herd.Protocol
      ( HerdRequest (..)
@@ -103,30 +104,13 @@ data HerdResponse =
   | GetSchemaRes Schema
   deriving (Eq, Show, Typeable, Generic)
 
-_GetSubjectIdsRes :: Prism' HerdResponse [SubjectId]
-_GetSubjectIdsRes = prism GetSubjectIdsRes $ \case
-  GetSubjectIdsRes xs -> Right xs
-  e                   -> Left e
-
-_GetSchemaVersionsRes :: Prism' HerdResponse [Version]
-_GetSchemaVersionsRes = prism GetSchemaVersionsRes $ \case
-  GetSchemaVersionsRes xs -> Right xs
-  e                       -> Left e
-
-_GetSchemaRes :: Prism' HerdResponse Schema
-_GetSchemaRes = prism GetSchemaRes $ \case
-  GetSchemaRes s -> Right s
-  e              -> Left e
+makePrisms ''HerdResponse
 
 _RegisterSchemaRes :: Prism' HerdResponse ()
-_RegisterSchemaRes = prism (const Done) $ \case
-  Done -> Right ()
-  e    -> Left e
+_RegisterSchemaRes = _Done
 
 _DeleteSchemaRes :: Prism' HerdResponse ()
-_DeleteSchemaRes = prism (const Done) $ \case
-  Done -> Right ()
-  e    -> Left e
+_DeleteSchemaRes = _Done
 
 instance ToJSON HerdResponse where
   toJSON Done                            = JSON.emptyArray
