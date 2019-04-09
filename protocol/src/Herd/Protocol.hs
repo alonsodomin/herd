@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 module Herd.Protocol
      ( HerdRequest (..)
@@ -14,13 +14,15 @@ module Herd.Protocol
      , HerdError (..)
      ) where
 
-import           Control.Lens     hiding ((.=))
+import           Control.Lens       hiding ((.=))
 import           Data.Aeson
-import qualified Data.Aeson.Types as JSON
-import           Data.Avro.Schema (Schema)
-import           Data.Text        (Text)
+import qualified Data.Aeson.Types   as JSON
+import           Data.Avro.Schema   (Schema)
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
+import           Data.Text          (Text)
 import           Data.Typeable
-import qualified Data.Vector      as Vector
+import qualified Data.Vector        as Vector
 import           GHC.Generics
 import           Network.JSONRPC
 
@@ -100,7 +102,7 @@ instance ToRequest HerdRequest where
 data HerdResponse =
     Done
   | GetSubjectIdsRes [SubjectId]
-  | GetSchemaVersionsRes [Version]
+  | GetSchemaVersionsRes (NonEmpty Version)
   | GetSchemaRes Schema
   deriving (Eq, Show, Typeable, Generic)
 
@@ -115,7 +117,7 @@ _DeleteSchemaRes = _Done
 instance ToJSON HerdResponse where
   toJSON Done                            = JSON.emptyArray
   toJSON (GetSubjectIdsRes subjectIds)   = JSON.Array . Vector.fromList $ fmap toJSON subjectIds
-  toJSON (GetSchemaVersionsRes versions) = JSON.Array . Vector.fromList $ fmap toJSON versions
+  toJSON (GetSchemaVersionsRes versions) = JSON.Array . Vector.fromList . NEL.toList $ fmap toJSON versions
   toJSON (GetSchemaRes schema)           = toJSON schema
 
 instance FromResponse HerdResponse where
@@ -126,7 +128,7 @@ instance FromResponse HerdResponse where
 
     | method == mnGetSchemaVersions = Just $
       withArray "schema-versions" $ \arr ->
-        GetSchemaVersionsRes <$> mapM parseJSON (Vector.toList arr)
+        GetSchemaVersionsRes . NEL.fromList <$> mapM parseJSON (Vector.toList arr)
 
     | method == mnGetSchema = Just $ \o -> GetSchemaRes <$> parseJSON o
 

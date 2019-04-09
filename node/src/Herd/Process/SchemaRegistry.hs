@@ -18,6 +18,7 @@ import           Control.Distributed.Process.ManagedProcess
 import           Control.Monad
 import           Data.Avro.Schema                           (Schema)
 import           Data.Binary                                (Binary (..))
+import           Data.List.NonEmpty                         (NonEmpty)
 import           Data.Typeable
 import           GHC.Generics
 
@@ -47,7 +48,7 @@ data DeleteSchema = DeleteSchema !SubjectId !Version
 getSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
 getSubjectIds reg = call reg GetSubjectIds
 
-getVersions :: SchemaRegistryServer -> SubjectId -> Process (Maybe [Version])
+getVersions :: SchemaRegistryServer -> SubjectId -> Process (Maybe (NonEmpty Version))
 getVersions reg = call reg . GetVersions
 
 getSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process (Maybe Schema)
@@ -64,7 +65,7 @@ deleteSchema reg sid v = call reg $ DeleteSchema sid v
 handleGetSubjectIds :: SchemaRegistry -> GetSubjectIds -> Process (ProcessReply [SubjectId] SchemaRegistry)
 handleGetSubjectIds reg _ = reply (Registry.getSubjects reg) reg
 
-handleGetVersions :: SchemaRegistry -> GetVersions -> Process (ProcessReply (Maybe [Version]) SchemaRegistry)
+handleGetVersions :: SchemaRegistry -> GetVersions -> Process (ProcessReply (Maybe (NonEmpty Version)) SchemaRegistry)
 handleGetVersions reg (GetVersions subjectId) =
   reply (Registry.getVersions subjectId reg) reg
 

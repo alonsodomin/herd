@@ -13,6 +13,7 @@ module Herd.Data.SchemaRegistry
 import           Data.Avro.Schema   (Schema)
 import           Data.HashMap.Lazy  (HashMap)
 import qualified Data.HashMap.Lazy  as Map
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Map.NonEmpty  (NEMap)
 import qualified Data.Map.NonEmpty  as NEM
@@ -30,8 +31,8 @@ empty = Map.empty
 getSubjects :: SchemaRegistry -> [SubjectId]
 getSubjects = Map.keys
 
-getVersions :: SubjectId -> SchemaRegistry -> Maybe [Version]
-getVersions subjectId reg = (NEL.toList . NEM.keys) <$> Map.lookup subjectId reg
+getVersions :: SubjectId -> SchemaRegistry -> Maybe (NonEmpty Version)
+getVersions subjectId reg = NEM.keys <$> Map.lookup subjectId reg
 
 getLatestVersion :: SubjectId -> SchemaRegistry -> Maybe Version
 getLatestVersion subjectId reg = latestVersion <$> Map.lookup subjectId reg

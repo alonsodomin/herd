@@ -19,6 +19,7 @@ import           Control.Monad.Reader
 import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString        as BS
 import           Data.Conduit.Network   (clientSettings)
+import           Data.List.NonEmpty     (NonEmpty)
 import           Data.Monoid            (First)
 import           Data.Text              (Text)
 import qualified Data.Text.Encoding     as T
@@ -39,7 +40,7 @@ type HerdClientT m = JSONRPCT m
 getSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
 getSubjectIds = sendToHerd' GetSubjectIdsReq _GetSubjectIdsRes
 
-getSchemaVersions :: MonadLoggerIO m => SubjectId -> HerdClientT m [Version]
+getSchemaVersions :: MonadLoggerIO m => SubjectId -> HerdClientT m (NonEmpty Version)
 getSchemaVersions subjectId = sendToHerd' (GetSchemaVersionsReq subjectId) _GetSchemaVersionsRes
 
 getSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m Schema

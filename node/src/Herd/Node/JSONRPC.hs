@@ -15,6 +15,7 @@ import           Data.Aeson
 import           Data.Avro.Schema            (Schema)
 import           Data.Conduit.Network        (serverSettings)
 import qualified Data.Foldable               as F
+import           Data.List.NonEmpty          (NonEmpty)
 import           Data.Maybe                  (catMaybes)
 import           Data.String
 import qualified Data.Text                   as T
@@ -32,7 +33,7 @@ import           Herd.Types
 getSubjectIds :: HerdNode -> Process [SubjectId]
 getSubjectIds node = R.getSubjectIds (node ^. hnSchemaRegistry)
 
-getSchemaVersions :: SubjectId -> HerdNode -> Process (Maybe [Version])
+getSchemaVersions :: SubjectId -> HerdNode -> Process (Maybe (NonEmpty Version))
 getSchemaVersions subjectId node = R.getVersions (node ^. hnSchemaRegistry) subjectId
 
 getSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe Schema)
@@ -90,14 +91,13 @@ handleRpc (DeleteSchemaReq subjectId version) = do
 
 rpcServer :: MonadLoggerIO m => RpcServerT m ()
 rpcServer = do
-  $(logDebug) "listening for new request"
   qM <- lift receiveBatchRequest
   case qM of
     Nothing -> do
       $(logDebug) "closed request channel, exting"
       return ()
     Just (SingleRequest q) -> do
-      $(logDebug) "got request"
+      $(logDebug) "got single request"
       rM <- buildResponse handleRpc q
       F.forM_ rM (lift . sendResponse)
       rpcServer
@@ -109,7 +109,8 @@ rpcServer = do
 
 startRpcServer :: HerdConfig -> HerdNode -> IO ()
 startRpcServer config herdNode = runStderrLoggingT $ do
-  let host = fromString . T.unpack $ config ^. hcNetwork . ncBroker . nbHost
+  let host = config ^. hcNetwork . ncBroker . nbHost
   let port = config ^. hcNetwork . ncBroker . nbPort
-  let ss   = serverSettings port host
+  let ss   = serverSettings port (fromString . T.unpack $ host)
+  $(logInfo) $ "starting Herd RPC server at " <> host <> ":" <> (toText port)
   jsonrpcTCPServer V2 False ss $ runNodeActionT herdNode rpcServer
