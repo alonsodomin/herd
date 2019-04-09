@@ -33,6 +33,7 @@ dependencies:
 - semigroups
 - text
 - text-binary
+- these
 - transformers
 - transformers-base
 - time

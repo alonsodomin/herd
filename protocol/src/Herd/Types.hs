@@ -12,6 +12,10 @@ module Herd.Types
      , version
      , SubjectRecordId (..)
      , SubjectRecord (..)
+     , srSubjectRecordId
+     , srSubjectId
+     , srPayload
+     , srTime
      , AvroSchema (..)
      ) where
 

@@ -11,6 +11,7 @@ module Herd.Protocol
      , _GetSchemaRes
      , _RegisterSchemaRes
      , _DeleteSchemaRes
+     , _ReadSubjectRes
      , _WriteSubjectRes
      , HerdError (..)
      ) where
@@ -26,6 +27,7 @@ import qualified Data.ByteString.Lazy        as BSL
 import           Data.List.NonEmpty          (NonEmpty)
 import qualified Data.List.NonEmpty          as NEL
 import           Data.Text                   (Text)
+import           Data.Time.Clock             (UTCTime)
 import           Data.Typeable
 import qualified Data.Vector                 as Vector
 import           GHC.Generics
@@ -40,6 +42,7 @@ data HerdRequest =
   | RegisterSchemaReq SubjectId Schema
   | DeleteSchemaReq SubjectId Version
   --
+  | ReadSubjectReq SubjectId UTCTime
   | WriteSubjectReq SubjectId ByteString
   deriving (Eq, Show, Typeable, Generic)
 
@@ -60,18 +63,23 @@ instance ToJSON HerdRequest where
       "subject-id" .= subjectId
     , "version"    .= version
     ]
+  toJSON (ReadSubjectReq subjectId from) = JSON.object [
+      "subject-id" .= subjectId
+    , "from"       .= from
+    ]
   toJSON (WriteSubjectReq subjectId payload) = JSON.object [
       "subject-id" .= subjectId
     , "payload"    .= (BSL.unpack . Base64.encode $ payload)
     ]
 
 mnGetSubjectIds, mnGetSchemaVersions, mnGetSchema, mnRegisterSchema, mnDeleteSchema :: Text
-mnWriteSubject :: Text
+mnReadSubject, mnWriteSubject :: Text
 mnGetSubjectIds     = "get-subject-ids"
 mnGetSchemaVersions = "get-schema-versions"
 mnGetSchema         = "get-schema"
 mnRegisterSchema    = "register-schema"
 mnDeleteSchema      = "delete-schema"
+mnReadSubject       = "read-subject"
 mnWriteSubject      = "write-subject"
 
 instance FromRequest HerdRequest where
@@ -101,6 +109,12 @@ instance FromRequest HerdRequest where
         ver       <- o .: "version"
         return $ DeleteSchemaReq subjectId ver
 
+    | method == mnReadSubject = Just $
+      withObject "read-subject-req" $ \o -> do
+        subjectId <- o .: "subject-id"
+        from      <- o .: "from"
+        return $ ReadSubjectReq subjectId from
+
     | method == mnWriteSubject = Just $
       withObject "write-subject-req" $ \o -> do
         subjectId <- o .: "subject-id"
@@ -116,6 +130,7 @@ instance ToRequest HerdRequest where
   requestMethod (RegisterSchemaReq _ _)  = mnRegisterSchema
   requestMethod (DeleteSchemaReq _ _)    = mnDeleteSchema
 
+  requestMethod (ReadSubjectReq _ _)     = mnReadSubject
   requestMethod (WriteSubjectReq _ _)    = mnWriteSubject
 
   requestIsNotif = const False
@@ -126,6 +141,7 @@ data HerdResponse =
   | GetSchemaVersionsRes (NonEmpty Version)
   | GetSchemaRes Schema
   --
+  | ReadSubjectRes [SubjectRecord]
   | WriteSubjectRes SubjectRecordId
   deriving (Eq, Show, Typeable, Generic)
 
@@ -142,6 +158,7 @@ instance ToJSON HerdResponse where
   toJSON (GetSubjectIdsRes subjectIds)   = JSON.Array . Vector.fromList $ fmap toJSON subjectIds
   toJSON (GetSchemaVersionsRes versions) = JSON.Array . Vector.fromList . NEL.toList $ fmap toJSON versions
   toJSON (GetSchemaRes schema)           = toJSON schema
+  toJSON (ReadSubjectRes records)        = toJSON records
   toJSON (WriteSubjectRes subjectId)     = toJSON subjectId
 
 instance FromResponse HerdResponse where
@@ -159,6 +176,9 @@ instance FromResponse HerdResponse where
     | method == mnRegisterSchema = Just . const $ return Done
     | method == mnDeleteSchema = Just . const $ return Done
 
+    | method == mnReadSubject = Just $
+      withArray "subject-records" $ \arr ->
+        ReadSubjectRes <$> mapM parseJSON (Vector.toList arr)
     | method == mnWriteSubject = Just $ \x -> WriteSubjectRes <$> parseJSON x
 
     | otherwise = Nothing
