@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Herd.Config where
+module Herd.Node.Config where
 
 import           Control.Lens
 import           Data.Aeson

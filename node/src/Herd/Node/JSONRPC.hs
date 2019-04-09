@@ -21,8 +21,8 @@ import           Data.String
 import qualified Data.Text                   as T
 import           Network.JSONRPC
 
-import           Herd.Config
 import           Herd.Data.Text
+import           Herd.Node.Config
 import           Herd.Node.Core
 import qualified Herd.Process.SchemaRegistry as R
 import           Herd.Protocol

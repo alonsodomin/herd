@@ -10,8 +10,8 @@ import           Data.Yaml           (ParseException, decodeFileEither,
                                       prettyPrintParseException)
 import           Options.Applicative
 
-import           Herd.Config
 import           Herd.Node
+import           Herd.Node.Config
 
 licensePreamble :: String
 licensePreamble = "Herd Copyright (C) 2019  A. Alonso Dominguez\n"

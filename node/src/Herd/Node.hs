@@ -20,16 +20,10 @@ import qualified Data.Text                                          as T
 import           Data.Typeable
 import           GHC.Generics
 
-import           Herd.Config
+import           Herd.Node.Config
 import           Herd.Node.Core
 import           Herd.Node.JSONRPC
 import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
-
-data NodeCommand = ShutdownCmd
-  deriving (Eq, Show, Generic, Typeable, Binary)
-
-handleCmd :: NodeCommand -> Process ()
-handleCmd ShutdownCmd = say "Shutting down..."
 
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
