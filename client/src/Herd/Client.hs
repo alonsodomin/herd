@@ -8,6 +8,8 @@ module Herd.Client
      , getSchema
      , registerSchema
      , deleteSchema
+     -- Subject Log
+     , writeSubject
      , runClient
      ) where
 
@@ -16,6 +18,8 @@ import           Control.Lens           (Getting, (^?))
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Control.Monad.Reader
+import           Data.Avro              (ToAvro)
+import qualified Data.Avro              as Avro
 import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString        as BS
 import           Data.Conduit.Network   (clientSettings)
@@ -54,6 +58,13 @@ registerSchema subjectId schema =
 deleteSchema :: MonadLoggerIO m => SubjectId -> Version -> ClientT m ()
 deleteSchema subjectId version =
   sendToServer' (DeleteSchemaReq subjectId version) _DeleteSchemaRes
+
+-- Data API
+
+writeSubject :: (MonadLoggerIO m, ToAvro a) => SubjectId -> a -> ClientT m SubjectRecordId
+writeSubject subjectId payload =
+  let binPayload = Avro.encode payload
+  in sendToServer' (WriteSubjectReq subjectId binPayload) _WriteSubjectRes
 
 -- Manage the actual communication with the server
 
