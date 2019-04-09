@@ -16,6 +16,8 @@ import           Control.Lens           (Getting, (^?))
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import           Control.Monad.Reader
+import           Data.Avro              (ToAvro)
+import qualified Data.Avro              as Avro
 import           Data.Avro.Schema       (Schema)
 import qualified Data.ByteString        as BS
 import           Data.Conduit.Network   (clientSettings)
@@ -37,6 +39,8 @@ import           Herd.Types
 
 type HerdClientT m = JSONRPCT m
 
+-- Schema management API
+
 getSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
 getSubjectIds = sendToHerd' GetSubjectIdsReq _GetSubjectIdsRes
 
@@ -54,6 +58,13 @@ registerSchema subjectId schema =
 deleteSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m ()
 deleteSchema subjectId version =
   sendToHerd' (DeleteSchemaReq subjectId version) _DeleteSchemaRes
+
+-- Data API
+
+writeSubject :: (MonadLoggerIO m, ToAvro a) => SubjectId -> a -> HerdClientT m SubjectRecordId
+writeSubject subjectId payload =
+  let binPayload = Avro.encode payload
+  in sendToHerd' (WriteSubjectReq subjectId binPayload) _WriteSubjectRes
 
 -- Manage the actual communication with the server
 
