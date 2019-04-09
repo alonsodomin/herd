@@ -8,7 +8,7 @@ module Herd.Client
      , getSchema
      , registerSchema
      , deleteSchema
-     , runHerdClient
+     , runClient
      ) where
 
 import           Conduit
@@ -35,30 +35,30 @@ import           Herd.Types
 
 -- makeLenses ''ClientSettings
 
-type HerdClientT m = JSONRPCT m
+type ClientT m = JSONRPCT m
 
-getSubjectIds :: MonadLoggerIO m => HerdClientT m [SubjectId]
-getSubjectIds = sendToHerd' GetSubjectIdsReq _GetSubjectIdsRes
+getSubjectIds :: MonadLoggerIO m => ClientT m [SubjectId]
+getSubjectIds = sendToServer' GetSubjectIdsReq _GetSubjectIdsRes
 
-getSchemaVersions :: MonadLoggerIO m => SubjectId -> HerdClientT m (NonEmpty Version)
-getSchemaVersions subjectId = sendToHerd' (GetSchemaVersionsReq subjectId) _GetSchemaVersionsRes
+getSchemaVersions :: MonadLoggerIO m => SubjectId -> ClientT m (NonEmpty Version)
+getSchemaVersions subjectId = sendToServer' (GetSchemaVersionsReq subjectId) _GetSchemaVersionsRes
 
-getSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m Schema
+getSchema :: MonadLoggerIO m => SubjectId -> Version -> ClientT m Schema
 getSchema subjectId version =
-  sendToHerd' (GetSchemaReq subjectId version) _GetSchemaRes
+  sendToServer' (GetSchemaReq subjectId version) _GetSchemaRes
 
-registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> HerdClientT m ()
+registerSchema :: MonadLoggerIO m => SubjectId -> Schema -> ClientT m ()
 registerSchema subjectId schema =
-  sendToHerd' (RegisterSchemaReq subjectId schema) _RegisterSchemaRes
+  sendToServer' (RegisterSchemaReq subjectId schema) _RegisterSchemaRes
 
-deleteSchema :: MonadLoggerIO m => SubjectId -> Version -> HerdClientT m ()
+deleteSchema :: MonadLoggerIO m => SubjectId -> Version -> ClientT m ()
 deleteSchema subjectId version =
-  sendToHerd' (DeleteSchemaReq subjectId version) _DeleteSchemaRes
+  sendToServer' (DeleteSchemaReq subjectId version) _DeleteSchemaRes
 
 -- Manage the actual communication with the server
 
-sendToHerd :: (MonadLoggerIO m) => HerdRequest -> Getting (First a) HerdResponse a -> (a -> m r) -> HerdClientT m r
-sendToHerd req l f = do
+sendToServer :: (MonadLoggerIO m) => HerdRequest -> Getting (First a) HerdResponse a -> (a -> m r) -> ClientT m r
+sendToServer req l f = do
   rawRes <- sendRequest req
   res    <- foldResponse rawRes
 
@@ -72,13 +72,13 @@ sendToHerd req l f = do
     foldResponse (Just (Left e))  = fail $ fromError e
     foldResponse (Just (Right r)) = return r
 
-sendToHerd' :: MonadLoggerIO m => HerdRequest -> Getting (First a) HerdResponse a -> HerdClientT m a
-sendToHerd' r l = sendToHerd r l return
+sendToServer' :: MonadLoggerIO m => HerdRequest -> Getting (First a) HerdResponse a -> ClientT m a
+sendToServer' r l = sendToServer r l return
 
 -- Run the Herd client monad
 
-runHerdClient :: (MonadUnliftIO m, MonadLoggerIO m) => Text -> Int -> HerdClientT m a -> m a
-runHerdClient host port action = do
+runClient :: (MonadUnliftIO m, MonadLoggerIO m) => Text -> Int -> ClientT m a -> m a
+runClient host port action = do
   --let jsonrcpSettings = clientSettings (settings ^. csPort) (settings ^. csHost)
   let cs = clientSettings port (T.encodeUtf8 host)
   jsonrpcTCPClient V2 True cs action
