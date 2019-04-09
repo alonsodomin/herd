@@ -5,9 +5,10 @@
 module Herd.Node.Config where
 
 import           Control.Lens
+import           Control.Monad.Logger (LogLevel (..))
 import           Data.Aeson
-import           Data.Text     (Text)
-import qualified Data.Text     as T
+import           Data.Text            (Text)
+import qualified Data.Text            as T
 import           Data.Typeable
 import           GHC.Generics
 
@@ -44,20 +45,26 @@ instance FromJSON NetworkConfig where
     return NetworkConfig{..}
 
 data LoggingDriver =
-  LoggingStdOut
-  deriving (Eq, Show, Generic, Enum, Ord, Typeable)
+    LoggingConsole
+  | LoggingFile FilePath
+  deriving (Eq, Show, Generic, Typeable)
 
 instance FromJSON LoggingDriver where
-  parseJSON = withText "logging driver" $ \txt ->
-    case (T.toLower txt) of
-      "stdout" -> pure LoggingStdOut
-      _        -> fail $ "Invalid logging driver: " ++ (T.unpack txt)
+  parseJSON = withObject "logging driver" $ \o -> do
+    driverId <- o .: "driver"
+    case (T.toLower driverId) of
+      "stdout" -> pure LoggingConsole
+      "file"   -> do
+        path <- o .: "path"
+        return $ LoggingFile path
+      _        -> fail $ "Invalid logging driver: " ++ (T.unpack driverId)
 
 defaultLoggingDriver :: LoggingDriver
-defaultLoggingDriver = LoggingStdOut
+defaultLoggingDriver = LoggingConsole
 
 data LoggingConfig = LoggingConfig
   { _lcDriver :: LoggingDriver
+  , _lcLevel  :: Maybe LogLevel
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''LoggingConfig
@@ -65,10 +72,17 @@ makeLenses ''LoggingConfig
 instance FromJSON LoggingConfig where
   parseJSON = withObject "logging config" $ \o -> do
     _lcDriver <- maybe defaultLoggingDriver id <$> o .:? "driver"
+    _lcLevel  <- fmap (parseLogLevel . T.toLower) <$> o .:? "level"
     return LoggingConfig{..}
 
+    where parseLogLevel "debug" = LevelDebug
+          parseLogLevel "info"  = LevelInfo
+          parseLogLevel "warn"  = LevelWarn
+          parseLogLevel "error" = LevelError
+          parseLogLevel txt     = LevelOther txt
+
 defaultLoggingConfig :: LoggingConfig
-defaultLoggingConfig = LoggingConfig defaultLoggingDriver
+defaultLoggingConfig = LoggingConfig defaultLoggingDriver Nothing
 
 data ClusterConfig = ClusterConfig
   { _ccBinding   :: NetworkBinding

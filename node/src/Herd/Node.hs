@@ -41,4 +41,5 @@ startHerdNode config = do
         rootSupervisor localNode = do
           reg <- spawnSchemaRegistry
           let herdNode = mkHerdNode localNode reg
-          liftIO $ startRpcServer config herdNode
+          let herdEnv  = mkHerdEnv config herdNode
+          liftIO $ startRpcServer config herdEnv

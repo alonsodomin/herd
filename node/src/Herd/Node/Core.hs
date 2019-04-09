@@ -2,12 +2,17 @@
 {-# LANGUAGE TemplateHaskell            #-}
 
 module Herd.Node.Core
-     ( HerdNode
+     ( Logger
+     , HerdNode
      , mkHerdNode
      , hnLocalNode
      , hnSchemaRegistry
-     , NodeActionT
-     , runNodeActionT
+     , HerdEnv
+     , mkHerdEnv
+     , heLogger
+     , heNode
+     , HerdActionT
+     , runAction
      , invokeAction
      ) where
 
@@ -21,7 +26,10 @@ import           Control.Monad.Logger
 import           Control.Monad.Reader
 import           Data.Typeable
 
+import           Herd.Node.Config
 import           Herd.Process.SchemaRegistry      (SchemaRegistryServer)
+
+type Logger = LoggingT IO () -> IO ()
 
 data HerdNode = HerdNode
   { _hnLocalNode      :: LocalNode
@@ -33,19 +41,38 @@ makeLenses ''HerdNode
 mkHerdNode :: LocalNode -> SchemaRegistryServer -> HerdNode
 mkHerdNode = HerdNode
 
-newtype NodeActionT m a = NodeActionT
-  { unNodeActionT :: ReaderT HerdNode m a }
-  deriving (Functor, Applicative, Monad, MonadIO, MonadReader HerdNode, MonadTrans, MonadLogger)
+data HerdEnv = HerdEnv
+  { _heLogger :: Logger
+  , _heNode   :: HerdNode
+  }
 
-runNodeActionT :: HerdNode -> NodeActionT m a -> m a
-runNodeActionT node act = runReaderT (unNodeActionT act) node
+makeLenses ''HerdEnv
 
-invokeAction :: MonadIO m => (HerdNode -> Process a) -> NodeActionT m a
-invokeAction action = NodeActionT $ do
-  node <- ask
+mkHerdEnv :: HerdConfig -> HerdNode -> HerdEnv
+mkHerdEnv config node =
+  HerdEnv {
+    _heLogger = logger (config ^. hcLogging . lcDriver)
+  , _heNode   = node
+  }
+
+  where logger :: LoggingDriver -> Logger
+        logger LoggingConsole     = runStdoutLoggingT
+        logger (LoggingFile path) = runFileLoggingT path
+
+newtype HerdActionT m a = HerdActionT
+  { unNodeActionT :: ReaderT HerdEnv m a }
+  deriving (Functor, Applicative, Monad, MonadIO, MonadReader HerdEnv, MonadTrans, MonadLogger)
+
+runAction :: HerdEnv -> HerdActionT m a -> m a
+runAction env act = runReaderT (unNodeActionT act) env
+
+invokeAction :: MonadIO m => (HerdNode -> Process a) -> HerdActionT m a
+invokeAction action = HerdActionT $ do
+  env <- ask
   liftIO $ do
     tvar <- newEmptyTMVarIO
-    runProcess (node ^. hnLocalNode) $ do
-      result <- action node
+    let herdNode = (env ^. heNode)
+    runProcess (herdNode ^. hnLocalNode) $ do
+      result <- action herdNode
       liftIO $ atomically $ putTMVar tvar result
     atomically $ readTMVar tvar

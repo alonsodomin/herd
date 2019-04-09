@@ -63,8 +63,8 @@ schemaNotFound subjectId version = ErrorObj {
 
 -- JSON-RPC behaviour
 
-type RpcServerT m = NodeActionT (JSONRPCT m)
-type RpcHandler m = Respond HerdRequest (NodeActionT m) HerdResponse
+type RpcServerT m = HerdActionT (JSONRPCT m)
+type RpcHandler m = Respond HerdRequest (HerdActionT m) HerdResponse
 
 handleRpc :: MonadLoggerIO m => RpcHandler m
 handleRpc GetSubjectIdsReq = Right . GetSubjectIdsRes <$> invokeAction getSubjectIds
@@ -107,10 +107,10 @@ rpcServer = do
       lift . sendBatchResponse $ BatchResponse rs
       rpcServer
 
-startRpcServer :: HerdConfig -> HerdNode -> IO ()
-startRpcServer config herdNode = runStderrLoggingT $ do
+startRpcServer :: HerdConfig -> HerdEnv -> IO ()
+startRpcServer config env = (env ^. heLogger) $ do
   let host = config ^. hcNetwork . ncBroker . nbHost
   let port = config ^. hcNetwork . ncBroker . nbPort
   let ss   = serverSettings port (fromString . T.unpack $ host)
   $(logInfo) $ "starting Herd RPC server at " <> host <> ":" <> (toText port)
-  jsonrpcTCPServer V2 False ss $ runNodeActionT herdNode rpcServer
+  jsonrpcTCPServer V2 False ss $ runAction env rpcServer
