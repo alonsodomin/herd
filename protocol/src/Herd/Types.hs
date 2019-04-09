@@ -4,7 +4,16 @@
 {-# LANGUAGE TemplateHaskell      #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
-module Herd.Types where
+module Herd.Types
+     ( SubjectId (..)
+     , Version
+     , initialVersion
+     , nextVersion
+     , version
+     , SubjectRecordId (..)
+     , SubjectRecord (..)
+     , AvroSchema (..)
+     ) where
 
 import           Control.Lens                 hiding ((.=))
 import           Data.Aeson                   (FromJSON, ToJSON, object,
@@ -48,6 +57,11 @@ initialVersion = Version 1
 
 nextVersion :: Version -> Version
 nextVersion (Version x) = Version (x + 1)
+
+version :: Integer -> Maybe Version
+version x
+  | x >= 1    = Just $ Version x
+  | otherwise = Nothing
 
 instance ToText Version where
   toText (Version x) = toText x
