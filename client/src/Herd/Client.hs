@@ -65,18 +65,19 @@ deleteSchema subjectId version =
 
 -- Data API
 
-type SubjectRecords a = (These (NonEmpty String) (NonEmpty a))
+type SubjectRecords a = (These (NonEmpty String) [a])
 
 readSubject :: (MonadLoggerIO m, FromAvro a) => SubjectId -> UTCTime -> ClientT m (SubjectRecords a)
 readSubject subjectId from = do
   records <- sendToServer (ReadSubjectReq subjectId from) _ReadSubjectRes
   return $ decodeRecords records
 
-  where decodeRecords :: (Traversable f, FromAvro a) => f SubjectRecord -> SubjectRecords a
+  where decodeRecords :: FromAvro a => [SubjectRecord] -> SubjectRecords a
+        decodeRecords []   = That []
         decodeRecords recs = foldr1 (<>) $ fmap (handleAvroResult . Avro.decode . BSL.fromStrict . (view srPayload)) recs
 
         handleAvroResult :: Avro.Result a -> SubjectRecords a
-        handleAvroResult (Avro.Success a) = That (a :| [])
+        handleAvroResult (Avro.Success a) = That [a]
         handleAvroResult (Avro.Error err) = This (err :| [])
 
 writeSubject :: (MonadLoggerIO m, ToAvro a) => SubjectId -> a -> ClientT m SubjectRecordId
