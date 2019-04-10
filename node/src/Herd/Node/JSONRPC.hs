@@ -14,19 +14,21 @@ import           Control.Monad.Logger
 import           Data.Aeson
 import           Data.Avro.Schema            (Schema)
 import           Data.ByteString             (ByteString)
+import qualified Data.ByteString.Lazy        as BSL
 import           Data.Conduit.Network        (serverSettings)
 import qualified Data.Foldable               as F
 import           Data.List.NonEmpty          (NonEmpty)
 import           Data.Maybe                  (catMaybes)
 import           Data.String
 import qualified Data.Text                   as T
-import           Data.Time.Clock             (UTCTime)
+import           Data.Time.Clock             (UTCTime, getCurrentTime)
 import           Network.JSONRPC
 
 import           Herd.Data.Text
 import           Herd.Node.Config
 import           Herd.Node.Core
 import qualified Herd.Process.SchemaRegistry as R
+import qualified Herd.Process.SubjectLog     as L
 import           Herd.Protocol
 import           Herd.Types
 
@@ -48,7 +50,7 @@ deleteSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe ())
 deleteSchema sid v node = R.deleteSchema (node ^. hnSchemaRegistry) sid v
 
 writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdNode -> Process (Maybe SubjectRecordId)
-writeSubject = undefined
+writeSubject sid payload time node = L.writeSubject (node ^. hnSubjectLog) sid payload time
 
 -- Errors
 
@@ -93,6 +95,13 @@ handleRpc (DeleteSchemaReq subjectId version) = do
   case deleted of
     Nothing -> return . Left $ schemaNotFound subjectId version
     Just _  -> return $ Right Done
+
+handleRpc (WriteSubjectReq subjectId payload) = do
+  time  <- liftIO $ getCurrentTime
+  recId <- invokeAction (writeSubject subjectId (BSL.toStrict payload) time)
+  case recId of
+    Nothing -> return . Left $ subjectNotFound subjectId
+    Just x  -> return . Right $ WriteSubjectRes x
 
 rpcServer :: MonadLoggerIO m => RpcServerT m ()
 rpcServer = do

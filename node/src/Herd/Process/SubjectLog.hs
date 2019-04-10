@@ -11,6 +11,7 @@ import           Control.Distributed.Process                (Process, ProcessId,
 import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
+import           Control.Lens
 import           Data.Binary
 import           Data.ByteString                            (ByteString)
 import           Data.Time.Clock                            (UTCTime)
@@ -42,12 +43,14 @@ deriving instance Addressable SubjectLogServer
 -- ClientAPI
 
 writeSubject :: SubjectLogServer -> SubjectId -> ByteString -> UTCTime -> Process (Maybe SubjectRecordId)
-writeSubject log sid payload time = call log $ WriteSubject sid payload time
+writeSubject slog sid payload time = call slog $ WriteSubject sid payload time
 
 -- Handlers
 
 handleWriteSubject :: SubjectLog -> WriteSubject -> Process (ProcessReply (Maybe SubjectRecordId) SubjectLog)
-handleWriteSubject = undefined
+handleWriteSubject slog (WriteSubject subjectId payload time) = do
+  (record, newSLog) <- pure $ SLog.addRecord subjectId payload time slog
+  reply (Just $ record ^. srSubjectRecordId) newSLog
 
 -- Server
 

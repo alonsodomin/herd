@@ -7,6 +7,7 @@ module Herd.Node.Core
      , mkHerdNode
      , hnLocalNode
      , hnSchemaRegistry
+     , hnSubjectLog
      , HerdEnv
      , mkHerdEnv
      , heLogger
@@ -28,17 +29,19 @@ import           Data.Typeable
 
 import           Herd.Node.Config
 import           Herd.Process.SchemaRegistry      (SchemaRegistryServer)
+import           Herd.Process.SubjectLog          (SubjectLogServer)
 
 type Logger = LoggingT IO () -> IO ()
 
 data HerdNode = HerdNode
   { _hnLocalNode      :: LocalNode
   , _hnSchemaRegistry :: SchemaRegistryServer
+  , _hnSubjectLog     :: SubjectLogServer
   } deriving Typeable
 
 makeLenses ''HerdNode
 
-mkHerdNode :: LocalNode -> SchemaRegistryServer -> HerdNode
+mkHerdNode :: LocalNode -> SchemaRegistryServer -> SubjectLogServer -> HerdNode
 mkHerdNode = HerdNode
 
 data HerdEnv = HerdEnv
