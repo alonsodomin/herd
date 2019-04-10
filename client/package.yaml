@@ -43,6 +43,12 @@ dependencies:
 # Herd dependencies
 - herd-protocol
 
+default-extensions:
+- DeriveDataTypeable
+- DeriveGeneric
+- StandaloneDeriving
+- TypeSynonymInstances
+
 library:
   source-dirs: src
   dependencies:
