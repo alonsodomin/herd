@@ -13,12 +13,14 @@ import           Control.Monad.Except
 import           Control.Monad.Logger
 import           Data.Aeson
 import           Data.Avro.Schema            (Schema)
+import           Data.ByteString             (ByteString)
 import           Data.Conduit.Network        (serverSettings)
 import qualified Data.Foldable               as F
 import           Data.List.NonEmpty          (NonEmpty)
 import           Data.Maybe                  (catMaybes)
 import           Data.String
 import qualified Data.Text                   as T
+import           Data.Time.Clock             (UTCTime)
 import           Network.JSONRPC
 
 import           Herd.Data.Text
@@ -44,6 +46,9 @@ registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sc
 
 deleteSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe ())
 deleteSchema sid v node = R.deleteSchema (node ^. hnSchemaRegistry) sid v
+
+writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdNode -> Process (Maybe SubjectRecordId)
+writeSubject = undefined
 
 -- Errors
 

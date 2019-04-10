@@ -43,6 +43,19 @@ data RegisterSchema = RegisterSchema !SubjectId !Schema
 data DeleteSchema = DeleteSchema !SubjectId !Version
   deriving (Eq, Show, Generic, Typeable, Binary)
 
+-- Server definition
+
+newtype SchemaRegistryServer = SchemaRegistryServer
+  { schemaRegistryPid :: ProcessId }
+  deriving (Eq, Show, Generic, Typeable, Binary)
+
+instance Resolvable SchemaRegistryServer where
+  resolve = return . Just . schemaRegistryPid
+
+deriving instance Routable SchemaRegistryServer
+deriving instance Linkable SchemaRegistryServer
+deriving instance Addressable SchemaRegistryServer
+
 -- Client API
 
 getSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
@@ -86,18 +99,7 @@ handleDeleteSchema reg (DeleteSchema subjectId version) = do
     Just _  -> Registry.deleteSchema subjectId version reg
   reply (void currentSchema) newRegistry
 
--- Server definition
-
-data SchemaRegistryServer = SchemaRegistryServer
-  { schemaRegistryPid :: ProcessId }
-  deriving (Eq, Show, Generic, Typeable, Binary)
-
-instance Resolvable SchemaRegistryServer where
-  resolve = return . Just . schemaRegistryPid
-
-deriving instance Routable SchemaRegistryServer
-deriving instance Linkable SchemaRegistryServer
-deriving instance Addressable SchemaRegistryServer
+-- Server
 
 spawnSchemaRegistry :: Process SchemaRegistryServer
 spawnSchemaRegistry = do
