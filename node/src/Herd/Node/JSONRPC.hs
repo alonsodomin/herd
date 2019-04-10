@@ -44,30 +44,30 @@ overRegistry = heNode . hnSchemaRegistry
 overSubjectLog :: Getter HerdEnv SubjectLogServer
 overSubjectLog = heNode . hnSubjectLog
 
-registryAction   = liftAction overRegistry
-subjectLogAction = liftAction overSubjectLog
+withRegistry   = liftAction overRegistry
+withSubjectLog = liftAction overSubjectLog
 
 -- Internal Registry API
 
 getSubjectIds :: HerdProcess [SubjectId]
-getSubjectIds = registryAction R.getSubjectIds
+getSubjectIds = withRegistry R.getSubjectIds
 
 getSchemaVersions :: SubjectId -> HerdProcess (Maybe (NonEmpty Version))
-getSchemaVersions subjectId = registryAction (R.getVersions subjectId)
+getSchemaVersions subjectId = withRegistry (R.getVersions subjectId)
 
 getSchema :: SubjectId -> Version -> HerdProcess (Maybe Schema)
-getSchema subjectId version = registryAction (R.getSchema subjectId version)
+getSchema subjectId version = withRegistry (R.getSchema subjectId version)
 
 registerSchema :: SubjectId -> Schema -> HerdProcess ()
-registerSchema sid sch = registryAction (R.registerSchema sid sch)
+registerSchema sid sch = withRegistry (R.registerSchema sid sch)
 
 deleteSchema :: SubjectId -> Version -> HerdProcess (Maybe ())
-deleteSchema sid v = registryAction (R.deleteSchema sid v)
+deleteSchema sid v = withRegistry (R.deleteSchema sid v)
 
 -- Internal SubjectLog API
 
 writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdProcess (Maybe SubjectRecordId)
-writeSubject sid payload time = subjectLogAction (L.writeSubject sid payload time)
+writeSubject sid payload time = withSubjectLog (L.writeSubject sid payload time)
 
 -- Errors
 
