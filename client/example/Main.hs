@@ -13,7 +13,6 @@ import           System.Environment
 
 import           Herd.Client
 import           Herd.Data.Text
-import           Herd.Types
 
 main :: IO ()
 main = do
@@ -34,3 +33,6 @@ main = do
 
           schema <- getSchema "foo" (NEL.head versions)
           liftIO . putStrLn $ show schema
+
+          recordId <- writeSubject "bar" (20 :: Int)
+          liftIO . T.putStrLn $ toText recordId
