@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 module Herd.Node.JSONRPC
@@ -11,6 +12,7 @@ import           Control.Distributed.Process (Process)
 import           Control.Lens
 import           Control.Monad.Except
 import           Control.Monad.Logger
+import           Control.Monad.Reader
 import           Data.Aeson
 import           Data.Avro.Schema            (Schema)
 import           Data.ByteString             (ByteString)
@@ -27,30 +29,45 @@ import           Network.JSONRPC
 import           Herd.Data.Text
 import           Herd.Node.Config
 import           Herd.Node.Core
+import           Herd.Process.SchemaRegistry (SchemaRegistryServer)
 import qualified Herd.Process.SchemaRegistry as R
+import           Herd.Process.SubjectLog     (SubjectLogServer)
 import qualified Herd.Process.SubjectLog     as L
 import           Herd.Protocol
 import           Herd.Types
 
 -- Adapter methods
 
-getSubjectIds :: HerdNode -> Process [SubjectId]
-getSubjectIds node = R.getSubjectIds (node ^. hnSchemaRegistry)
+overRegistry :: Getter HerdEnv SchemaRegistryServer
+overRegistry = heNode . hnSchemaRegistry
 
-getSchemaVersions :: SubjectId -> HerdNode -> Process (Maybe (NonEmpty Version))
-getSchemaVersions subjectId node = R.getVersions (node ^. hnSchemaRegistry) subjectId
+overSubjectLog :: Getter HerdEnv SubjectLogServer
+overSubjectLog = heNode . hnSubjectLog
 
-getSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe Schema)
-getSchema subjectId version node = R.getSchema (node ^. hnSchemaRegistry) subjectId version
+registryAction   = liftAction overRegistry
+subjectLogAction = liftAction overSubjectLog
 
-registerSchema :: SubjectId -> Schema -> HerdNode -> Process ()
-registerSchema sid sch node = R.registerSchema (node ^. hnSchemaRegistry) sid sch
+-- Internal Registry API
 
-deleteSchema :: SubjectId -> Version -> HerdNode -> Process (Maybe ())
-deleteSchema sid v node = R.deleteSchema (node ^. hnSchemaRegistry) sid v
+getSubjectIds :: HerdProcess [SubjectId]
+getSubjectIds = registryAction R.getSubjectIds
 
-writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdNode -> Process (Maybe SubjectRecordId)
-writeSubject sid payload time node = L.writeSubject (node ^. hnSubjectLog) sid payload time
+getSchemaVersions :: SubjectId -> HerdProcess (Maybe (NonEmpty Version))
+getSchemaVersions subjectId = registryAction (R.getVersions subjectId)
+
+getSchema :: SubjectId -> Version -> HerdProcess (Maybe Schema)
+getSchema subjectId version = registryAction (R.getSchema subjectId version)
+
+registerSchema :: SubjectId -> Schema -> HerdProcess ()
+registerSchema sid sch = registryAction (R.registerSchema sid sch)
+
+deleteSchema :: SubjectId -> Version -> HerdProcess (Maybe ())
+deleteSchema sid v = registryAction (R.deleteSchema sid v)
+
+-- Internal SubjectLog API
+
+writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdProcess (Maybe SubjectRecordId)
+writeSubject sid payload time = subjectLogAction (L.writeSubject sid payload time)
 
 -- Errors
 

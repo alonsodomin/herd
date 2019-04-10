@@ -3,7 +3,7 @@
 module Herd.Process.SubjectLog
      ( SubjectLogServer
      , writeSubject
-     , spawnSubjectLogServer
+     , spawnSubjectLog
      ) where
 
 import           Control.Distributed.Process                (Process, ProcessId,
@@ -42,8 +42,8 @@ deriving instance Addressable SubjectLogServer
 
 -- ClientAPI
 
-writeSubject :: SubjectLogServer -> SubjectId -> ByteString -> UTCTime -> Process (Maybe SubjectRecordId)
-writeSubject slog sid payload time = call slog $ WriteSubject sid payload time
+writeSubject :: SubjectId -> ByteString -> UTCTime -> SubjectLogServer ->  Process (Maybe SubjectRecordId)
+writeSubject sid payload time slog = call slog $ WriteSubject sid payload time
 
 -- Handlers
 
@@ -54,8 +54,8 @@ handleWriteSubject slog (WriteSubject subjectId payload time) = do
 
 -- Server
 
-spawnSubjectLogServer :: Process SubjectLogServer
-spawnSubjectLogServer = do
+spawnSubjectLog :: Process SubjectLogServer
+spawnSubjectLog = do
   pid <- spawnLocal $ serve () initLog subjectLogDef
   return $ SubjectLogServer pid
   where

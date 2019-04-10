@@ -61,17 +61,17 @@ deriving instance Addressable SchemaRegistryServer
 getSubjectIds :: SchemaRegistryServer -> Process [SubjectId]
 getSubjectIds reg = call reg GetSubjectIds
 
-getVersions :: SchemaRegistryServer -> SubjectId -> Process (Maybe (NonEmpty Version))
-getVersions reg = call reg . GetVersions
+getVersions :: SubjectId -> SchemaRegistryServer -> Process (Maybe (NonEmpty Version))
+getVersions sid reg = call reg $ GetVersions sid
 
-getSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process (Maybe Schema)
-getSchema reg sid v = call reg $ GetSchema sid v
+getSchema :: SubjectId -> Version -> SchemaRegistryServer -> Process (Maybe Schema)
+getSchema sid v reg = call reg $ GetSchema sid v
 
-registerSchema :: SchemaRegistryServer -> SubjectId -> Schema -> Process ()
-registerSchema reg sid sch = call reg $ RegisterSchema sid sch
+registerSchema :: SubjectId -> Schema -> SchemaRegistryServer -> Process ()
+registerSchema sid sch reg = call reg $ RegisterSchema sid sch
 
-deleteSchema :: SchemaRegistryServer -> SubjectId -> Version -> Process (Maybe ())
-deleteSchema reg sid v = call reg $ DeleteSchema sid v
+deleteSchema :: SubjectId -> Version -> SchemaRegistryServer -> Process (Maybe ())
+deleteSchema sid v reg = call reg $ DeleteSchema sid v
 
 -- Handlers
 

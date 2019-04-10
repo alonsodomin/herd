@@ -24,6 +24,7 @@ import           Herd.Node.Config
 import           Herd.Node.Core
 import           Herd.Node.JSONRPC
 import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
+import           Herd.Process.SubjectLog                            (spawnSubjectLog)
 
 startHerdNode :: HerdConfig -> IO ()
 startHerdNode config = do
@@ -39,7 +40,10 @@ startHerdNode config = do
 
         rootSupervisor :: LocalNode -> Process ()
         rootSupervisor localNode = do
-          reg <- spawnSchemaRegistry
-          let herdNode = mkHerdNode localNode reg
+          reg  <- spawnSchemaRegistry
+          slog <- spawnSubjectLog
+
+          let herdNode = mkHerdNode localNode reg slog
           let herdEnv  = mkHerdEnv config herdNode
+
           liftIO $ startRpcServer config herdEnv

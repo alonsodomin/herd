@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Rank2Types                 #-}
 {-# LANGUAGE TemplateHaskell            #-}
 
 module Herd.Node.Core
@@ -13,6 +14,8 @@ module Herd.Node.Core
      , heLogger
      , heNode
      , HerdActionT
+     , HerdProcess
+     , liftAction
      , runAction
      , invokeAction
      ) where
@@ -66,16 +69,23 @@ newtype HerdActionT m a = HerdActionT
   { unNodeActionT :: ReaderT HerdEnv m a }
   deriving (Functor, Applicative, Monad, MonadIO, MonadReader HerdEnv, MonadTrans, MonadLogger)
 
+type HerdProcess = HerdActionT Process
+
 runAction :: HerdEnv -> HerdActionT m a -> m a
 runAction env act = runReaderT (unNodeActionT act) env
 
-invokeAction :: MonadIO m => (HerdNode -> Process a) -> HerdActionT m a
+liftAction :: Monad m => Getter HerdEnv a -> (a -> m b) -> HerdActionT m b
+liftAction getter f = HerdActionT . withReaderT (view getter) $ do
+  a <- ask
+  lift $ f a
+
+invokeAction :: MonadIO m => HerdProcess a -> HerdActionT m a
 invokeAction action = HerdActionT $ do
   env <- ask
   liftIO $ do
     tvar <- newEmptyTMVarIO
     let herdNode = (env ^. heNode)
     runProcess (herdNode ^. hnLocalNode) $ do
-      result <- action herdNode
+      result <- runAction env action
       liftIO $ atomically $ putTMVar tvar result
     atomically $ readTMVar tvar
