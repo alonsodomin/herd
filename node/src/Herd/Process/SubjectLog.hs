@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveAnyClass #-}
 
-module Herd.Node.Process.SubjectLog
+module Herd.Process.SubjectLog
      ( SubjectLogServer
      , writeSubject
      , spawnSubjectLogServer
