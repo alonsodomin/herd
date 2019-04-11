@@ -36,17 +36,6 @@ import qualified Herd.Process.SubjectLog     as L
 import           Herd.Protocol
 import           Herd.Types
 
--- Adapter methods
-
-overRegistry :: Getter HerdEnv SchemaRegistryServer
-overRegistry = heNode . hnSchemaRegistry
-
-overSubjectLog :: Getter HerdEnv SubjectLogServer
-overSubjectLog = heNode . hnSubjectLog
-
-withRegistry   = liftAction overRegistry
-withSubjectLog = liftAction overSubjectLog
-
 -- Internal Registry API
 
 getSubjectIds :: HerdProcess [SubjectId]
@@ -65,6 +54,9 @@ deleteSchema :: SubjectId -> Version -> HerdProcess (Maybe ())
 deleteSchema sid v = withRegistry (R.deleteSchema sid v)
 
 -- Internal SubjectLog API
+
+readSubject :: SubjectId -> UTCTime -> HerdProcess (Maybe [SubjectRecord])
+readSubject sid time = withSubjectLog (L.readSubject sid time)
 
 writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdProcess (Maybe SubjectRecordId)
 writeSubject sid payload time = withSubjectLog (L.writeSubject sid payload time)
@@ -113,6 +105,11 @@ handleRpc (DeleteSchemaReq subjectId version) = do
     Nothing -> return . Left $ schemaNotFound subjectId version
     Just _  -> return $ Right Done
 
+handleRpc (ReadSubjectReq subjectId time) = do
+  recs <- invokeAction (readSubject subjectId time)
+  case recs of
+    Nothing -> return . Left $ subjectNotFound subjectId
+    Just xs -> return . Right $ ReadSubjectRes xs
 handleRpc (WriteSubjectReq subjectId payload) = do
   time  <- liftIO $ getCurrentTime
   recId <- invokeAction (writeSubject subjectId (BSL.toStrict payload) time)

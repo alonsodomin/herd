@@ -18,6 +18,9 @@ module Herd.Node.Core
      , liftAction
      , runAction
      , invokeAction
+     --
+     , withRegistry
+     , withSubjectLog
      ) where
 
 import           Control.Concurrent.STM           (atomically)
@@ -89,3 +92,11 @@ invokeAction action = HerdActionT $ do
       result <- runAction env action
       liftIO $ atomically $ putTMVar tvar result
     atomically $ readTMVar tvar
+
+-- Lifted versions for each process
+
+withRegistry :: Monad m => (SchemaRegistryServer -> m a) -> HerdActionT m a
+withRegistry   = liftAction $ heNode . hnSchemaRegistry
+
+withSubjectLog :: Monad m => (SubjectLogServer -> m a) -> HerdActionT m a
+withSubjectLog = liftAction $ heNode . hnSubjectLog

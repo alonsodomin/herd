@@ -2,6 +2,7 @@
 
 module Herd.Process.SubjectLog
      ( SubjectLogServer
+     , readSubject
      , writeSubject
      , spawnSubjectLog
      ) where
@@ -24,6 +25,9 @@ import           Herd.Types
 
 -- Protocol definition
 
+data ReadSubject = ReadSubject SubjectId UTCTime
+  deriving (Eq, Show, Typeable, Generic, Binary)
+
 data WriteSubject = WriteSubject SubjectId ByteString UTCTime
   deriving (Eq, Show, Typeable, Generic, Binary)
 
@@ -42,10 +46,18 @@ deriving instance Addressable SubjectLogServer
 
 -- ClientAPI
 
+readSubject :: SubjectId -> UTCTime -> SubjectLogServer -> Process (Maybe [SubjectRecord])
+readSubject sid time slog = call slog $ ReadSubject sid time
+
 writeSubject :: SubjectId -> ByteString -> UTCTime -> SubjectLogServer ->  Process (Maybe SubjectRecordId)
 writeSubject sid payload time slog = call slog $ WriteSubject sid payload time
 
 -- Handlers
+
+handleReadSubject :: SubjectLog -> ReadSubject -> Process (ProcessReply (Maybe [SubjectRecord]) SubjectLog)
+handleReadSubject slog (ReadSubject subjectId time) = do
+  allRecs <- pure $ SLog.getRecords subjectId slog
+  reply (Just $ takeWhile (\x -> x ^. srTime >= time) allRecs) slog
 
 handleWriteSubject :: SubjectLog -> WriteSubject -> Process (ProcessReply (Maybe SubjectRecordId) SubjectLog)
 handleWriteSubject slog (WriteSubject subjectId payload time) = do
@@ -66,5 +78,6 @@ spawnSubjectLog = do
     subjectLogDef = defaultProcess
       { apiHandlers = [
           handleCall handleWriteSubject
+        , handleCall handleReadSubject
         ]
     , unhandledMessagePolicy = Drop }
