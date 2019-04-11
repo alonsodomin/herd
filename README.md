@@ -1,6 +1,7 @@
 # Herd
 
 [![CircleCI](https://circleci.com/gh/alonsodomin/herd.svg?style=svg)](https://circleci.com/gh/alonsodomin/herd)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Distributed schema-driven commit log. The idea behind Herd is to make a scalable self-descriptive storage that allows fine grained traceability of each of its records.
 
