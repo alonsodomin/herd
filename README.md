@@ -1,5 +1,7 @@
 # Herd
 
+[![CircleCI](https://circleci.com/gh/alonsodomin/herd.svg?style=svg)](https://circleci.com/gh/alonsodomin/herd)
+
 Distributed schema-driven commit log. The idea behind Herd is to make a scalable self-descriptive storage that allows fine grained traceability of each of its records.
 
 ## Requirements
