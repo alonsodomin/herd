@@ -48,6 +48,8 @@ library:
   source-dirs: src
   dependencies:
   - json-rpc
+  - QuickCheck
+  - quickcheck-instances
 
 tests:
   herd-protocol-test:
@@ -60,5 +62,4 @@ tests:
     dependencies:
     - herd-protocol
     - hspec
-    - QuickCheck
-    - quickcheck-instances
+    - QuickCheck    

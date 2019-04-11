@@ -41,6 +41,8 @@ import           Data.Time.Clock              (UTCTime)
 import           Data.Typeable
 import           GHC.Generics                 (Generic)
 import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
+import           Test.QuickCheck
+import           Test.QuickCheck.Instances ()
 
 import           Herd.Data.Text
 
@@ -52,6 +54,9 @@ instance ToText SubjectId where
 
 instance IsString SubjectId where
   fromString = SubjectId . T.pack
+
+instance Arbitrary SubjectId where
+  arbitrary = SubjectId <$> arbitrary
 
 newtype Version = Version Integer
   deriving (Eq, Show, Read, Ord, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
@@ -70,12 +75,18 @@ version x
 instance ToText Version where
   toText (Version x) = toText x
 
+instance Arbitrary Version where
+  arbitrary = Version <$> suchThat arbitrary (\x -> x >= 1)
+
 data SubjectRecordId = SubjectRecordId SubjectId Integer
   deriving (Eq, Binary, Show, Read, Generic, Typeable, FromJSON, ToJSON)
 
 instance ToText SubjectRecordId where
   toText (SubjectRecordId subjectId seqNum) =
     T.concat [toText subjectId, "#", toText seqNum]
+
+instance Arbitrary SubjectRecordId where
+  arbitrary = SubjectRecordId <$> arbitrary <*> arbitrary
 
 data SubjectRecord = SubjectRecord
   { _srSubjectRecordId :: SubjectRecordId
@@ -101,6 +112,9 @@ instance FromJSON SubjectRecord where
     _srPayload         <- (Base64.encode . BS.pack) <$> o .: "payload"
     _srTime            <- o .: "time"
     return SubjectRecord{..}
+
+instance Arbitrary SubjectRecord where
+  arbitrary = SubjectRecord <$> arbitrary <*> arbitrary <*> arbitrary
 
 instance Binary Schema where
   put = put . BSL.toStrict . JSON.encode
