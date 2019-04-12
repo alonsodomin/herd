@@ -1,7 +1,7 @@
 pull_request_rules:
   - name: automatic merge when CI passes patch code coverage status is good
     conditions:
-      - status-success="ci/circleci: build"
+      - "status-success=ci/circleci: build"
       - base=master
     actions:
       merge:
