@@ -40,9 +40,9 @@ import qualified Data.Text                    as T
 import           Data.Time.Clock              (UTCTime)
 import           Data.Typeable
 import           GHC.Generics                 (Generic)
-import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 import           Test.QuickCheck
-import           Test.QuickCheck.Instances ()
+import           Test.QuickCheck.Instances    ()
+import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 
 import           Herd.Data.Text
 
