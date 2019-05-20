@@ -22,7 +22,7 @@ import           GHC.Generics
 
 import           Herd.Node.Config
 import           Herd.Node.Core
-import           Herd.Node.JSONRPC
+import           Herd.Node.RPC
 import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
 import           Herd.Process.SubjectLog                            (spawnSubjectLog)
 

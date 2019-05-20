@@ -4,7 +4,7 @@
 {-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
-module Herd.Node.JSONRPC
+module Herd.Node.RPC
      ( startRpcServer
      ) where
 
@@ -14,52 +14,21 @@ import           Control.Monad.Except
 import           Control.Monad.Logger
 import           Control.Monad.Reader
 import           Data.Aeson
-import           Data.Avro.Schema            (Schema)
-import           Data.ByteString             (ByteString)
 import qualified Data.ByteString.Lazy        as BSL
 import           Data.Conduit.Network        (serverSettings)
 import qualified Data.Foldable               as F
-import           Data.List.NonEmpty          (NonEmpty)
 import           Data.Maybe                  (catMaybes)
 import           Data.String
 import qualified Data.Text                   as T
-import           Data.Time.Clock             (UTCTime, getCurrentTime)
+import           Data.Time.Clock             (getCurrentTime)
 import           Network.JSONRPC
 
 import           Herd.Data.Text
+import           Herd.Node.API
 import           Herd.Node.Config
 import           Herd.Node.Core
-import           Herd.Process.SchemaRegistry (SchemaRegistryServer)
-import qualified Herd.Process.SchemaRegistry as R
-import           Herd.Process.SubjectLog     (SubjectLogServer)
-import qualified Herd.Process.SubjectLog     as L
 import           Herd.Protocol
 import           Herd.Types
-
--- Internal Registry API
-
-getSubjectIds :: HerdProcess [SubjectId]
-getSubjectIds = withRegistry R.getSubjectIds
-
-getSchemaVersions :: SubjectId -> HerdProcess (Maybe (NonEmpty Version))
-getSchemaVersions subjectId = withRegistry (R.getVersions subjectId)
-
-getSchema :: SubjectId -> Version -> HerdProcess (Maybe Schema)
-getSchema subjectId version = withRegistry (R.getSchema subjectId version)
-
-registerSchema :: SubjectId -> Schema -> HerdProcess ()
-registerSchema sid sch = withRegistry (R.registerSchema sid sch)
-
-deleteSchema :: SubjectId -> Version -> HerdProcess (Maybe ())
-deleteSchema sid v = withRegistry (R.deleteSchema sid v)
-
--- Internal SubjectLog API
-
-readSubject :: SubjectId -> UTCTime -> HerdProcess (Maybe [SubjectRecord])
-readSubject sid time = withSubjectLog (L.readSubject sid time)
-
-writeSubject :: SubjectId -> ByteString -> UTCTime -> HerdProcess (Maybe SubjectRecordId)
-writeSubject sid payload time = withSubjectLog (L.writeSubject sid payload time)
 
 -- Errors
 
