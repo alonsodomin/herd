@@ -30,6 +30,7 @@ resolver: lts-12.26
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - protocol
+- storage
 - node
 - client
 

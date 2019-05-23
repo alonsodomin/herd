@@ -1,4 +1,4 @@
-name:                herd-node
+name:                herd-storage
 version:             0.1.0.0
 github:              "alonsodomin/herd"
 license:             GPL-3
@@ -16,8 +16,6 @@ copyright:           "2019 A. Alonso Dominguez"
 description:         Please see the README on Github at <https://github.com/githubuser/herd#readme>
 
 dependencies:
-- aeson
-- avro
 - base >= 4.9 && < 5
 - base64-bytestring
 - binary
@@ -26,7 +24,6 @@ dependencies:
 - free
 - hashable
 - mmorph
-- monad-logger
 - mtl >= 2.2.2 && < 2.3
 - nonempty-containers
 - lens
@@ -40,7 +37,6 @@ dependencies:
 - time
 - unordered-containers
 - uuid
-- yaml
 
 default-extensions:
 - DataKinds
@@ -58,57 +54,13 @@ library:
   dependencies:
   - conduit-extra
   - directory
-  - distributed-process
-  - distributed-process-async
-  - distributed-process-client-server
-  - distributed-process-extras
-  - distributed-process-monad-control
-  - distributed-process-simplelocalnet
-  - distributed-process-supervisor
-  - json-rpc
-  - optparse-applicative >= 0.14.2 && < 0.15
-  - network-transport
-  - network-transport-tcp
-  - servant
-  - servant-server
-  - wai
-  - warp
-  # Herd dependencies
-  - herd-protocol
-  - herd-storage
+  - rocksdb-haskell
+  
   exposed-modules:
-  - Herd.CLI
-  - Herd.Data.SchemaRegistry
-  - Herd.Data.SubjectLog
-  - Herd.Node
-
-executables:
-  herd:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - herd-node    
-
-  herd-node-codegen:
-    main:                Main.hs
-    source-dirs:         codegen
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - containers
-    - elm-bridge
-    - herd-node
-    - servant-elm
-    - wl-pprint-text
+  - Herd.Storage
 
 tests:
-  herd-test:
+  herd-storage-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
