@@ -23,6 +23,7 @@ import           GHC.Generics
 import           Herd.Node.Config
 import           Herd.Node.Core
 import           Herd.Node.RPC
+import Herd.Node.REST
 import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
 import           Herd.Process.SubjectLog                            (spawnSubjectLog)
 
@@ -46,4 +47,5 @@ startHerdNode config = do
           let herdNode = mkHerdNode localNode reg slog
           let herdEnv  = mkHerdEnv config herdNode
 
-          liftIO $ startRpcServer config herdEnv
+          _ <- spawnLocal . liftIO $ startRpcServer config herdEnv
+          liftIO $ startRESTServer config herdEnv

@@ -45,11 +45,14 @@ dependencies:
 - herd-protocol
 
 default-extensions:
+- DataKinds
 - DeriveDataTypeable
 - DeriveGeneric
 - LambdaCase
+- MultiParamTypeClasses
 - StandaloneDeriving
 - RecordWildCards
+- TypeOperators
 - TypeSynonymInstances
 
 library:
@@ -64,11 +67,16 @@ library:
   - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
+  - elm-export
   - json-rpc
   - optparse-applicative >= 0.14.2 && < 0.15
   - network-transport
   - network-transport-tcp
   - rocksdb-haskell
+  - servant
+  - servant-server
+  - wai
+  - warp
   exposed-modules:
   - Herd.CLI
   - Herd.Data.SchemaRegistry
