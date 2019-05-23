@@ -33,7 +33,7 @@ elmOpts =
 
 remoteApiSpec :: Spec
 remoteApiSpec =
-  moduleSpec ["Herd", "Console", "Remote", "API"] $ do
+  moduleSpec ["Herd", "Console", "Remote", "Types"] $ do
     -- embedDec "type NoContent = NoContent"
     renderType    (Proxy :: Proxy SubjectId)
     -- renderDecoder (Proxy :: Proxy SubjectId)
@@ -49,7 +49,7 @@ remoteHttpSpec :: Spec
 remoteHttpSpec =
   Spec [ "Herd", "Console", "Remote", "HTTP" ]
     ( "import Http"
-    : "import Herd.Console.Remote.API exposing (..)"
+    : "import Herd.Console.Remote.Types exposing (..)"
     : generateElmForAPIWith elmOpts herdREST
     )
 

@@ -4,18 +4,11 @@ import Browser
 import Html exposing (Html, table, thead, th, tbody, tr, td, text)
 import List
 
-import Herd.Console.Remote.API exposing (..)
-
-type alias Model =
-  { subjectIds : List SubjectId }
+import Herd.Console.Model as Model exposing (Model)
+import Herd.Console.Remote.Types exposing (..)
 
 herdConsole =
-  Browser.sandbox { init = init, update = update, view = view }
-
--- MODEL
-
-init : Model
-init = { subjectIds = [ SubjectId "foo" ] }
+  Browser.sandbox { init = Model.init, update = update, view = view }
 
 -- UPDATE
 
