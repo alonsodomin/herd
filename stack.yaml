@@ -47,6 +47,8 @@ extra-deps:
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
+- git: git@github.com:hercules-ci/elm-export.git
+  commit: 3a8c979e439feff3e6d2bae913b07ed2c025c9d8
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

@@ -7,11 +7,10 @@ module Main where
 
 import qualified Data.Avro.Schema as Avro
 import           Data.Proxy       (Proxy (Proxy))
-import           Elm              
-import           Servant.Elm      (ElmOptions (..), UrlPrefix (Static),
+import           Elm
+import           Servant.Elm      (ElmOptions (..), UrlPrefix (..),
                                    defElmImports, defElmOptions,
                                    generateElmForAPIWith)
-import Text.PrettyPrint.Leijen.Text hiding ((<$>), (<>))
 
 import           Herd.Node
 import           Herd.Types
@@ -25,31 +24,37 @@ instance ElmType Avro.Type where
 deriving instance ElmType SubjectId
 deriving instance ElmType Version
 
--- instance HasEncoder SubjectId where
---   render (SubjectId x) = pure $ "Json.Encode.string" <+> (render x)
-
 elmOpts :: ElmOptions
 elmOpts =
-  defElmOptions
-    { urlPrefix = Static "http://localhost:8081" }
+  defElmOptions { urlPrefix = Static "http://localhost:8081" }
+
+-- embedDec :: Text -> RenderM ()
+-- embedDec dec = collectDeclaration (pure $ text dec)
+
+remoteApiSpec :: Spec
+remoteApiSpec =
+  moduleSpec ["Herd", "Console", "Remote", "API"] $ do
+    -- embedDec "type NoContent = NoContent"
+    renderType    (Proxy :: Proxy SubjectId)
+    -- renderDecoder (Proxy :: Proxy SubjectId)
+    -- renderEncoder (Proxy :: Proxy SubjectId)
+    renderType    (Proxy :: Proxy Version)
+    -- renderDecoder (Proxy :: Proxy Version)
+    -- renderEncoder (Proxy :: Proxy Version)
+    renderType    (Proxy :: Proxy Avro.Type)
+    -- renderDecoder (Proxy :: Proxy Avro.Type)
+    -- renderEncoder (Proxy :: Proxy Avro.Type)
+
+remoteHttpSpec :: Spec
+remoteHttpSpec =
+  Spec [ "Herd", "Console", "Remote", "HTTP" ]
+    ( "import Http"
+    : "import Herd.Console.Remote.API exposing (..)"
+    : generateElmForAPIWith elmOpts herdREST
+    )
 
 specs :: [Spec]
-specs =
-  [ Spec ["Herd", "Console", "Api"]
-         (defElmImports
-          : "type NoContent = NoContent"
-          : toElmTypeSource    (Proxy :: Proxy SubjectId)
-          : toElmDecoderSource (Proxy :: Proxy SubjectId)
-          -- : toElmEncoderSource (Proxy :: Proxy SubjectId)
-          : toElmTypeSource    (Proxy :: Proxy Version)
-          : toElmDecoderSource (Proxy :: Proxy Version)
-          -- : toElmEncoderSource (Proxy :: Proxy Version)
-          : toElmTypeSource    (Proxy :: Proxy Avro.Type)
-          : toElmDecoderSource (Proxy :: Proxy Avro.Type)
-          -- : toElmEncoderSource (Proxy :: Proxy Avro.Type)
-          : generateElmForAPIWith elmOpts herdREST
-          )
-  ]
+specs = [remoteApiSpec, remoteHttpSpec]
 
 main :: IO ()
 main = specsToDir specs "console/gen"

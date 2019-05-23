@@ -1,4 +1,4 @@
-FRONTEND_API := console/gen/Herd/Console/Api.elm
+FRONTEND_API := console/gen/Herd/Console/Remote/HTTP.elm
 
 all: backend ui
 
@@ -24,3 +24,6 @@ test: all
 
 install: test
 	@stack install
+
+fmt:
+	@./stylize.sh
