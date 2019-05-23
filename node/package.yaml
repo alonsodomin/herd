@@ -67,7 +67,6 @@ library:
   - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
-  - elm-export
   - json-rpc
   - optparse-applicative >= 0.14.2 && < 0.15
   - network-transport
@@ -81,6 +80,7 @@ library:
   - Herd.CLI
   - Herd.Data.SchemaRegistry
   - Herd.Data.SubjectLog
+  - Herd.Node
 
 executables:
   herd:
@@ -91,7 +91,20 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - herd-node    
+
+  herd-node-codegen:
+    main:                Main.hs
+    source-dirs:         codegen
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - elm-export
     - herd-node
+    - herd-protocol
+    - servant-elm
 
 tests:
   herd-test:

@@ -1,21 +1,24 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeOperators     #-}
 
 module Herd.Node.REST
-     ( startRESTServer
+     ( HerdREST
+     , startRESTServer
      ) where
 
-import Control.Monad.IO.Class
-import Control.Lens
-import Network.Wai (Application)
-import Network.Wai.Handler.Warp (run)
-import Servant
-import qualified Data.List.NonEmpty as NEL
-import           Data.Avro.Schema            (Schema)
+import           Control.Lens
+import           Control.Monad.IO.Class
+import           Data.Avro.Schema         (Schema)
+import qualified Data.List.NonEmpty       as NEL
+import           Network.Wai              (Application)
+import           Network.Wai.Handler.Warp (run)
+import           Servant
 
-import Herd.Node.Config
-import Herd.Node.API
-import Herd.Node.Core
-import Herd.Types
+import           Herd.Node.API
+import           Herd.Node.Config
+import           Herd.Node.Core
+import           Herd.Types
 
 type HerdREST = "subjects" :> Get '[JSON] [SubjectId]
            :<|> "subjects" :> Capture "subjectId" SubjectId :> Get '[JSON] [Version]

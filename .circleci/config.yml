@@ -11,13 +11,13 @@ jobs:
             - herd-{{ checksum "node/package.yaml" }}
       - run:
           name: Resolve/Update Dependencies
-          command: stack setup
+          command: make setup
       - run:
           name: Run tests
-          command: stack test
+          command: make test
       - run:
           name: Install executable
-          command: stack install
+          command: make install
       - save_cache:
           name: Cache Dependencies
           key: herd-{{ checksum "node/package.yaml" }}

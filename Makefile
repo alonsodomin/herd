@@ -1,3 +1,5 @@
+FRONTEND_API := "console/gen/Herd/Console/Api.elm"
+
 all: backend ui
 
 setup:
@@ -9,7 +11,16 @@ clean:
 	@cd console && make clean
 
 backend:
+	@stack build
+
+$(FRONTEND_API): backend
+	mkdir -p $(@D) && stack exec herd-node-codegen
+
+ui: $(FRONTEND_API)
+	@cd console && make build
+
+test: all
 	@stack test
 
-ui:
-	@cd console && make build
+install: test
+	@stack install
