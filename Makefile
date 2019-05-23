@@ -1,4 +1,4 @@
-FRONTEND_API := "console/gen/Herd/Console/Api.elm"
+FRONTEND_API := console/gen/Herd/Console/Api.elm
 
 all: backend ui
 

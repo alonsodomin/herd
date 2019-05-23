@@ -101,10 +101,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - elm-export
+    - elm-export >= 0.6.0.1 && < 0.7
     - herd-node
     - herd-protocol
     - servant-elm
+    - wl-pprint-text
 
 tests:
   herd-test:

@@ -4,6 +4,7 @@
 
 module Herd.Node.REST
      ( HerdREST
+     , herdREST
      , startRESTServer
      ) where
 

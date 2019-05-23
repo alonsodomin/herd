@@ -13,7 +13,7 @@ $(BUILD_FOLDER):
 	@mkdir -p $(BUILD_FOLDER)
 	@cp $(BASE_DIR)/static/* $(BUILD_FOLDER)/
 
-$(BUILD_FOLDER)/main.js: $(BUILD_FOLDER)
+$(BUILD_FOLDER)/main.js: $(BUILD_FOLDER) $(GEN_FOLDER)/Herd/Console/*.elm
 	@elm make src/Main.elm --output=$(BUILD_FOLDER)/main.js
 
 build: $(BUILD_FOLDER)/main.js

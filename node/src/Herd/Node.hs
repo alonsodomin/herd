@@ -4,6 +4,7 @@
 module Herd.Node
      ( HerdNode
      , HerdREST
+     , herdREST
      , startHerdNode
      ) where
 
