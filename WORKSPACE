@@ -7,6 +7,8 @@ load(
     "http_archive"
 )
 
+#### Haskell Support ####
+
 # Download `rules_haskell`.
 # and make it accessible `@io_tweag_rules_haskell`.
 http_archive(
