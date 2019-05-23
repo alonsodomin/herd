@@ -1,0 +1,15 @@
+load("@io_bazel_rules_purescript//purescript:purescript.bzl", "purescript_app", "purescript_test")
+
+dependencies = \
+    [ "@purescript_console//:pkg"
+    , "@purescript_effect//:pkg"
+    , "@purescript_prelude//:pkg"
+    ]
+
+# Defines an application with default entrypoint (Main.main):
+purescript_app(
+    name       = "purs-app",
+    visibility = ["//visibility:public"],
+    srcs       = glob(["src/**/*.purs"]),
+    deps       = dependencies,
+)

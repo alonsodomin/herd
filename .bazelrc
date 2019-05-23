@@ -1,0 +1,1 @@
+build --color=yes --incompatible_bzl_disallow_load_after_statement=false

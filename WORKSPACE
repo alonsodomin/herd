@@ -7,6 +7,8 @@ load(
     "http_archive"
 )
 
+#### Haskell Support ####
+
 # Download `rules_haskell`.
 # and make it accessible `@io_tweag_rules_haskell`.
 http_archive(
@@ -33,3 +35,5 @@ load(
 # Registers a haskell toolchain with a GHC binary
 # downloaded from haskell.org.
 haskell_register_ghc_bindists(version = "8.6.4")
+
+#### PureScript Support ####
