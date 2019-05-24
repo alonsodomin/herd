@@ -31,3 +31,4 @@ install: test
 
 fmt:
 	@./stylize.sh
+	@cd console && make fmt

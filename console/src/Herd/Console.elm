@@ -1,10 +1,11 @@
-module Herd.Console exposing (..)
+module Herd.Console exposing (herdConsole)
 
 import Browser
-import Html exposing (Html, table, thead, th, tbody, tr, td, text)
-import List
 import Dict
-
 import Herd.Console.SchemaList as SchemaList
+import Html exposing (Html, table, tbody, td, text, th, thead, tr)
+import List
 
-herdConsole = SchemaList.main
+
+herdConsole =
+    SchemaList.main

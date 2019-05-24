@@ -23,3 +23,6 @@ uglify: $(BUILD_FOLDER)/main.js
 
 clean:
 	@rm -fr $(BUILD_FOLDER) $(ELM_STUFF) $(GEN_FOLDER)
+
+fmt:
+	@elm-format src/ --yes
