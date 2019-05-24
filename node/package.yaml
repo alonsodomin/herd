@@ -102,7 +102,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - containers
-    #- elm-export >= 0.6.0.1 && < 0.7
     - elm-bridge
     - herd-node
     - servant-elm

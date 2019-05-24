@@ -48,11 +48,6 @@ extra-deps:
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
-#- ../elm-export
-# - github: alonsodomin/elm-export
-#   #commit: 3a8c979e439feff3e6d2bae913b07ed2c025c9d8
-#   commit: 5ce762a4ff45ac780eca61155ebfc1b8ebc12693
-#- ../servant-elm
 - github: alonsodomin/servant-elm
   commit: b8f0164e4c87c0ce8c93c5b27e3dfa486e89d871
 

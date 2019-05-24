@@ -1,5 +1,5 @@
 BASE_DIR := $(shell pwd)
-BUILD_FOLDER := $(BASE_DIR)/build
+BUILD_FOLDER := $(BASE_DIR)/dist
 GEN_FOLDER := $(BASE_DIR)/gen
 ELM_STUFF := $(BASE_DIR)/elm-stuff
 

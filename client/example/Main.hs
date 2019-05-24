@@ -13,7 +13,7 @@ import           System.Environment
 
 import           Herd.Client
 import           Herd.Data.Text
-import Herd.Types (AvroSchema (..))
+import           Herd.Types             (AvroSchema (..))
 
 main :: IO ()
 main = do
