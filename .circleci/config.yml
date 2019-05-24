@@ -2,13 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: fpco/stack-build:lts
+      - image: fpco/stack-build
     steps:
       - checkout
       - restore_cache:
           name: Restore Cached Dependencies
           keys:
-            - herd-{{ checksum "node/package.yaml" }}
+            - herd-node-{{ checksum "node/package.yaml" }}
+            - herd-console-{{ checksum "console/elm.json" }}
       - run:
           name: Resolve/Update Dependencies
           command: make setup
