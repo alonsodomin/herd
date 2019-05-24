@@ -48,10 +48,10 @@ extra-deps:
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
 #- ../elm-export
-- git: git@github.com:alonsodomin/elm-export.git
+- github: alonsodomin/elm-export
   #commit: 3a8c979e439feff3e6d2bae913b07ed2c025c9d8
   commit: 5ce762a4ff45ac780eca61155ebfc1b8ebc12693
-- git: git@github.com:domenkozar/servant-elm.git
+- github: domenkozar/servant-elm
   commit: db0262b67afef73e53773dd9a9fb8f49f028f73f
 
 # Override default flag values for local packages and extra-deps
