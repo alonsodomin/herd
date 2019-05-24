@@ -1,9 +1,9 @@
 module Herd.Console.Model exposing (..)
 
-import Herd.Console.Remote.Types exposing (..)
+import Herd.Console.SchemaList as SchemaList exposing (SchemaList)
 
 type alias Model =
-  { subjectIds : List SubjectId }
+  { schemas : SchemaList }
 
 init : Model
-init = { subjectIds = [ SubjectId "foo" ] }
+init = { schemas = SchemaList.empty }

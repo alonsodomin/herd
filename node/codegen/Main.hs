@@ -34,15 +34,14 @@ elmOpts =
 remoteApiSpec :: Spec
 remoteApiSpec =
   moduleSpec ["Herd", "Console", "Remote", "Types"] $ do
-    -- embedDec "type NoContent = NoContent"
     renderType    (Proxy :: Proxy SubjectId)
-    -- renderDecoder (Proxy :: Proxy SubjectId)
+    renderDecoder (Proxy :: Proxy SubjectId)
     -- renderEncoder (Proxy :: Proxy SubjectId)
     renderType    (Proxy :: Proxy Version)
-    -- renderDecoder (Proxy :: Proxy Version)
+    renderDecoder (Proxy :: Proxy Version)
     -- renderEncoder (Proxy :: Proxy Version)
     renderType    (Proxy :: Proxy Avro.Type)
-    -- renderDecoder (Proxy :: Proxy Avro.Type)
+    renderDecoder (Proxy :: Proxy Avro.Type)
     -- renderEncoder (Proxy :: Proxy Avro.Type)
 
 remoteHttpSpec :: Spec
