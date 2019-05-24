@@ -16,7 +16,6 @@ import           Control.Distributed.Process.Extras         hiding (sendChan)
 import           Control.Distributed.Process.Extras.Time    (Delay (..))
 import           Control.Distributed.Process.ManagedProcess
 import           Control.Monad
-import           Data.Avro.Schema                           (Schema)
 import           Data.Binary                                (Binary (..))
 import           Data.List.NonEmpty                         (NonEmpty)
 import           Data.Typeable
@@ -37,7 +36,7 @@ data GetVersions = GetVersions !SubjectId
 data GetSchema = GetSchema !SubjectId !Version
   deriving (Eq, Show, Generic, Typeable, Binary)
 
-data RegisterSchema = RegisterSchema !SubjectId !Schema
+data RegisterSchema = RegisterSchema !SubjectId !AvroSchema
   deriving (Eq, Show, Generic, Typeable, Binary)
 
 data DeleteSchema = DeleteSchema !SubjectId !Version
@@ -64,10 +63,10 @@ getSubjectIds reg = call reg GetSubjectIds
 getVersions :: SubjectId -> SchemaRegistryServer -> Process (Maybe (NonEmpty Version))
 getVersions sid reg = call reg $ GetVersions sid
 
-getSchema :: SubjectId -> Version -> SchemaRegistryServer -> Process (Maybe Schema)
+getSchema :: SubjectId -> Version -> SchemaRegistryServer -> Process (Maybe AvroSchema)
 getSchema sid v reg = call reg $ GetSchema sid v
 
-registerSchema :: SubjectId -> Schema -> SchemaRegistryServer -> Process ()
+registerSchema :: SubjectId -> AvroSchema -> SchemaRegistryServer -> Process ()
 registerSchema sid sch reg = call reg $ RegisterSchema sid sch
 
 deleteSchema :: SubjectId -> Version -> SchemaRegistryServer -> Process (Maybe ())
@@ -82,7 +81,7 @@ handleGetVersions :: SchemaRegistry -> GetVersions -> Process (ProcessReply (May
 handleGetVersions reg (GetVersions subjectId) =
   reply (Registry.getVersions subjectId reg) reg
 
-handleGetSchema :: SchemaRegistry -> GetSchema -> Process (ProcessReply (Maybe Schema) SchemaRegistry)
+handleGetSchema :: SchemaRegistry -> GetSchema -> Process (ProcessReply (Maybe AvroSchema) SchemaRegistry)
 handleGetSchema reg (GetSchema subjectId version) =
   reply (Registry.getSchema subjectId version reg) reg
 

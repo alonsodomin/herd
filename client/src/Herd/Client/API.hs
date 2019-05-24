@@ -16,7 +16,7 @@ module Herd.Client.API
 import           Control.Lens         (view)
 import           Data.Avro            (FromAvro, ToAvro)
 import qualified Data.Avro            as Avro
-import           Data.Avro.Schema     (Schema)
+-- import           Data.Avro.Schema     (Schema)
 import qualified Data.ByteString      as BS
 import qualified Data.ByteString.Lazy as BSL
 import           Data.List.NonEmpty   (NonEmpty ((:|)))
@@ -34,11 +34,11 @@ getSubjectIds = sendToServer GetSubjectIdsReq _GetSubjectIdsRes
 getSchemaVersions :: MonadClient m => SubjectId -> m (NonEmpty Version)
 getSchemaVersions subjectId = sendToServer (GetSchemaVersionsReq subjectId) _GetSchemaVersionsRes
 
-getSchema :: MonadClient m => SubjectId -> Version -> m Schema
+getSchema :: MonadClient m => SubjectId -> Version -> m AvroSchema
 getSchema subjectId version =
   sendToServer (GetSchemaReq subjectId version) _GetSchemaRes
 
-registerSchema :: MonadClient m => SubjectId -> Schema -> m ()
+registerSchema :: MonadClient m => SubjectId -> AvroSchema -> m ()
 registerSchema subjectId schema =
   sendToServer (RegisterSchemaReq subjectId schema) _RegisterSchemaRes
 

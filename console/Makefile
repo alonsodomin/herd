@@ -6,14 +6,14 @@ ELM_STUFF := $(BASE_DIR)/elm-stuff
 all: build
 
 setup:
-	@npm install -g elm
+	@npm install -g elm@elm0.19.0 elm-format@elm0.19.0
 	@npm install -g uglify-js
 
 $(BUILD_FOLDER):
 	@mkdir -p $(BUILD_FOLDER)
 	@cp $(BASE_DIR)/static/* $(BUILD_FOLDER)/
 
-$(BUILD_FOLDER)/main.js: $(BUILD_FOLDER) $(GEN_FOLDER)/Herd/Console/Remote/*.elm
+$(BUILD_FOLDER)/main.js: $(BUILD_FOLDER) $(GEN_FOLDER)/Herd/Console/Remote.elm
 	@elm make Main.elm --output=$(BUILD_FOLDER)/main.js
 
 build: $(BUILD_FOLDER)/main.js

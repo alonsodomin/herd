@@ -1,26 +1,59 @@
-module Herd.Console.SchemaList exposing (SchemaList, empty, view)
+module Herd.Console.SchemaList exposing (SchemaList, view, main)
 
+import Browser
 import Html exposing (Html, table, thead, th, tbody, tr, td, text)
 import Dict exposing (Dict)
 
-import Herd.Console.Remote.Types exposing (..)
+import Herd.Console.Remote exposing (..)
+
+main =
+  Browser.element
+    { init = init
+    , update = update
+    , subscriptions = subscriptions
+    , view = view
+    }
 
 type alias SchemaList = Dict SubjectId (List Version)
 
-empty : SchemaList
-empty = Dict.empty
+type Msg = GotSchemaList SchemaList
 
-view : SchemaList -> Html msg
-view reg = table [] [
+type Model = 
+    Initializing
+  | Ready SchemaList
+
+init : () -> (Model, Cmd Msg)
+init _ =
+  let loadSchemaList = Cmd.none
+  in (Initializing, loadSchemaList)
+  
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+  case msg of
+    GotSchemaList list -> (Ready list, Cmd.none)
+
+subscriptions : Model -> Sub Msg
+subscriptions _ = Sub.none
+
+-- View operations
+
+view : Model -> Html msg
+view model =
+  case model of
+    Initializing -> text ""
+    Ready ls    -> viewSchemaList ls
+
+viewSchemaList : SchemaList -> Html msg
+viewSchemaList list = table [] [
     thead [] [
       tr [] [
         th [] [ text "Subject ID" ]
       ]
     ]
-  , tbody [] (List.map viewSubjectId (Dict.keys reg))
+  , tbody [] (List.map viewSubjectId (Dict.keys list))
   ]
 
 viewSubjectId : SubjectId -> Html msg
-viewSubjectId (SubjectId subjectId) = tr [] [
+viewSubjectId subjectId = tr [] [
     td [] [ text subjectId ]
   ]

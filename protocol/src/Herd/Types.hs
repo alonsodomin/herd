@@ -17,6 +17,7 @@ module Herd.Types
      , srPayload
      , srTime
      , AvroSchema (..)
+     , asSchema
      ) where
 
 import           Control.Lens                 hiding ((.=))
@@ -121,7 +122,10 @@ instance Binary Schema where
   get = (get :: B.Get ByteString) >>= ((either fail pure) . JSON.eitherDecode' . BSL.fromStrict)
 
 newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
-  deriving (Eq, Generic, Typeable, Binary)
+  deriving (Eq, Generic, Typeable, Binary, FromJSON, ToJSON)
+
+asSchema :: Getter AvroSchema Schema
+asSchema = to unwrapSchema
 
 instance Show AvroSchema where
   showsPrec p (AvroSchema sch) = showsPrec p (JSON.encode sch)

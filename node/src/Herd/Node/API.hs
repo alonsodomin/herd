@@ -1,6 +1,5 @@
 module Herd.Node.API where
 
-import           Data.Avro.Schema            (Schema)
 import           Data.ByteString             (ByteString)
 import           Data.List.NonEmpty          (NonEmpty)
 import           Data.Time.Clock             (UTCTime)
@@ -18,10 +17,10 @@ getSubjectIds = withRegistry Reg.getSubjectIds
 getSchemaVersions :: SubjectId -> HerdProcess (Maybe (NonEmpty Version))
 getSchemaVersions subjectId = withRegistry (Reg.getVersions subjectId)
 
-getSchema :: SubjectId -> Version -> HerdProcess (Maybe Schema)
+getSchema :: SubjectId -> Version -> HerdProcess (Maybe AvroSchema)
 getSchema subjectId version = withRegistry (Reg.getSchema subjectId version)
 
-registerSchema :: SubjectId -> Schema -> HerdProcess ()
+registerSchema :: SubjectId -> AvroSchema -> HerdProcess ()
 registerSchema sid sch = withRegistry (Reg.registerSchema sid sch)
 
 deleteSchema :: SubjectId -> Version -> HerdProcess (Maybe ())

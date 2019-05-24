@@ -1,4 +1,4 @@
-FRONTEND_API := console/gen/Herd/Console/Remote/HTTP.elm
+FRONTEND_API := console/gen/Herd/Console/Remote.elm
 
 all: backend ui
 
@@ -6,9 +6,13 @@ setup:
 	@stack setup
 	@cd console && make setup
 
-clean:
+backend-clean:
 	@stack clean
+
+ui-clean:
 	@cd console && make clean
+
+clean: backend-clean ui-clean
 
 backend:
 	@stack build

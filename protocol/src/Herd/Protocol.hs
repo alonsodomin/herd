@@ -19,7 +19,6 @@ module Herd.Protocol
 import           Control.Lens                hiding ((.=))
 import           Data.Aeson
 import qualified Data.Aeson.Types            as JSON
-import           Data.Avro.Schema            (Schema)
 import           Data.Binary.Orphans         ()
 import qualified Data.ByteString.Base64.Lazy as Base64
 import           Data.ByteString.Lazy        (ByteString)
@@ -39,7 +38,7 @@ data HerdRequest =
     GetSubjectIdsReq
   | GetSchemaVersionsReq SubjectId
   | GetSchemaReq SubjectId Version
-  | RegisterSchemaReq SubjectId Schema
+  | RegisterSchemaReq SubjectId AvroSchema
   | DeleteSchemaReq SubjectId Version
   --
   | ReadSubjectReq SubjectId UTCTime
@@ -139,7 +138,7 @@ data HerdResponse =
     Done
   | GetSubjectIdsRes [SubjectId]
   | GetSchemaVersionsRes (NonEmpty Version)
-  | GetSchemaRes Schema
+  | GetSchemaRes AvroSchema
   --
   | ReadSubjectRes [SubjectRecord]
   | WriteSubjectRes SubjectRecordId

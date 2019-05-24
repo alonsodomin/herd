@@ -20,9 +20,9 @@ import qualified Data.Map.NonEmpty  as NEM
 
 import           Herd.Types
 
-type SchemaRegistry = HashMap SubjectId (NEMap Version Schema)
+type SchemaRegistry = HashMap SubjectId (NEMap Version AvroSchema)
 
-latestVersion :: NEMap Version Schema -> Version
+latestVersion :: NEMap Version AvroSchema -> Version
 latestVersion = NEL.last . NEM.keys
 
 empty :: SchemaRegistry
@@ -37,7 +37,7 @@ getVersions subjectId reg = NEM.keys <$> Map.lookup subjectId reg
 getLatestVersion :: SubjectId -> SchemaRegistry -> Maybe Version
 getLatestVersion subjectId reg = latestVersion <$> Map.lookup subjectId reg
 
-getSchema :: SubjectId -> Version -> SchemaRegistry -> Maybe Schema
+getSchema :: SubjectId -> Version -> SchemaRegistry -> Maybe AvroSchema
 getSchema subjectId version reg =
   let versions = Map.lookup subjectId reg
   in NEM.lookup version =<< versions
@@ -46,10 +46,10 @@ deleteSchema :: SubjectId -> Version -> SchemaRegistry -> SchemaRegistry
 deleteSchema subjectId version =
   Map.update (NEM.nonEmptyMap . NEM.delete version) subjectId
 
-registerSchema :: SubjectId -> Schema -> SchemaRegistry -> SchemaRegistry
+registerSchema :: SubjectId -> AvroSchema -> SchemaRegistry -> SchemaRegistry
 registerSchema subjectId schema =
   Map.alter populateSchema subjectId
-  where populateSchema :: Maybe (NEMap Version Schema) -> Maybe (NEMap Version Schema)
+  where populateSchema :: Maybe (NEMap Version AvroSchema) -> Maybe (NEMap Version AvroSchema)
         populateSchema Nothing     = Just $ NEM.singleton initialVersion schema
         populateSchema (Just prev) = Just $
           let latestV = latestVersion prev

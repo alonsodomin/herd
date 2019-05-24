@@ -13,6 +13,7 @@ import           System.Environment
 
 import           Herd.Client
 import           Herd.Data.Text
+import Herd.Types (AvroSchema (..))
 
 main :: IO ()
 main = do
@@ -21,9 +22,9 @@ main = do
   where herdProgram = do
           $(logDebug) "making some requests to the Herd server"
 
-          registerSchema "foo" Avro.Boolean
-          registerSchema "bar" Avro.Int
-          registerSchema "foo" Avro.String
+          registerSchema "foo" $ AvroSchema Avro.Boolean
+          registerSchema "bar" $ AvroSchema Avro.Int
+          registerSchema "foo" $ AvroSchema Avro.String
 
           subjectIds <- getSubjectIds
           liftIO . T.putStrLn $ "Subject IDs: " <> (toText subjectIds)

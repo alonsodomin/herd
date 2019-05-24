@@ -10,7 +10,6 @@ module Herd.Node.REST
 
 import           Control.Lens
 import           Control.Monad.IO.Class
-import           Data.Avro.Schema         (Schema)
 import qualified Data.List.NonEmpty       as NEL
 import           Network.Wai              (Application)
 import           Network.Wai.Handler.Warp (run)
@@ -23,7 +22,7 @@ import           Herd.Types
 
 type HerdREST = "subjects" :> Get '[JSON] [SubjectId]
            :<|> "subjects" :> Capture "subjectId" SubjectId :> Get '[JSON] [Version]
-           :<|> "subjects" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Get '[JSON] (Maybe Schema)
+           :<|> "subjects" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Get '[JSON] (Maybe AvroSchema)
 
 instance FromHttpApiData SubjectId where
   parseUrlPiece = Right . SubjectId
@@ -58,7 +57,7 @@ handleGetSubjectVersions env subjectId = do
     Just vs -> return $ NEL.toList vs
     Nothing -> return []
 
-handleGetSchema :: HerdEnv -> SubjectId -> Version -> Handler (Maybe Schema)
+handleGetSchema :: HerdEnv -> SubjectId -> Version -> Handler (Maybe AvroSchema)
 handleGetSchema env subjectId version =
   liftIO $ runAction env $ invokeAction (getSchema subjectId version)
 
