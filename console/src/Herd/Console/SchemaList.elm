@@ -22,7 +22,7 @@ type alias SchemaList =
 
 latestVersion : SubjectId -> SchemaList -> Maybe Version
 latestVersion subjectId list =
-    Dict.get subjectId list |> Maybe.andThen List.head
+    Dict.get subjectId list |> Maybe.andThen List.maximum
 
 
 type Msg
@@ -135,14 +135,16 @@ viewSchemaList list =
         [ thead []
             [ tr []
                 [ th [] [ text "Subject ID" ]
+                , th [] [ text "Version" ]
                 ]
             ]
-        , tbody [] (List.map viewSubjectId (Dict.keys list))
+        , tbody [] (List.map viewSubjectId (Dict.toList list))
         ]
 
 
-viewSubjectId : SubjectId -> Html msg
-viewSubjectId subjectId =
+viewSubjectId : (SubjectId, List Version) -> Html msg
+viewSubjectId (subjectId, versions) =
     tr []
         [ td [] [ text subjectId ]
+        , td [] [ text ((Maybe.withDefault 0 (List.maximum versions)) |> String.fromInt) ]
         ]
