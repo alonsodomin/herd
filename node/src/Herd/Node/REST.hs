@@ -10,9 +10,10 @@ module Herd.Node.REST
 
 import           Control.Lens
 import           Control.Monad.IO.Class
-import qualified Data.List.NonEmpty       as NEL
-import           Network.Wai              (Application)
-import           Network.Wai.Handler.Warp (run)
+import qualified Data.List.NonEmpty          as NEL
+import           Network.Wai                 (Application)
+import           Network.Wai.Handler.Warp    (run)
+import           Network.Wai.Middleware.Cors (simpleCors)
 import           Servant
 
 import           Herd.Node.API
@@ -43,7 +44,7 @@ herdRESTServer env = handleGetSubjects env
                 :<|> handleGetSchema env
 
 herdRESTApp :: HerdEnv -> Application
-herdRESTApp env = serve herdREST (herdRESTServer env)
+herdRESTApp env = simpleCors $ serve herdREST (herdRESTServer env)
 
 -- Handlers
 

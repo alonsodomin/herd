@@ -19,8 +19,11 @@ main =
 type alias SchemaList =
     Dict SubjectId (List Version)
 
+
 latestVersion : SubjectId -> SchemaList -> Maybe Version
-latestVersion subjectId list = (Dict.get subjectId list) |> Maybe.andThen List.head
+latestVersion subjectId list =
+    Dict.get subjectId list |> Maybe.andThen List.head
+
 
 type Msg
     = GotSubjectIds (Result Http.Error (List SubjectId))
