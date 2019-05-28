@@ -35,7 +35,7 @@ describeRegistry = hspec $ do
 
     it "should register a new schema with the initial version" $ do
       let subjectId = SubjectId "foo"
-      let schema    = Avro.Boolean
+      let schema    = AvroSchema Avro.Boolean
 
       let registerAndRetrieve = do
             modify $ registerSchema subjectId schema
@@ -46,8 +46,8 @@ describeRegistry = hspec $ do
 
     it "should bump schema version when registering a new one" $ do
       let subjectId = SubjectId "foo"
-      let schema1   = Avro.Boolean
-      let schema2   = Avro.mkUnion (Avro.Null :| [Avro.Boolean])
+      let schema1   = AvroSchema Avro.Boolean
+      let schema2   = AvroSchema $ Avro.mkUnion (Avro.Null :| [Avro.Boolean])
 
       let expectedVersion = Just $ nextVersion initialVersion
 
@@ -67,7 +67,7 @@ describeRegistry = hspec $ do
 
     it "should delete an existent schema" $ do
       let subjectId = SubjectId "foo"
-      let schema    = Avro.Boolean
+      let schema    = AvroSchema Avro.Boolean
 
       let registerAndDelete = do
             modify $ registerSchema subjectId schema
