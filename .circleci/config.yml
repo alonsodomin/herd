@@ -2,7 +2,6 @@ version: 2
 jobs:
   build:
     docker:
-      #- image: fpco/stack-build:lts-12.26
       - image: alonsodomin/herd-circleci
     steps:
       - checkout
