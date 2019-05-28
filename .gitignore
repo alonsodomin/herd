@@ -2,3 +2,9 @@
 *~
 *.cabal
 *.iml
+
+# Console 
+elm-stuff/
+dist/
+gen/
+node_modules/
