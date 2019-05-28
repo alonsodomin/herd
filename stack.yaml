@@ -50,7 +50,7 @@ extra-deps:
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
 # - ../servant-elm
 - github: alonsodomin/servant-elm
-  commit: 78eb5789695bc6be88d928d86c760a11dbdc4476
+  commit: 641bb8d765fa1e09f258ec57be292960a1a0d140
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

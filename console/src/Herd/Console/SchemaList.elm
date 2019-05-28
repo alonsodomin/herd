@@ -32,12 +32,12 @@ type Msg
 
 loadSubjectIds : Cmd Msg
 loadSubjectIds =
-    Http.send GotSubjectIds <| Remote.getSubjects
+    Remote.getSubjects GotSubjectIds
 
 
 loadVersions : SubjectId -> Cmd Msg
 loadVersions subjectId =
-    Http.send (GotSchemaVersions subjectId) <| Remote.getSubjectsBySubjectId subjectId
+    Remote.getSubjectsBySubjectId subjectId (GotSchemaVersions subjectId)
 
 
 type Model
@@ -68,11 +68,11 @@ handleError err =
         Http.NetworkError ->
             Failure "Network error!"
 
-        Http.BadStatus res ->
-            Failure ("Bad status code: " ++ res.status.message ++ " url: " ++ res.url)
+        Http.BadStatus code ->
+            Failure ("Bad status code: " ++ (String.fromInt code))
 
-        Http.BadPayload _ _ ->
-            Failure "Bad payload"
+        Http.BadBody msg ->
+            Failure ("Bad body: " ++ msg)
 
 
 init : () -> ( Model, Cmd Msg )
