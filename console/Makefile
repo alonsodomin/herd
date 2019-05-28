@@ -6,8 +6,9 @@ ELM_STUFF := $(BASE_DIR)/elm-stuff
 all: build
 
 setup:
-	@npm install elm@elm0.19.0 elm-format@elm0.19.0
-	@npm install uglify-js
+	@npm install -g elm@0.19.0-no-deps
+	@npm install -g --unsafe-perm elm-format@elm0.19.0
+	@npm install -g uglify-js
 
 $(BUILD_FOLDER):
 	@mkdir -p $(BUILD_FOLDER)
