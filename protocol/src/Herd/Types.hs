@@ -144,4 +144,4 @@ instance FromJSON AvroSchema where
   parseJSON str = AvroSchema <$> parseJSON str
 
 instance ToJSON AvroSchema where
-  toJSON (AvroSchema schema) = JSON.String (TL.toStrict $ JSON.encodeToLazyText schema)
+  toJSON (AvroSchema schema) = toJSON schema

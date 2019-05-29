@@ -22,4 +22,4 @@ jsonEncSchema =
 
 toString : Schema -> String
 toString schema =
-    Json.encode 0 (encodeType schema)
+    Json.encode 4 (encodeType schema)

@@ -19,6 +19,21 @@ encodeType typ =
         Type.Int ->
             Json.string "int"
 
+        Type.Long ->
+            Json.string "long"
+
+        Type.Float ->
+            Json.string "float"
+
+        Type.Double ->
+            Json.string "double"
+
+        Type.Bytes ->
+            Json.string "bytes"
+
+        Type.String ->
+            Json.string "string"
+
         Type.Union { options } ->
             Json.array encodeType (Array.fromList (NEL.toList options))
 
@@ -29,6 +44,11 @@ decodeType =
         [ decodeNull
         , decodeBoolean
         , decodeInt
+        , decodeLong
+        , decodeFloat
+        , decodeDouble
+        , decodeBytes
+        , decodeString
         , Decode.lazy (\_ -> decodeUnion)
         ]
 
@@ -62,6 +82,31 @@ decodeInt =
     decodeFromString <| match "int" ( "Not an int", Type.Int )
 
 
+decodeLong : Decoder Type
+decodeLong =
+    decodeFromString <| match "long" ( "Not a long", Type.Long )
+
+
+decodeFloat : Decoder Type
+decodeFloat =
+    decodeFromString <| match "float" ( "Not a float", Type.Float )
+
+
+decodeDouble : Decoder Type
+decodeDouble =
+    decodeFromString <| match "double" ( "Not a double", Type.Double )
+
+
+decodeBytes : Decoder Type
+decodeBytes =
+    decodeFromString <| match "bytes" ( "Not bytes", Type.Bytes )
+
+
+decodeString : Decoder Type
+decodeString =
+    decodeFromString <| match "string" ( "Not a string", Type.String )
+
+
 decodeUnion : Decoder Type
 decodeUnion =
     let
@@ -71,7 +116,7 @@ decodeUnion =
                     Decode.succeed <| Type.Union { options = opts }
 
                 Nothing ->
-                    Decode.fail "Empty union"
+                    Decode.fail "Empty union!"
     in
     Decode.array decodeType
         |> Decode.map Array.toList

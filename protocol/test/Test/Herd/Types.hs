@@ -19,4 +19,4 @@ describeAvroSchema = hspec $ do
   describe "AvroSchema" $ do
     it "should encode as a JSON string" $ do
       let schema    = AvroSchema Avro.Boolean
-      toJSON schema `shouldBe` JSON.String "\"boolean\""
+      toJSON schema `shouldBe` JSON.String "boolean"

@@ -7,4 +7,9 @@ type Type
     = Null
     | Boolean
     | Int
+    | Long
+    | Float
+    | Double
+    | Bytes
+    | String
     | Union { options : Nonempty Type }
