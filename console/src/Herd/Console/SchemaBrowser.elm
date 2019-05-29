@@ -1,6 +1,6 @@
 module Herd.Console.SchemaBrowser exposing (Model, Msg, init, update, view)
 
-import Debug
+import Avro as Avro
 import Dict exposing (Dict)
 import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
 import Herd.Console.Remote as Remote exposing (AvroSchema, SubjectId, Version)
@@ -8,19 +8,21 @@ import Herd.Fetch as Fetch exposing (Fetch)
 import Html exposing (..)
 import Html.Attributes as Html
 import Http
+import Json.Encode as Json
 import List.Nonempty as NEL exposing (Nonempty)
 import Material
 import Material.Drawer.Dismissible as Drawer
 import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
 import Material.Menu as Menu
-import Material.Options as Options exposing (styled)
+import Material.Options as Options exposing (styled, when)
 import Material.TopAppBar as TopAppBar
 
 
 type Msg
     = Mdc (Material.Msg Msg)
     | ClickedSchema SubjectId Version
+    | ToggleDrawer
     | GotSubjectIds (Result Http.Error (List SubjectId))
     | GotSchemaVersions SubjectId (Result Http.Error (Maybe (Nonempty Version)))
     | GotSchema (Result Http.Error (Maybe AvroSchema))
@@ -45,6 +47,7 @@ type alias Model =
     { mdc : Material.Model Msg
     , schemaIndex : Fetch SchemaIndex
     , selectedSchema : Maybe (Fetch AvroSchema)
+    , drawerOpen : Bool
     }
 
 
@@ -53,6 +56,7 @@ initialModel =
     { mdc = Material.defaultModel
     , schemaIndex = Fetch.pending
     , selectedSchema = Nothing
+    , drawerOpen = True
     }
 
 
@@ -70,7 +74,10 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickedSchema subjectId version ->
-            ( { model | selectedSchema = Just Fetch.pending }, loadSchema (Debug.log "subjectId" subjectId) (Debug.log "version" version) )
+            ( { model | selectedSchema = Just Fetch.pending }, loadSchema subjectId version )
+
+        ToggleDrawer ->
+            ( { model | drawerOpen = not model.drawerOpen }, Cmd.none)
 
         GotSubjectIds result ->
             case result of
@@ -119,7 +126,13 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    viewDrawer model
+    Html.div []
+        [ viewTopBar model 
+        , styled Html.div
+            [ TopAppBar.fixedAdjust ]
+            [ viewDrawer model ]
+        ]
+    
 
 
 viewTopBar : Model -> Html Msg
@@ -132,8 +145,7 @@ viewTopBar model =
             [ TopAppBar.navigationIcon Mdc
                 "burger-menu"
                 model.mdc
-                []
-                -- [ Options.onClick OpenDrawer ]
+                [ Options.onClick ToggleDrawer ]
                 "menu"
             , TopAppBar.title [] [ text "Herd" ]
             ]
@@ -146,7 +158,9 @@ viewDrawer model =
         [ Drawer.view Mdc
             "herd-drawer"
             model.mdc
-            []
+            [ Drawer.open |> when model.drawerOpen
+            , Drawer.onClose ToggleDrawer
+            ]
             [ Drawer.header []
                 [ styled h3 [ Drawer.title ] [ text "Herd" ]
                 , styled h6 [ Drawer.subTitle ] [ text "username" ]
@@ -168,9 +182,7 @@ viewDrawer model =
             ]
         , styled Html.div
             [ Drawer.appContent ]
-            [ viewTopBar model
-            , styled Html.div [ TopAppBar.fixedAdjust ] [ viewSchemaBrowser model ]
-            ]
+            [ viewSchemaBrowser model ]
         ]
 
 
@@ -219,7 +231,7 @@ viewSelectedSchema : Maybe (Fetch AvroSchema) -> Html Msg
 viewSelectedSchema selected =
     case selected of
         Just fetched ->
-            Fetch.view text fetched
+            Fetch.view (\x -> text <| Avro.toString x) fetched
 
         Nothing ->
             text "No schema selected"

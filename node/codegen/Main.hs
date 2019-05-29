@@ -9,6 +9,8 @@ module Main where
 import           Control.Lens
 import qualified Data.Avro.Schema    as Avro
 import           Data.Proxy          (Proxy (Proxy))
+import Data.Text (Text)
+import qualified Data.Text as T
 import           Elm.TyRep
 import           Options.Applicative
 import           Servant.Elm         (DefineElm (DefineElm),
@@ -25,7 +27,7 @@ deriveElmDef defaultOptions ''SubjectId
 deriveElmDef defaultOptions ''Version
 
 instance IsElmDefinition AvroSchema where
-  compileElmDef _ = ETypePrimAlias $ EPrimAlias (ETypeName "AvroSchema" []) (ETyCon $ ETCon "String")
+  compileElmDef _ = ETypePrimAlias $ EPrimAlias (ETypeName "AvroSchema" []) (ETyCon $ ETCon "Schema")
 
 typeDefs =
   [ DefineElm (Proxy :: Proxy SubjectId)
@@ -38,8 +40,14 @@ apiType = (Proxy :: Proxy HerdREST)
 elmOpts :: ElmOptions
 elmOpts = defElmOptions
   { urlPrefix      = Static "http://localhost:8081"
-  , stringElmTypes = (toElmType (Proxy :: Proxy SubjectId)):(toElmType (Proxy :: Proxy AvroSchema)):(stringElmTypes defElmOptions)
+  , stringElmTypes = (toElmType (Proxy :: Proxy SubjectId)):(stringElmTypes defElmOptions)
   }
+
+elmImports :: Text
+elmImports = T.unlines
+  [ "import Avro exposing (..)"
+  , defElmImports
+  ]
 
 moduleHeader = [ "Herd", "Console", "Remote" ]
 
@@ -73,4 +81,4 @@ main = runCodeGen =<< execParser opts
 
 runCodeGen :: HerdCodegenOpts -> IO ()
 runCodeGen opts =
-  generateElmModuleWith elmOpts moduleHeader defElmImports (opts ^. hcoDestFolder) typeDefs apiType
+  generateElmModuleWith elmOpts moduleHeader elmImports (opts ^. hcoDestFolder) typeDefs apiType
