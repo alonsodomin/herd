@@ -1,62 +1,79 @@
 module Avro.Json exposing (decodeType, encodeType)
 
-import Avro.Types exposing (..)
+import Array
+import Avro.Types as Type exposing (Type)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Json
+import List.Nonempty as NEL exposing (Nonempty)
 
 
 encodeType : Type -> Json.Value
 encodeType typ =
     case typ of
-        Null ->
+        Type.Null ->
             Json.string "null"
 
-        Boolean ->
+        Type.Boolean ->
             Json.string "boolean"
 
-        Int ->
+        Type.Int ->
             Json.string "int"
+
+        Type.Union { options } ->
+            Json.array encodeType (Array.fromList (NEL.toList options))
 
 
 decodeType : Decoder Type
 decodeType =
-    Decode.oneOf [ decodeNull, decodeBoolean, decodeInt ]
+    Decode.oneOf
+        [ decodeNull
+        , decodeBoolean
+        , decodeInt
+        , Decode.lazy (\_ -> decodeUnion)
+        ]
+
+
+match : a -> ( String, Type ) -> a -> Decoder Type
+match toMatch ( err, res ) value =
+    if value == toMatch then
+        Decode.succeed res
+
+    else
+        Decode.fail err
+
+
+decodeFromString : (String -> Decoder Type) -> Decoder Type
+decodeFromString f =
+    Decode.string |> Decode.andThen f
 
 
 decodeNull : Decoder Type
 decodeNull =
-    let
-        succeedIfNull value =
-            if value == "null" then
-                Decode.succeed Null
-
-            else
-                Decode.fail "Not a null"
-    in
-    Decode.string |> Decode.andThen succeedIfNull
+    decodeFromString <| match "null" ( "Not a null", Type.Null )
 
 
 decodeBoolean : Decoder Type
 decodeBoolean =
-    let
-        succeedIfBoolean value =
-            if value == "boolean" then
-                Decode.succeed Boolean
-
-            else
-                Decode.fail "Not a boolean"
-    in
-    Decode.string |> Decode.andThen succeedIfBoolean
+    decodeFromString <| match "boolean" ( "Not a boolean", Type.Boolean )
 
 
 decodeInt : Decoder Type
 decodeInt =
-    let
-        succeedIfInt value =
-            if value == "int" then
-                Decode.succeed Int
+    decodeFromString <| match "int" ( "Not an int", Type.Int )
 
-            else
-                Decode.fail "Not an int"
+
+decodeUnion : Decoder Type
+decodeUnion =
+    let
+        handleParsed parsed =
+            case parsed of
+                Just opts ->
+                    Decode.succeed <| Type.Union { options = opts }
+
+                Nothing ->
+                    Decode.fail "Empty union"
     in
-    Decode.string |> Decode.andThen succeedIfInt
+    Decode.array decodeType
+        |> Decode.map Array.toList
+        |> Decode.map NEL.fromList
+        |> Decode.andThen handleParsed
