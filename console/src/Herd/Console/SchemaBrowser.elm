@@ -19,9 +19,11 @@ import Material.TopAppBar as TopAppBar
 
 
 type Msg
-    = GotSubjectIds (Result Http.Error (List SubjectId))
+    = Mdc (Material.Msg Msg)
+    | ClickedSchema SubjectId Version
+    | GotSubjectIds (Result Http.Error (List SubjectId))
     | GotSchemaVersions SubjectId (Result Http.Error (Maybe (Nonempty Version)))
-    | Mdc (Material.Msg Msg)
+    | GotSchema (Result Http.Error (Maybe AvroSchema))
 
 
 loadSubjectIds : Cmd Msg
@@ -32,6 +34,11 @@ loadSubjectIds =
 loadVersions : SubjectId -> Cmd Msg
 loadVersions subjectId =
     Remote.getSubjectsBySubjectId subjectId (\rs -> GotSchemaVersions subjectId (Result.map NEL.fromList rs))
+
+
+loadSchema : SubjectId -> Version -> Cmd Msg
+loadSchema subjectId version =
+    Remote.getSubjectsBySubjectIdByVersion subjectId version GotSchema
 
 
 type alias Model =
@@ -86,6 +93,9 @@ init _ =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ClickedSchema subjectId version ->
+            ( { model | selectedSchema = Just Pending }, loadSchema subjectId version )
+
         GotSubjectIds result ->
             case result of
                 Ok [] ->
@@ -105,6 +115,17 @@ update msg model =
                             modelToSchemaList model
                     in
                     ( { model | schemaIndex = Ready (SchemaIndex.insert subjectId versions list) }, Cmd.none )
+
+                Ok Nothing ->
+                    ( model, Cmd.none )
+
+                Err err ->
+                    ( handleError err model, Cmd.none )
+
+        GotSchema result ->
+            case result of
+                Ok (Just schema) ->
+                    ( { model | selectedSchema = Just (Ready schema) }, Cmd.none )
 
                 Ok Nothing ->
                     ( model, Cmd.none )
@@ -183,6 +204,9 @@ viewSchemaBrowser model =
         [ LayoutGrid.cell
             [ LayoutGrid.span4 ]
             [ viewSchemaIndex model ]
+        , LayoutGrid.cell
+            [ LayoutGrid.span8 ]
+            [ viewSelectedSchema model.selectedSchema ]
         ]
 
 
@@ -199,13 +223,29 @@ viewSchemaIndex model =
                         (List.map renderSubjectId (Dict.toList list))
 
         renderSubjectId ( subjectId, versions ) =
-            Lists.li []
+            Lists.li [ Options.onClick (ClickedSchema subjectId (SchemaIndex.latest versions)) ]
                 [ Lists.graphicIcon [] "code"
                 , Lists.text [] [ text subjectId ]
-                , Lists.metaText [] <| latestVersion versions
+                , Lists.metaText [] <| latestVersionText versions
                 ]
 
-        latestVersion versions =
+        latestVersionText versions =
             "v" ++ (SchemaIndex.latest versions |> String.fromInt)
     in
     listRender model.schemaIndex
+
+
+viewSelectedSchema : Maybe (Fetch AvroSchema) -> Html Msg
+viewSelectedSchema selected =
+    case selected of
+        Just Pending ->
+            text "Loading selected schema..."
+
+        Just (Failed msg) ->
+            text ("Failed loading schema: " ++ msg)
+
+        Just (Ready schema) ->
+            text schema
+
+        Nothing ->
+            text "No schema selected"
