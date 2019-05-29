@@ -3,13 +3,12 @@ module Herd.Console.SchemaBrowser exposing (Model, Msg, init, update, view)
 import Dict exposing (Dict)
 import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
 import Herd.Console.Remote as Remote exposing (AvroSchema, SubjectId, Version)
-import Herd.Fetch as Fetch exposing (Fetch(..))
+import Herd.Fetch as Fetch exposing (Fetch)
 import Html exposing (..)
 import Html.Attributes as Html
 import Http
 import List.Nonempty as NEL exposing (Nonempty)
 import Material
-import Material.Button as Button
 import Material.Drawer.Dismissible as Drawer
 import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
@@ -51,38 +50,14 @@ type alias Model =
 initialModel : Model
 initialModel =
     { mdc = Material.defaultModel
-    , schemaIndex = Pending
+    , schemaIndex = Fetch.pending
     , selectedSchema = Nothing
     }
 
 
 modelToSchemaList : Model -> SchemaIndex
 modelToSchemaList model =
-    case model.schemaIndex of
-        Ready list ->
-            list
-
-        _ ->
-            SchemaIndex.empty
-
-
-handleError : Http.Error -> Model -> Model
-handleError err model =
-    case err of
-        Http.BadUrl url ->
-            { model | schemaIndex = Failed ("Bad url: " ++ url) }
-
-        Http.Timeout ->
-            { model | schemaIndex = Failed "Timed out!" }
-
-        Http.NetworkError ->
-            { model | schemaIndex = Failed "Network error!" }
-
-        Http.BadStatus code ->
-            { model | schemaIndex = Failed ("Bad status code: " ++ String.fromInt code) }
-
-        Http.BadBody msg ->
-            { model | schemaIndex = Failed ("Bad body: " ++ msg) }
+    Fetch.withDefault SchemaIndex.empty model.schemaIndex
 
 
 init : () -> ( Model, Cmd Msg )
@@ -94,18 +69,18 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickedSchema subjectId version ->
-            ( { model | selectedSchema = Just Pending }, loadSchema subjectId version )
+            ( { model | selectedSchema = Just Fetch.pending }, loadSchema subjectId version )
 
         GotSubjectIds result ->
             case result of
                 Ok [] ->
-                    ( { model | schemaIndex = Ready Dict.empty }, Cmd.none )
+                    ( { model | schemaIndex = Fetch.succeeded SchemaIndex.empty }, Cmd.none )
 
                 Ok subjectIds ->
                     ( model, Cmd.batch (List.map loadVersions subjectIds) )
 
                 Err err ->
-                    ( handleError err model, Cmd.none )
+                    ( { model | schemaIndex = Fetch.failed err }, Cmd.none )
 
         GotSchemaVersions subjectId result ->
             case result of
@@ -114,24 +89,24 @@ update msg model =
                         list =
                             modelToSchemaList model
                     in
-                    ( { model | schemaIndex = Ready (SchemaIndex.insert subjectId versions list) }, Cmd.none )
+                    ( { model | schemaIndex = Fetch.succeeded (SchemaIndex.insert subjectId versions list) }, Cmd.none )
 
                 Ok Nothing ->
                     ( model, Cmd.none )
 
                 Err err ->
-                    ( handleError err model, Cmd.none )
+                    ( { model | schemaIndex = Fetch.failed err }, Cmd.none )
 
         GotSchema result ->
             case result of
                 Ok (Just schema) ->
-                    ( { model | selectedSchema = Just (Ready schema) }, Cmd.none )
+                    ( { model | selectedSchema = Just (Fetch.succeeded schema) }, Cmd.none )
 
                 Ok Nothing ->
-                    ( model, Cmd.none )
+                    ( { model | selectedSchema = Nothing }, Cmd.none )
 
                 Err err ->
-                    ( handleError err model, Cmd.none )
+                    ( { model | selectedSchema = Just (Fetch.failed err) }, Cmd.none )
 
         Mdc m ->
             Material.update Mdc m model
@@ -238,14 +213,8 @@ viewSchemaIndex model =
 viewSelectedSchema : Maybe (Fetch AvroSchema) -> Html Msg
 viewSelectedSchema selected =
     case selected of
-        Just Pending ->
-            text "Loading selected schema..."
-
-        Just (Failed msg) ->
-            text ("Failed loading schema: " ++ msg)
-
-        Just (Ready schema) ->
-            text schema
+        Just fetched ->
+            Fetch.view text fetched
 
         Nothing ->
             text "No schema selected"
