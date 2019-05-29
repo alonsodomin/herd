@@ -8,4 +8,14 @@ import List
 
 
 herdConsole =
-    SchemaList.main
+    Browser.element
+        { init = SchemaList.init
+        , update = SchemaList.update
+        , subscriptions = subscriptions
+        , view = SchemaList.view
+        }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none

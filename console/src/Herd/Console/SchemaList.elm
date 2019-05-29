@@ -1,7 +1,7 @@
-module Herd.Console.SchemaList exposing (SchemaList, main, view)
+module Herd.Console.SchemaList exposing (init, update, view)
 
-import Browser
 import Dict exposing (Dict)
+import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
 import Herd.Console.Remote as Remote exposing (SubjectId, Version)
 import Herd.Fetch as Fetch exposing (Fetch(..))
 import Html exposing (..)
@@ -14,24 +14,6 @@ import Material.List as Lists
 import Material.Menu as Menu
 import Material.Options as Options exposing (styled)
 import Material.TopAppBar as TopAppBar
-
-
-main =
-    Browser.element
-        { init = init
-        , update = update
-        , subscriptions = subscriptions
-        , view = view
-        }
-
-
-type alias SchemaList =
-    Dict SubjectId (List Version)
-
-
-latestVersion : SubjectId -> SchemaList -> Maybe Version
-latestVersion subjectId list =
-    Dict.get subjectId list |> Maybe.andThen List.maximum
 
 
 type Msg
@@ -52,44 +34,44 @@ loadVersions subjectId =
 
 type alias Model =
     { mdc : Material.Model Msg
-    , schemaList : Fetch SchemaList
+    , schemaIndex : Fetch SchemaIndex
     }
 
 
 initialModel : Model
 initialModel =
     { mdc = Material.defaultModel
-    , schemaList = Pending
+    , schemaIndex = Pending
     }
 
 
-modelToSchemaList : Model -> SchemaList
+modelToSchemaList : Model -> SchemaIndex
 modelToSchemaList model =
-    case model.schemaList of
+    case model.schemaIndex of
         Ready list ->
             list
 
         _ ->
-            Dict.empty
+            SchemaIndex.empty
 
 
 handleError : Http.Error -> Model -> Model
 handleError err model =
     case err of
         Http.BadUrl url ->
-            { model | schemaList = Failed ("Bad url: " ++ url) }
+            { model | schemaIndex = Failed ("Bad url: " ++ url) }
 
         Http.Timeout ->
-            { model | schemaList = Failed "Timed out!" }
+            { model | schemaIndex = Failed "Timed out!" }
 
         Http.NetworkError ->
-            { model | schemaList = Failed "Network error!" }
+            { model | schemaIndex = Failed "Network error!" }
 
         Http.BadStatus code ->
-            { model | schemaList = Failed ("Bad status code: " ++ String.fromInt code) }
+            { model | schemaIndex = Failed ("Bad status code: " ++ String.fromInt code) }
 
         Http.BadBody msg ->
-            { model | schemaList = Failed ("Bad body: " ++ msg) }
+            { model | schemaIndex = Failed ("Bad body: " ++ msg) }
 
 
 init : () -> ( Model, Cmd Msg )
@@ -103,7 +85,7 @@ update msg model =
         GotSubjectIds result ->
             case result of
                 Ok [] ->
-                    ( { model | schemaList = Ready Dict.empty }, Cmd.none )
+                    ( { model | schemaIndex = Ready Dict.empty }, Cmd.none )
 
                 Ok subjectIds ->
                     ( model, Cmd.batch (List.map loadVersions subjectIds) )
@@ -118,18 +100,13 @@ update msg model =
                         list =
                             modelToSchemaList model
                     in
-                    ( { model | schemaList = Ready (Dict.insert subjectId versions list) }, Cmd.none )
+                    ( { model | schemaIndex = Ready (Dict.insert subjectId versions list) }, Cmd.none )
 
                 Err err ->
                     ( handleError err model, Cmd.none )
 
         Mdc m ->
             Material.update Mdc m model
-
-
-subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
 
 
 
@@ -212,12 +189,4 @@ viewSchemaList model =
                 , Lists.metaText [] ("v" ++ (Maybe.withDefault 0 (List.maximum versions) |> String.fromInt))
                 ]
     in
-    listRender model.schemaList
-
-
-viewSubjectId : ( SubjectId, List Version ) -> Html msg
-viewSubjectId ( subjectId, versions ) =
-    tr []
-        [ td [] [ text subjectId ]
-        , td [] [ text (Maybe.withDefault 0 (List.maximum versions) |> String.fromInt) ]
-        ]
+    listRender model.schemaIndex
