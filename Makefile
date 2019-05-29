@@ -10,6 +10,9 @@ CONSOLE_MAIN := $(CONSOLE_DIR)/Main.elm
 CONSOLE_VIEW := $(DIST_DIR)/main.html
 CONSOLE_APP := $(DIST_DIR)/main.js
 
+MDC_DIR := $(CONSOLE_DIR)/elm-mdc
+MDC_DEPS := $(DIST_DIR)/elm-mdc.js $(DIST_DIR)/material-components-web.css
+
 ELM_STUFF := $(CONSOLE_DIR)/elm-stuff
 NPM_MODULES := $(CONSOLE_DIR)/node_modules
 NPM_TOOLS_DIR := $(NPM_MODULES)/.bin
@@ -63,25 +66,39 @@ $(REMOTE_API): backend
 $(DIST_DIR):
 	@mkdir -p $(DIST_DIR)
 
+$(MDC_DIR)/elm-mdc.js: $(MDC_DIR)/Makefile
+	@cd $(MDC_DIR) && make elm-mdc.js
+
+$(MDC_DIR)/material-components-web.css: $(MDC_DIR)/Makefile
+	@cd $(MDC_DIR) && make material-components-web.css
+
 $(CONSOLE_VIEW): $(DIST_DIR)
 	@cp $(CONSOLE_DIR)/static/* $(DIST_DIR)/
 
-$(CONSOLE_APP): $(NPM_DEV_TOOLS) $(CONSOLE_VIEW) $(REMOTE_API) $(CONSOLE_MAIN)
+$(DIST_DIR)/elm-mdc.js: $(MDC_DIR)/elm-mdc.js
+	cp $(MDC_DIR)/elm-mdc.js $(DIST_DIR)/elm-mdc.js
+
+$(DIST_DIR)/material-components-web.css: $(MDC_DIR)/material-components-web.css
+	cp $(MDC_DIR)/material-components-web.css $(DIST_DIR)/material-components-web.css
+
+$(CONSOLE_APP): $(NPM_DEV_TOOLS) $(REMOTE_API) $(CONSOLE_MAIN)
 	@cd $(CONSOLE_DIR) && $(ELM) make $(CONSOLE_MAIN) --output=$(CONSOLE_APP)
 
-ui: $(CONSOLE_APP)
+ui: $(CONSOLE_APP) $(CONSOLE_VIEW) $(MDC_DEPS)
 
 uglify: $(CONSOLE_APP)
 	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP) && $(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
 
 # Misc
 
+dist: test uglify
+
 test: all
 	@stack test
 
-install: test uglify
+install: dist
 	@stack install
 
 fmt:
 	@./stylize.sh
-	$(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes
+	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes

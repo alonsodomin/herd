@@ -5,6 +5,8 @@ jobs:
       - image: alonsodomin/herd-circleci
     steps:
       - checkout
+      - run: git submodule sync
+      - run: git submodule update --init --recursive
       - restore_cache:
           name: Restore Cached Dependencies
           keys:
