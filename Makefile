@@ -101,4 +101,4 @@ install: dist
 
 fmt:
 	@./stylize.sh
-	$(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes
+	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes
