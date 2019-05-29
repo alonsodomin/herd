@@ -3,12 +3,17 @@ module Herd.Console.SchemaList exposing (SchemaList, main, view)
 import Browser
 import Dict exposing (Dict)
 import Herd.Console.Remote as Remote exposing (SubjectId, Version)
-import Html exposing (Html, table, tbody, td, text, th, thead, tr)
+import Herd.Fetch as Fetch exposing (Fetch(..))
+import Html exposing (..)
+import Html.Attributes as Html
 import Http
 import Material
 import Material.Button as Button
+import Material.Drawer.Dismissible as Drawer
+import Material.List as Lists
 import Material.Menu as Menu
-import Material.Options exposing (cs, css, styled)
+import Material.Options as Options exposing (styled)
+import Material.TopAppBar as TopAppBar
 
 
 main =
@@ -45,22 +50,16 @@ loadVersions subjectId =
     Remote.getSubjectsBySubjectId subjectId (GotSchemaVersions subjectId)
 
 
-type Status a
-    = Loading
-    | Failed String
-    | Ready a
-
-
 type alias Model =
     { mdc : Material.Model Msg
-    , schemaList : Status SchemaList
+    , schemaList : Fetch SchemaList
     }
 
 
 initialModel : Model
 initialModel =
     { mdc = Material.defaultModel
-    , schemaList = Loading
+    , schemaList = Pending
     }
 
 
@@ -139,49 +138,81 @@ subscriptions _ =
 
 view : Model -> Html Msg
 view model =
-    case model.schemaList of
-        Loading ->
-            Html.div [] [ viewMenu model, text "Loading..." ]
-
-        Failed m ->
-            text m
-
-        Ready ls ->
-            Html.div [] [ viewMenu model, viewSchemaList ls ]
+    viewDrawer model
 
 
-viewMenu : Model -> Html Msg
-viewMenu model =
-    styled Html.div
-        [ Menu.surfaceAnchor ]
-        [ Button.view Mdc
-            "my-button"
-            model.mdc
-            [ Menu.attach Mdc "my-menu" ]
-            [ text "Show" ]
-        , Menu.view Mdc
-            "my-menu"
+viewDrawer : Model -> Html Msg
+viewDrawer model =
+    Html.div []
+        [ Drawer.view Mdc
+            "herd-drawer"
             model.mdc
             []
-            (Menu.ul []
-                [ Menu.li [] [ text "Menu Item 1" ]
-                , Menu.li [] [ text "Menu Item 2" ]
+            [ Drawer.header []
+                [ styled h3 [ Drawer.title ] [ text "Herd" ]
+                , styled h6 [ Drawer.subTitle ] [ text "username" ]
                 ]
-            )
-        ]
-
-
-viewSchemaList : SchemaList -> Html msg
-viewSchemaList list =
-    table []
-        [ thead []
-            [ tr []
-                [ th [] [ text "Subject ID" ]
-                , th [] [ text "Version" ]
+            , Drawer.content []
+                [ Lists.nav Mdc
+                    "herd-nav"
+                    model.mdc
+                    []
+                    [ Lists.a
+                        [ Options.attribute (Html.href "#persistent-drawer")
+                        , Lists.activated
+                        ]
+                        [ Lists.graphicIcon [] "inbox"
+                        , text "Schemas"
+                        ]
+                    ]
                 ]
             ]
-        , tbody [] (List.map viewSubjectId (Dict.toList list))
+        , styled Html.div
+            [ Drawer.appContent ]
+            [ viewTopBar model
+            , styled Html.div [ TopAppBar.fixedAdjust ] [ viewSchemaList model ]
+            ]
         ]
+
+
+viewTopBar : Model -> Html Msg
+viewTopBar model =
+    TopAppBar.view Mdc
+        "herd-topbar"
+        model.mdc
+        [ TopAppBar.fixed ]
+        [ TopAppBar.section [ TopAppBar.alignStart ]
+            [ TopAppBar.navigationIcon Mdc
+                "burger-menu"
+                model.mdc
+                []
+                -- [ Options.onClick OpenDrawer ]
+                "menu"
+            , TopAppBar.title [] [ text "Herd" ]
+            ]
+        ]
+
+
+viewSchemaList : Model -> Html Msg
+viewSchemaList model =
+    let
+        listRender =
+            Fetch.view <|
+                \list ->
+                    Lists.ul Mdc
+                        "schema-list"
+                        model.mdc
+                        [ Lists.avatarList ]
+                        (List.map renderSubjectId (Dict.toList list))
+
+        renderSubjectId ( subjectId, versions ) =
+            Lists.li []
+                [ Lists.graphicIcon [] "subject"
+                , Lists.text [] [ text subjectId ]
+                , Lists.metaText [] ("v" ++ (Maybe.withDefault 0 (List.maximum versions) |> String.fromInt))
+                ]
+    in
+    listRender model.schemaList
 
 
 viewSubjectId : ( SubjectId, List Version ) -> Html msg
