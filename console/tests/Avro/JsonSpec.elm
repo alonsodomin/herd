@@ -32,6 +32,8 @@ suite =
                             "[\"null\", \"int\"]"
                     in
                     Expect.equal (Ok expectedUnion) (decodeString Json.decodeType input)
+            , test "should fail to decode an empty union" <|
+                \_ -> Expect.err (decodeString Json.decodeType "[]")
             ]
         , describe "Avro.Json.encodeType"
             [ test "encodes a Null" <|

@@ -1,2 +1,4 @@
+import           Test.Herd.Types
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = describeTypes

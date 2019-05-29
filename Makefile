@@ -105,7 +105,7 @@ uglify: $(CONSOLE_APP) $(UGLIFY)
 backend-test: $(STACK_WORK_DIR)
 	@stack test
 
-ui-test: $(ELM_TEST) $(ELM)
+ui-test: $(ELM_TEST) $(CONSOLE_APP)
 	@cd $(CONSOLE_DIR) && $(ELM_TEST) --compiler $(ELM)
 
 test: backend-test ui-test
