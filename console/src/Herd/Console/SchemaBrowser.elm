@@ -1,15 +1,17 @@
-module Herd.Console.SchemaList exposing (init, update, view)
+module Herd.Console.SchemaBrowser exposing (Model, Msg, init, update, view)
 
 import Dict exposing (Dict)
 import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
-import Herd.Console.Remote as Remote exposing (SubjectId, Version)
+import Herd.Console.Remote as Remote exposing (AvroSchema, SubjectId, Version)
 import Herd.Fetch as Fetch exposing (Fetch(..))
 import Html exposing (..)
 import Html.Attributes as Html
 import Http
+import List.Nonempty as NEL exposing (Nonempty)
 import Material
 import Material.Button as Button
 import Material.Drawer.Dismissible as Drawer
+import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
 import Material.Menu as Menu
 import Material.Options as Options exposing (styled)
@@ -18,7 +20,7 @@ import Material.TopAppBar as TopAppBar
 
 type Msg
     = GotSubjectIds (Result Http.Error (List SubjectId))
-    | GotSchemaVersions SubjectId (Result Http.Error (List Version))
+    | GotSchemaVersions SubjectId (Result Http.Error (Maybe (Nonempty Version)))
     | Mdc (Material.Msg Msg)
 
 
@@ -29,12 +31,13 @@ loadSubjectIds =
 
 loadVersions : SubjectId -> Cmd Msg
 loadVersions subjectId =
-    Remote.getSubjectsBySubjectId subjectId (GotSchemaVersions subjectId)
+    Remote.getSubjectsBySubjectId subjectId (\rs -> GotSchemaVersions subjectId (Result.map NEL.fromList rs))
 
 
 type alias Model =
     { mdc : Material.Model Msg
     , schemaIndex : Fetch SchemaIndex
+    , selectedSchema : Maybe (Fetch AvroSchema)
     }
 
 
@@ -42,6 +45,7 @@ initialModel : Model
 initialModel =
     { mdc = Material.defaultModel
     , schemaIndex = Pending
+    , selectedSchema = Nothing
     }
 
 
@@ -95,12 +99,15 @@ update msg model =
 
         GotSchemaVersions subjectId result ->
             case result of
-                Ok versions ->
+                Ok (Just versions) ->
                     let
                         list =
                             modelToSchemaList model
                     in
-                    ( { model | schemaIndex = Ready (Dict.insert subjectId versions list) }, Cmd.none )
+                    ( { model | schemaIndex = Ready (SchemaIndex.insert subjectId versions list) }, Cmd.none )
+
+                Ok Nothing ->
+                    ( model, Cmd.none )
 
                 Err err ->
                     ( handleError err model, Cmd.none )
@@ -116,6 +123,24 @@ update msg model =
 view : Model -> Html Msg
 view model =
     viewDrawer model
+
+
+viewTopBar : Model -> Html Msg
+viewTopBar model =
+    TopAppBar.view Mdc
+        "herd-topbar"
+        model.mdc
+        [ TopAppBar.fixed ]
+        [ TopAppBar.section [ TopAppBar.alignStart ]
+            [ TopAppBar.navigationIcon Mdc
+                "burger-menu"
+                model.mdc
+                []
+                -- [ Options.onClick OpenDrawer ]
+                "menu"
+            , TopAppBar.title [] [ text "Herd" ]
+            ]
+        ]
 
 
 viewDrawer : Model -> Html Msg
@@ -147,31 +172,22 @@ viewDrawer model =
         , styled Html.div
             [ Drawer.appContent ]
             [ viewTopBar model
-            , styled Html.div [ TopAppBar.fixedAdjust ] [ viewSchemaList model ]
+            , styled Html.div [ TopAppBar.fixedAdjust ] [ viewSchemaBrowser model ]
             ]
         ]
 
 
-viewTopBar : Model -> Html Msg
-viewTopBar model =
-    TopAppBar.view Mdc
-        "herd-topbar"
-        model.mdc
-        [ TopAppBar.fixed ]
-        [ TopAppBar.section [ TopAppBar.alignStart ]
-            [ TopAppBar.navigationIcon Mdc
-                "burger-menu"
-                model.mdc
-                []
-                -- [ Options.onClick OpenDrawer ]
-                "menu"
-            , TopAppBar.title [] [ text "Herd" ]
-            ]
+viewSchemaBrowser : Model -> Html Msg
+viewSchemaBrowser model =
+    LayoutGrid.view []
+        [ LayoutGrid.cell
+            [ LayoutGrid.span4 ]
+            [ viewSchemaIndex model ]
         ]
 
 
-viewSchemaList : Model -> Html Msg
-viewSchemaList model =
+viewSchemaIndex : Model -> Html Msg
+viewSchemaIndex model =
     let
         listRender =
             Fetch.view <|
@@ -184,9 +200,12 @@ viewSchemaList model =
 
         renderSubjectId ( subjectId, versions ) =
             Lists.li []
-                [ Lists.graphicIcon [] "subject"
+                [ Lists.graphicIcon [] "code"
                 , Lists.text [] [ text subjectId ]
-                , Lists.metaText [] ("v" ++ (Maybe.withDefault 0 (List.maximum versions) |> String.fromInt))
+                , Lists.metaText [] <| latestVersion versions
                 ]
+
+        latestVersion versions =
+            "v" ++ (SchemaIndex.latest versions |> String.fromInt)
     in
     listRender model.schemaIndex
