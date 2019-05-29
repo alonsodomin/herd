@@ -9,8 +9,8 @@ module Main where
 import           Control.Lens
 import qualified Data.Avro.Schema    as Avro
 import           Data.Proxy          (Proxy (Proxy))
-import Data.Text (Text)
-import qualified Data.Text as T
+import           Data.Text           (Text)
+import qualified Data.Text           as T
 import           Elm.TyRep
 import           Options.Applicative
 import           Servant.Elm         (DefineElm (DefineElm),

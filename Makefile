@@ -5,6 +5,7 @@ STACK_WORK_DIR := $(BASE_DIR)/.stack-work
 
 CONSOLE_DIR := $(BASE_DIR)/console
 CONSOLE_GEN_DIR := $(CONSOLE_DIR)/gen
+CONSOLE_TESTS_DIR := $(CONSOLE_DIR)/tests
 CONSOLE_SRC_DIR := $(CONSOLE_DIR)/src
 CONSOLE_MAIN := $(CONSOLE_DIR)/Main.elm
 CONSOLE_VIEW := $(DIST_DIR)/main.html
@@ -21,15 +22,25 @@ REMOTE_API := $(CONSOLE_GEN_DIR)/Herd/Console/Remote.elm
 
 ELM := $(NPM_TOOLS_DIR)/elm
 ELM_FORMAT := $(NPM_TOOLS_DIR)/elm-format
+ELM_TEST := $(NPM_TOOLS_DIR)/elm-test
 UGLIFY := $(NPM_TOOLS_DIR)/uglifyjs
 
 NPM_DEV_TOOLS := $(ELM) $(ELM_FORMAT) $(UGLIFY)
 
-all: backend ui
+all: dist
 
 # Setup build environment
 
-$(NPM_DEV_TOOLS):
+$(ELM):
+	@cd $(CONSOLE_DIR) && npm install
+
+$(ELM_FORMAT):
+	@cd $(CONSOLE_DIR) && npm install
+
+$(ELM_TEST):
+	@cd $(CONSOLE_DIR) && npm install
+
+$(UGLIFY):
 	@cd $(CONSOLE_DIR) && npm install
 
 $(STACK_WORK_DIR):
@@ -81,24 +92,32 @@ $(DIST_DIR)/elm-mdc.js: $(MDC_DIR)/elm-mdc.js
 $(DIST_DIR)/material-components-web.css: $(MDC_DIR)/material-components-web.css
 	cp $(MDC_DIR)/material-components-web.css $(DIST_DIR)/material-components-web.css
 
-$(CONSOLE_APP): $(NPM_DEV_TOOLS) $(REMOTE_API) $(CONSOLE_MAIN)
+$(CONSOLE_APP): $(ELM) $(REMOTE_API) $(CONSOLE_MAIN)
 	@cd $(CONSOLE_DIR) && $(ELM) make $(CONSOLE_MAIN) --output=$(CONSOLE_APP)
 
 ui: $(CONSOLE_APP) $(CONSOLE_VIEW) $(MDC_DEPS)
 
-uglify: $(CONSOLE_APP)
+uglify: $(CONSOLE_APP) $(UGLIFY)
 	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP) && $(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
+
+# Testing tagets
+
+backend-test: $(STACK_WORK_DIR)
+	@stack test
+
+ui-test: $(ELM_TEST)
+	@cd $(CONSOLE_DIR) && $(ELM_TEST)
+
+test: backend-test ui-test
 
 # Misc
 
 dist: test uglify
 
-test: all
-	@stack test
-
 install: dist
 	@stack install
 
-fmt:
+fmt: $(ELM_FORMAT)
 	@./stylize.sh
 	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes
+	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_TESTS_DIR)/ --yes

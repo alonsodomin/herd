@@ -77,7 +77,7 @@ update msg model =
             ( { model | selectedSchema = Just Fetch.pending }, loadSchema subjectId version )
 
         ToggleDrawer ->
-            ( { model | drawerOpen = not model.drawerOpen }, Cmd.none)
+            ( { model | drawerOpen = not model.drawerOpen }, Cmd.none )
 
         GotSubjectIds result ->
             case result of
@@ -127,12 +127,11 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ viewTopBar model 
+        [ viewTopBar model
         , styled Html.div
             [ TopAppBar.fixedAdjust ]
             [ viewDrawer model ]
         ]
-    
 
 
 viewTopBar : Model -> Html Msg

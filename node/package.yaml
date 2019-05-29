@@ -110,7 +110,7 @@ executables:
     - wl-pprint-text
 
 tests:
-  herd-test:
+  herd-node-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

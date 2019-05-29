@@ -1,0 +1,31 @@
+module Avro.JsonSpec exposing (suite)
+
+import Avro.Json as Json
+import Avro.Types as Avro
+import Expect exposing (Expectation)
+import Fuzz exposing (Fuzzer, int, list, string)
+import Json.Decode exposing (decodeString)
+import Json.Encode exposing (encode)
+import Test exposing (..)
+
+
+suite : Test
+suite =
+    describe "Avro.Json"
+        [ describe "Avro.Json.decodeType"
+            [ test "decodes a quoted 'null' string" <|
+                \_ -> Expect.equal (Ok Avro.Null) (decodeString Json.decodeType "\"null\"")
+            , test "decodes quoted 'boolean' string" <|
+                \_ -> Expect.equal (Ok Avro.Boolean) (decodeString Json.decodeType "\"boolean\"")
+            , test "decodes quoted 'int' string" <|
+                \_ -> Expect.equal (Ok Avro.Int) (decodeString Json.decodeType "\"int\"")
+            ]
+        , describe "Avro.Json.encodeType"
+            [ test "encodes a Null" <|
+                \_ -> Expect.equal "\"null\"" (encode 0 <| Json.encodeType Avro.Null)
+            , test "encodes a Boolean" <|
+                \_ -> Expect.equal "\"boolean\"" (encode 0 <| Json.encodeType Avro.Boolean)
+            , test "encodes an Int" <|
+                \_ -> Expect.equal "\"int\"" (encode 0 <| Json.encodeType Avro.Int)
+            ]
+        ]

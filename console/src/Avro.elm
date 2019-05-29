@@ -1,15 +1,25 @@
-module Avro exposing (Schema, jsonEncSchema, jsonDecSchema, toString)
+module Avro exposing (Schema, jsonDecSchema, jsonEncSchema, toString)
 
-import Json.Encode as Json
+import Avro.Json exposing (..)
+import Avro.Types exposing (Type)
 import Json.Decode exposing (Decoder)
+import Json.Encode as Json
 
-type alias Schema = Json.Value
+
+type alias Schema =
+    Type
+
 
 jsonDecSchema : Decoder Schema
-jsonDecSchema = Json.Decode.value
+jsonDecSchema =
+    decodeType
+
 
 jsonEncSchema : Schema -> Json.Value
-jsonEncSchema = identity
+jsonEncSchema =
+    encodeType
+
 
 toString : Schema -> String
-toString = Json.encode 0
+toString schema =
+    Json.encode 0 (encodeType schema)
