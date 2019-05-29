@@ -1,4 +1,4 @@
-module Herd.Console.Data.SchemaIndex exposing (SchemaIndex, empty, insert, latest, latestVersion)
+module Herd.Console.Data.SchemaIndex exposing (SchemaIndex, empty, insert, isEmpty, latest, latestVersion)
 
 import Dict exposing (Dict)
 import Herd.Console.Remote as Remote exposing (SubjectId, Version)
@@ -17,6 +17,11 @@ empty =
 insert : SubjectId -> Nonempty Version -> SchemaIndex -> SchemaIndex
 insert subjectId versions =
     Dict.insert subjectId versions
+
+
+isEmpty : SchemaIndex -> Bool
+isEmpty =
+    Dict.isEmpty
 
 
 latestVersion : SubjectId -> SchemaIndex -> Maybe Version

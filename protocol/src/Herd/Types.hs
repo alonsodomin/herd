@@ -26,6 +26,7 @@ import           Data.Aeson                   (FromJSON, ToJSON, object,
                                                (.:), (.:?), (.=))
 import qualified Data.Aeson                   as JSON
 import qualified Data.Aeson.Text              as JSON
+import qualified Data.Aeson.Types             as JSON
 import           Data.Avro.Schema             (Schema)
 import           Data.Binary                  (Binary (..))
 import qualified Data.Binary                  as B
@@ -38,6 +39,7 @@ import           Data.Hashable                (Hashable, hashWithSalt)
 import           Data.String
 import           Data.Text                    (Text)
 import qualified Data.Text                    as T
+import qualified Data.Text.Lazy               as TL
 import           Data.Time.Clock              (UTCTime)
 import           Data.Typeable
 import           GHC.Generics                 (Generic)
@@ -122,7 +124,7 @@ instance Binary Schema where
   get = (get :: B.Get ByteString) >>= ((either fail pure) . JSON.eitherDecode' . BSL.fromStrict)
 
 newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
-  deriving (Eq, Generic, Typeable, Binary, FromJSON, ToJSON)
+  deriving (Eq, Generic, Typeable, Binary)
 
 asSchema :: Getter AvroSchema Schema
 asSchema = to unwrapSchema
@@ -137,3 +139,9 @@ instance Read AvroSchema where
     case decoded of
       Right x -> return x
       Left _  -> pfail
+
+instance FromJSON AvroSchema where
+  parseJSON str = AvroSchema <$> parseJSON str
+
+instance ToJSON AvroSchema where
+  toJSON (AvroSchema schema) = JSON.String (TL.toStrict $ JSON.encodeToLazyText schema)

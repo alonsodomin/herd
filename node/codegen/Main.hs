@@ -38,7 +38,7 @@ apiType = (Proxy :: Proxy HerdREST)
 elmOpts :: ElmOptions
 elmOpts = defElmOptions
   { urlPrefix      = Static "http://localhost:8081"
-  , stringElmTypes = (toElmType (Proxy :: Proxy SubjectId)):(stringElmTypes defElmOptions)
+  , stringElmTypes = (toElmType (Proxy :: Proxy SubjectId)):(toElmType (Proxy :: Proxy AvroSchema)):(stringElmTypes defElmOptions)
   }
 
 moduleHeader = [ "Herd", "Console", "Remote" ]

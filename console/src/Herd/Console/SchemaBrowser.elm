@@ -1,5 +1,6 @@
 module Herd.Console.SchemaBrowser exposing (Model, Msg, init, update, view)
 
+import Debug
 import Dict exposing (Dict)
 import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
 import Herd.Console.Remote as Remote exposing (AvroSchema, SubjectId, Version)
@@ -69,7 +70,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ClickedSchema subjectId version ->
-            ( { model | selectedSchema = Just Fetch.pending }, loadSchema subjectId version )
+            ( { model | selectedSchema = Just Fetch.pending }, loadSchema (Debug.log "subjectId" subjectId) (Debug.log "version" version) )
 
         GotSubjectIds result ->
             case result of
@@ -190,12 +191,16 @@ viewSchemaIndex model =
     let
         listRender =
             Fetch.view <|
-                \list ->
-                    Lists.ul Mdc
-                        "schema-list"
-                        model.mdc
-                        [ Lists.avatarList ]
-                        (List.map renderSubjectId (Dict.toList list))
+                \index ->
+                    if SchemaIndex.isEmpty index then
+                        text "No schemas found"
+
+                    else
+                        Lists.ul Mdc
+                            "schema-list"
+                            model.mdc
+                            [ Lists.avatarList ]
+                            (List.map renderSubjectId (Dict.toList index))
 
         renderSubjectId ( subjectId, versions ) =
             Lists.li [ Options.onClick (ClickedSchema subjectId (SchemaIndex.latest versions)) ]
