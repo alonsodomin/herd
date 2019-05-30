@@ -3,6 +3,7 @@ PROJECT_NAME := herd
 BASE_DIR := $(shell pwd)
 BASE_DIST_DIR := $(BASE_DIR)/dist
 DIST_DIR := $(BASE_DIST_DIR)/$(PROJECT_NAME)
+DIST_BIN_FILE := $(BASE_DIST_DIR)/$(PROJECT_NAME)-bin.zip
 
 STACK_WORK_DIR := $(BASE_DIR)/.stack-work
 
@@ -102,7 +103,8 @@ $(CONSOLE_APP): $(ELM) $(REMOTE_API) $(CONSOLE_MAIN)
 ui: $(CONSOLE_APP) $(CONSOLE_VIEW) $(MDC_DEPS)
 
 uglify: $(CONSOLE_APP) $(UGLIFY)
-	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP) && $(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
+	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP)
+	$(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
 
 # Testing tagets
 
@@ -116,8 +118,10 @@ test: backend-test ui-test
 
 # Misc
 
-dist: test uglify
-	zip $(BASE_DIST_DIR)/$(PROJECT_NAME).zip $(DIST_DIR)
+$(DIST_BIN_FILE): test uglify
+	zip $(DIST_BIN_FILE) $(DIST_DIR)
+
+dist: $(DIST_BIN_FILE)
 
 install: dist
 	@stack install
