@@ -1,4 +1,4 @@
-module Avro exposing (Schema, jsonDecSchema, jsonEncSchema, toString)
+module Avro exposing (Schema, jsonDecSchema, jsonEncSchema, prettyPrint, toString)
 
 import Avro.Json exposing (..)
 import Avro.Types exposing (Type)
@@ -22,4 +22,9 @@ jsonEncSchema =
 
 toString : Schema -> String
 toString schema =
+    Json.encode 0 (encodeType schema)
+
+
+prettyPrint : Schema -> String
+prettyPrint schema =
     Json.encode 4 (encodeType schema)

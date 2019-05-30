@@ -16,9 +16,10 @@ import Material.Elevation as Elevation
 import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
 import Material.Menu as Menu
-import Material.Options as Options exposing (css, styled, when)
+import Material.Options as Options exposing (cs, css, styled, when)
 import Material.TextField as TextField
 import Material.TopAppBar as TopAppBar
+import Material.Typography as Typography
 
 
 
@@ -256,35 +257,46 @@ viewSchemaIndex model =
                 , Lists.metaText [] <| latestVersionText versions
                 ]
 
+        renderSearchBox =
+            TextField.view Mdc
+                "subject-filter"
+                model.mdc
+                [ TextField.label "Search"
+                , Options.onInput FilterBySubject
+                , css "width" "100%"
+                ]
+                []
+
         latestVersionText versions =
             "v" ++ (SchemaIndex.latest versions |> String.fromInt)
     in
     styled Html.div
         [ Elevation.z2 ]
-        [ Html.div [] [ text "Subjects" ]
-        , TextField.view Mdc
-            "subject-filter"
-            model.mdc
-            [ TextField.label "Search"
-            , Options.onInput FilterBySubject
-            ]
-            []
+        [ Html.div [] [ styled h2 [ Typography.title ] [ text "Subjects" ] ]
+        , renderSearchBox
         , listRender indexToRender
         ]
 
 
 viewSelectedSchema : Maybe (Fetch AvroSchema) -> Html Msg
 viewSelectedSchema selected =
+    let
+        renderSchema schema =
+            styled Html.div
+                [ Elevation.z2 ]
+                [ styled h2 [ Typography.title ] [ text "Schema" ]
+                , styled Html.pre style [ text (Avro.prettyPrint schema) ]
+                ]
+
+        style =
+            [ css "font" sourceCodeFont, css "background-color" "white" ]
+
+        sourceCodeFont =
+            "12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace"
+    in
     case selected of
         Just fetched ->
-            let
-                style =
-                    [ css "font" sourceCodeFont, css "background-color" "white" ]
-
-                sourceCodeFont =
-                    "12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace"
-            in
-            Fetch.view (\x -> styled Html.pre (Elevation.z2 :: style) [ text (Avro.toString x) ]) fetched
+            Fetch.view renderSchema fetched
 
         Nothing ->
             text "No schema selected"
