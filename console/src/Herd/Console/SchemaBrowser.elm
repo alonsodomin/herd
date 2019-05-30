@@ -12,17 +12,52 @@ import Json.Encode as Json
 import List.Nonempty as NEL exposing (Nonempty)
 import Material
 import Material.Drawer.Dismissible as Drawer
+import Material.Elevation as Elevation
 import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
 import Material.Menu as Menu
-import Material.Options as Options exposing (styled, when)
+import Material.Options as Options exposing (css, styled, when)
+import Material.TextField as TextField
 import Material.TopAppBar as TopAppBar
+
+
+
+-- Model
+
+
+type alias Model =
+    { mdc : Material.Model Msg
+    , schemaIndex : Fetch SchemaIndex
+    , selectedSchema : Maybe (Fetch AvroSchema)
+    , filterBySubject : Maybe SubjectId
+    , drawerOpen : Bool
+    }
+
+
+initialModel : Model
+initialModel =
+    { mdc = Material.defaultModel
+    , schemaIndex = Fetch.pending
+    , selectedSchema = Nothing
+    , filterBySubject = Nothing
+    , drawerOpen = True
+    }
+
+
+modelToSchemaList : Model -> SchemaIndex
+modelToSchemaList model =
+    Fetch.withDefault SchemaIndex.empty model.schemaIndex
+
+
+
+-- Messages
 
 
 type Msg
     = Mdc (Material.Msg Msg)
     | ClickedSchema SubjectId Version
     | ToggleDrawer
+    | FilterBySubject String
     | GotSubjectIds (Result Http.Error (List SubjectId))
     | GotSchemaVersions SubjectId (Result Http.Error (Maybe (Nonempty Version)))
     | GotSchema (Result Http.Error (Maybe AvroSchema))
@@ -43,26 +78,8 @@ loadSchema subjectId version =
     Remote.getSubjectsBySubjectIdByVersion subjectId version GotSchema
 
 
-type alias Model =
-    { mdc : Material.Model Msg
-    , schemaIndex : Fetch SchemaIndex
-    , selectedSchema : Maybe (Fetch AvroSchema)
-    , drawerOpen : Bool
-    }
 
-
-initialModel : Model
-initialModel =
-    { mdc = Material.defaultModel
-    , schemaIndex = Fetch.pending
-    , selectedSchema = Nothing
-    , drawerOpen = True
-    }
-
-
-modelToSchemaList : Model -> SchemaIndex
-modelToSchemaList model =
-    Fetch.withDefault SchemaIndex.empty model.schemaIndex
+-- Implementation
 
 
 init : () -> ( Model, Cmd Msg )
@@ -78,6 +95,17 @@ update msg model =
 
         ToggleDrawer ->
             ( { model | drawerOpen = not model.drawerOpen }, Cmd.none )
+
+        FilterBySubject str ->
+            let
+                maybeFilter =
+                    if String.length str > 0 then
+                        Just str
+
+                    else
+                        Nothing
+            in
+            ( { model | filterBySubject = maybeFilter }, Cmd.none )
 
         GotSubjectIds result ->
             case result of
@@ -200,6 +228,14 @@ viewSchemaBrowser model =
 viewSchemaIndex : Model -> Html Msg
 viewSchemaIndex model =
     let
+        indexToRender =
+            case model.filterBySubject of
+                Just searchTerm ->
+                    Fetch.map (SchemaIndex.filter (\subjectId -> String.contains subjectId searchTerm)) model.schemaIndex
+
+                Nothing ->
+                    model.schemaIndex
+
         listRender =
             Fetch.view <|
                 \index ->
@@ -223,14 +259,31 @@ viewSchemaIndex model =
         latestVersionText versions =
             "v" ++ (SchemaIndex.latest versions |> String.fromInt)
     in
-    listRender model.schemaIndex
+    Html.div []
+        [ styled Html.div [ Elevation.z0 ] [ text "Subjects" ]
+        , TextField.view Mdc
+            "subject-filter"
+            model.mdc
+            [ TextField.label "Search"
+            , Options.onChange FilterBySubject
+            ]
+            []
+        , listRender indexToRender
+        ]
 
 
 viewSelectedSchema : Maybe (Fetch AvroSchema) -> Html Msg
 viewSelectedSchema selected =
     case selected of
         Just fetched ->
-            Fetch.view (\x -> text <| Avro.toString x) fetched
+            let
+                style =
+                    [ css "font" sourceCodeFont ]
+
+                sourceCodeFont =
+                    "12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace"
+            in
+            Fetch.view (\x -> styled Html.pre style [ text (Avro.toString x) ]) fetched
 
         Nothing ->
             text "No schema selected"

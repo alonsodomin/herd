@@ -1,4 +1,14 @@
-module Herd.Console.Data.SchemaIndex exposing (SchemaIndex, empty, insert, isEmpty, latest, latestVersion)
+module Herd.Console.Data.SchemaIndex exposing
+    ( SchemaIndex
+    , countSubjects
+    , countVersions
+    , empty
+    , filter
+    , insert
+    , isEmpty
+    , latest
+    , latestVersion
+    )
 
 import Dict exposing (Dict)
 import Herd.Console.Remote as Remote exposing (SubjectId, Version)
@@ -32,6 +42,23 @@ latestVersion subjectId idx =
 latest : Nonempty Version -> Version
 latest =
     maxFromNEL
+
+
+filter : (SubjectId -> Bool) -> SchemaIndex -> SchemaIndex
+filter pred =
+    Dict.filter (\s _ -> pred s)
+
+
+countSubjects : SchemaIndex -> Int
+countSubjects =
+    Dict.size
+
+
+countVersions : SubjectId -> SchemaIndex -> Int
+countVersions subjectId index =
+    Dict.get subjectId index
+        |> Maybe.map NEL.length
+        |> Maybe.withDefault 0
 
 
 

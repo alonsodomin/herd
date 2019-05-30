@@ -1,4 +1,4 @@
-module Herd.Fetch exposing (Fetch, failed, fromResult, pending, succeeded, view, withDefault)
+module Herd.Fetch exposing (Fetch, failed, fromResult, map, pending, succeeded, view, withDefault)
 
 import Html exposing (Html, text)
 import Http
@@ -27,6 +27,16 @@ succeeded x =
 failed : Http.Error -> Fetch a
 failed err =
     Ready (Err err)
+
+
+map : (a -> b) -> Fetch a -> Fetch b
+map f fetched =
+    case fetched of
+        Pending ->
+            Pending
+
+        Ready result ->
+            Ready (Result.map f result)
 
 
 withDefault : a -> Fetch a -> a
