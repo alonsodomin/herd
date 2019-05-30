@@ -136,6 +136,7 @@ instance ToRequest HerdRequest where
 
 data HerdResponse =
     Done
+  --
   | GetSubjectIdsRes [SubjectId]
   | GetSchemaVersionsRes (NonEmpty Version)
   | GetSchemaRes AvroSchema

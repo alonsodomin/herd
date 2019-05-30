@@ -11,6 +11,7 @@ module Herd.Node.REST
 import           Control.Lens
 import           Control.Monad.IO.Class
 import qualified Data.List.NonEmpty          as NEL
+import           Data.Maybe                  (isJust)
 import           Network.Wai                 (Application)
 import           Network.Wai.Handler.Warp    (run)
 import           Network.Wai.Middleware.Cors (simpleCors)
@@ -24,6 +25,8 @@ import           Herd.Types
 type HerdREST = "subjects" :> Get '[JSON] [SubjectId]
            :<|> "subjects" :> Capture "subjectId" SubjectId :> Get '[JSON] [Version]
            :<|> "subjects" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Get '[JSON] (Maybe AvroSchema)
+           :<|> "subjects" :> Capture "subjectId" SubjectId :> ReqBody '[JSON] AvroSchema :> Post '[JSON] ()
+           :<|> "subjects" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Delete '[JSON] ()
 
 instance FromHttpApiData SubjectId where
   parseUrlPiece = Right . SubjectId
@@ -42,6 +45,8 @@ herdRESTServer :: HerdEnv -> Server HerdREST
 herdRESTServer env = handleGetSubjects env
                 :<|> handleGetSubjectVersions env
                 :<|> handleGetSchema env
+                :<|> handleRegisterSchema env
+                :<|> handleDeleteSchema env
 
 herdRESTApp :: HerdEnv -> Application
 herdRESTApp env = simpleCors $ serve herdREST (herdRESTServer env)
@@ -61,6 +66,16 @@ handleGetSubjectVersions env subjectId = do
 handleGetSchema :: HerdEnv -> SubjectId -> Version -> Handler (Maybe AvroSchema)
 handleGetSchema env subjectId version =
   liftIO $ runAction env $ invokeAction (getSchema subjectId version)
+
+handleRegisterSchema :: HerdEnv -> SubjectId -> AvroSchema -> Handler ()
+handleRegisterSchema env subjectId schema =
+  liftIO $ runAction env $ invokeAction (registerSchema subjectId schema)
+
+handleDeleteSchema :: HerdEnv -> SubjectId -> Version -> Handler ()
+handleDeleteSchema env subjectId version = do
+  deleted <- liftIO $ runAction env $ invokeAction (deleteSchema subjectId version)
+  if (isJust deleted) then return ()
+  else throwError $ err404 { errBody = "Schema not found" }
 
 -- Main server function
 

@@ -231,7 +231,7 @@ viewSchemaIndex model =
         indexToRender =
             case model.filterBySubject of
                 Just searchTerm ->
-                    Fetch.map (SchemaIndex.filter (\subjectId -> String.contains subjectId searchTerm)) model.schemaIndex
+                    Fetch.map (SchemaIndex.filter (\subjectId -> String.contains searchTerm subjectId)) model.schemaIndex
 
                 Nothing ->
                     model.schemaIndex
@@ -259,13 +259,14 @@ viewSchemaIndex model =
         latestVersionText versions =
             "v" ++ (SchemaIndex.latest versions |> String.fromInt)
     in
-    Html.div []
-        [ styled Html.div [ Elevation.z0 ] [ text "Subjects" ]
+    styled Html.div
+        [ Elevation.z2 ]
+        [ Html.div [] [ text "Subjects" ]
         , TextField.view Mdc
             "subject-filter"
             model.mdc
             [ TextField.label "Search"
-            , Options.onChange FilterBySubject
+            , Options.onInput FilterBySubject
             ]
             []
         , listRender indexToRender
@@ -278,12 +279,12 @@ viewSelectedSchema selected =
         Just fetched ->
             let
                 style =
-                    [ css "font" sourceCodeFont ]
+                    [ css "font" sourceCodeFont, css "background-color" "white" ]
 
                 sourceCodeFont =
                     "12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace"
             in
-            Fetch.view (\x -> styled Html.pre style [ text (Avro.toString x) ]) fetched
+            Fetch.view (\x -> styled Html.pre (Elevation.z2 :: style) [ text (Avro.toString x) ]) fetched
 
         Nothing ->
             text "No schema selected"
