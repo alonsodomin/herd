@@ -8,6 +8,7 @@ module Main where
 
 import           Control.Lens
 import qualified Data.Avro.Schema    as Avro
+import           Data.List.Split
 import           Data.Proxy          (Proxy (Proxy))
 import           Data.Text           (Text)
 import qualified Data.Text           as T
@@ -49,13 +50,12 @@ elmImports = T.unlines
   , defElmImports
   ]
 
-moduleHeader = [ "Herd", "Console", "Remote" ]
-
 -- Main program
 
 data HerdCodegenOpts = HerdCodegenOpts
-  { _hcoDestFolder :: FilePath }
-  deriving (Eq, Show)
+  { _hcoDestFolder   :: FilePath
+  , _hcoModuleHeader :: [String]
+  } deriving (Eq, Show)
 
 makeLenses ''HerdCodegenOpts
 
@@ -69,8 +69,15 @@ destFolderOpt = strOption
              <> value defaultDestFolder
              <> help "Destination folder for generated code" )
 
+moduleHeaderOpt :: Parser [String]
+moduleHeaderOpt = (splitOn ".") <$> strOption
+                ( long "out"
+               <> short 'o'
+               <> metavar "OUTPUT"
+               <> help "Output module" )
+
 herdCodegenOpts :: Parser HerdCodegenOpts
-herdCodegenOpts = HerdCodegenOpts <$> destFolderOpt
+herdCodegenOpts = HerdCodegenOpts <$> destFolderOpt <*> moduleHeaderOpt
 
 main :: IO ()
 main = runCodeGen =<< execParser opts
@@ -81,4 +88,4 @@ main = runCodeGen =<< execParser opts
 
 runCodeGen :: HerdCodegenOpts -> IO ()
 runCodeGen opts =
-  generateElmModuleWith elmOpts moduleHeader elmImports (opts ^. hcoDestFolder) typeDefs apiType
+  generateElmModuleWith elmOpts (opts ^. hcoModuleHeader) elmImports (opts ^. hcoDestFolder) typeDefs apiType

@@ -72,7 +72,7 @@ backend: $(STACK_WORK_DIR)
 	@stack build
 
 $(REMOTE_API): backend
-	mkdir -p $(@D) && stack exec herd-node-codegen -- -d $(CONSOLE_GEN_DIR)
+	mkdir -p $(@D) && stack exec herd-node-codegen -- -d $(CONSOLE_GEN_DIR) -o "Herd.Console.Remote"
 
 $(DIST_DIR):
 	@mkdir -p $(DIST_DIR)
