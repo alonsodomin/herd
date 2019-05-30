@@ -1,4 +1,4 @@
-module Herd.Console.SchemaBrowser exposing (Model, Msg, init, update, view)
+module Herd.Console.Page.SchemaBrowser exposing (Model, Msg, init, update, view)
 
 import Avro as Avro
 import Dict exposing (Dict)
