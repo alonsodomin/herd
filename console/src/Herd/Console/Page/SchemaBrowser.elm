@@ -6,19 +6,16 @@ import Herd.Console.Data.SchemaIndex as SchemaIndex exposing (SchemaIndex)
 import Herd.Console.Remote as Remote exposing (AvroSchema, SubjectId, Version)
 import Herd.Fetch as Fetch exposing (Fetch)
 import Html exposing (..)
-import Html.Attributes as Html
 import Http
 import Json.Encode as Json
 import List.Nonempty as NEL exposing (Nonempty)
 import Material
-import Material.Drawer.Dismissible as Drawer
 import Material.Elevation as Elevation
 import Material.LayoutGrid as LayoutGrid
 import Material.List as Lists
 import Material.Menu as Menu
 import Material.Options as Options exposing (cs, css, styled, when)
 import Material.TextField as TextField
-import Material.TopAppBar as TopAppBar
 import Material.Typography as Typography
 
 
@@ -31,7 +28,6 @@ type alias Model =
     , schemaIndex : Fetch SchemaIndex
     , selectedSchema : Maybe (Fetch AvroSchema)
     , filterBySubject : Maybe SubjectId
-    , drawerOpen : Bool
     }
 
 
@@ -41,7 +37,6 @@ initialModel =
     , schemaIndex = Fetch.pending
     , selectedSchema = Nothing
     , filterBySubject = Nothing
-    , drawerOpen = True
     }
 
 
@@ -57,7 +52,6 @@ modelToSchemaList model =
 type Msg
     = Mdc (Material.Msg Msg)
     | ClickedSchema SubjectId Version
-    | ToggleDrawer
     | FilterBySubject String
     | GotSubjectIds (Result Http.Error (List SubjectId))
     | GotSchemaVersions SubjectId (Result Http.Error (Maybe (Nonempty Version)))
@@ -93,9 +87,6 @@ update msg model =
     case msg of
         ClickedSchema subjectId version ->
             ( { model | selectedSchema = Just Fetch.pending }, loadSchema subjectId version )
-
-        ToggleDrawer ->
-            ( { model | drawerOpen = not model.drawerOpen }, Cmd.none )
 
         FilterBySubject str ->
             let
@@ -155,67 +146,6 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.div []
-        [ viewTopBar model
-        , styled Html.div
-            [ TopAppBar.fixedAdjust ]
-            [ viewDrawer model ]
-        ]
-
-
-viewTopBar : Model -> Html Msg
-viewTopBar model =
-    TopAppBar.view Mdc
-        "herd-topbar"
-        model.mdc
-        [ TopAppBar.fixed ]
-        [ TopAppBar.section [ TopAppBar.alignStart ]
-            [ TopAppBar.navigationIcon Mdc
-                "burger-menu"
-                model.mdc
-                [ Options.onClick ToggleDrawer ]
-                "menu"
-            , TopAppBar.title [] [ text "Herd" ]
-            ]
-        ]
-
-
-viewDrawer : Model -> Html Msg
-viewDrawer model =
-    Html.div []
-        [ Drawer.view Mdc
-            "herd-drawer"
-            model.mdc
-            [ Drawer.open |> when model.drawerOpen
-            , Drawer.onClose ToggleDrawer
-            ]
-            [ Drawer.header []
-                [ styled h3 [ Drawer.title ] [ text "Herd" ]
-                , styled h6 [ Drawer.subTitle ] [ text "username" ]
-                ]
-            , Drawer.content []
-                [ Lists.nav Mdc
-                    "herd-nav"
-                    model.mdc
-                    []
-                    [ Lists.a
-                        [ Options.attribute (Html.href "#persistent-drawer")
-                        , Lists.activated
-                        ]
-                        [ Lists.graphicIcon [] "inbox"
-                        , text "Schemas"
-                        ]
-                    ]
-                ]
-            ]
-        , styled Html.div
-            [ Drawer.appContent ]
-            [ viewSchemaBrowser model ]
-        ]
-
-
-viewSchemaBrowser : Model -> Html Msg
-viewSchemaBrowser model =
     LayoutGrid.view []
         [ LayoutGrid.cell
             [ LayoutGrid.span4 ]
