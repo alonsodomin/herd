@@ -34,6 +34,12 @@ encodeType typ =
         Type.String ->
             Json.string "string"
 
+        Type.Array { items } ->
+            Json.object [ ( "type", Json.string "array" ), ( "items", encodeType items ) ]
+
+        Type.Map { values } ->
+            Json.object [ ( "type", Json.string "map" ), ( "values", encodeType values ) ]
+
         Type.Union { options } ->
             Json.array encodeType (Array.fromList (NEL.toList options))
 
@@ -49,6 +55,8 @@ decodeType =
         , decodeDouble
         , decodeBytes
         , decodeString
+        , decodeArray
+        , decodeMap
         , Decode.lazy (\_ -> decodeUnion)
         ]
 
@@ -105,6 +113,31 @@ decodeBytes =
 decodeString : Decoder Type
 decodeString =
     decodeFromString <| match "string" ( "Not a string", Type.String )
+
+
+decodeComplex : String -> String -> Decoder Type -> Decoder Type
+decodeComplex typeName errMsg decoder =
+    let
+        handleTypeName typ =
+            if typ == typeName then
+                decoder
+
+            else
+                Decode.fail errMsg
+    in
+    Decode.field "type" Decode.string |> Decode.andThen handleTypeName
+
+
+decodeArray : Decoder Type
+decodeArray =
+    decodeComplex "array" "Not an array" <|
+        Decode.lazy (\_ -> Decode.field "items" decodeType |> Decode.map (\x -> Type.Array { items = x }))
+
+
+decodeMap : Decoder Type
+decodeMap =
+    decodeComplex "map" "Not a map" <|
+        Decode.lazy (\_ -> Decode.field "values" decodeType |> Decode.map (\x -> Type.Map { values = x }))
 
 
 decodeUnion : Decoder Type

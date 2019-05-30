@@ -12,4 +12,6 @@ type Type
     | Double
     | Bytes
     | String
+    | Array { items : Type }
+    | Map { values : Type }
     | Union { options : Nonempty Type }
