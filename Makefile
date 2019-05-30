@@ -1,5 +1,8 @@
+PROJECT_NAME := herd
+
 BASE_DIR := $(shell pwd)
-DIST_DIR := $(BASE_DIR)/dist
+BASE_DIST_DIR := $(BASE_DIR)/dist
+DIST_DIR := $(BASE_DIST_DIR)/$(PROJECT_NAME)
 
 STACK_WORK_DIR := $(BASE_DIR)/.stack-work
 
@@ -55,7 +58,7 @@ backend-clean:
 	@stack clean
 
 ui-clean:
-	@rm -fr $(DIST_DIR) $(ELM_STUFF) $(CONSOLE_GEN_DIR)
+	@rm -fr $(BASE_DIST_DIR) $(ELM_STUFF) $(CONSOLE_GEN_DIR)
 
 clean: backend-clean ui-clean
 
@@ -114,6 +117,7 @@ test: backend-test ui-test
 # Misc
 
 dist: test uglify
+	zip $(BASE_DIST_DIR)/$(PROJECT_NAME).zip $(DIST_DIR)
 
 install: dist
 	@stack install
