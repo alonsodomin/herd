@@ -1,4 +1,4 @@
-module Avro exposing (Schema, jsonDecSchema, jsonEncSchema, prettyPrint, toString)
+module Avro exposing (Schema, prettyPrint, toString)
 
 import Avro.Json exposing (..)
 import Avro.Types exposing (Type)
@@ -8,16 +8,6 @@ import Json.Encode as Json
 
 type alias Schema =
     Type
-
-
-jsonDecSchema : Decoder Schema
-jsonDecSchema =
-    decodeType
-
-
-jsonEncSchema : Schema -> Json.Value
-jsonEncSchema =
-    encodeType
 
 
 toString : Schema -> String

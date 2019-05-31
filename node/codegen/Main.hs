@@ -46,7 +46,7 @@ elmOpts = defElmOptions
 
 elmImports :: Text
 elmImports = T.unlines
-  [ "import Avro exposing (..)"
+  [ "import Herd.Avro exposing (..)"
   , defElmImports
   ]
 
