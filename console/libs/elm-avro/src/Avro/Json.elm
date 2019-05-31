@@ -3,7 +3,7 @@ module Avro.Json exposing (decodeType, encodeType)
 import Array
 import Avro.Types as Type exposing (Field, Order(..), Type)
 import Avro.Types.Value as AvroV
-import Extra.Maybe exposing (catMaybes)
+import Avro.Internal.Maybe exposing (catMaybes)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Json
 import List.Nonempty as NEL exposing (Nonempty)

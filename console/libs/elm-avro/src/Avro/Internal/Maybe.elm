@@ -1,4 +1,4 @@
-module Extra.Maybe exposing (catMaybes)
+module Avro.Internal.Maybe exposing (catMaybes, toList)
 
 
 toList : Maybe a -> List a
