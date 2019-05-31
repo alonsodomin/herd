@@ -133,5 +133,4 @@ install: dist
 fmt: $(ELM_FORMAT)
 	@./stylize.sh
 	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_SRC_DIR)/ --yes
-	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_DIR)/libs/elm-avro/src --yes
 	@cd $(CONSOLE_DIR) && $(ELM_FORMAT) $(CONSOLE_TESTS_DIR)/ --yes
