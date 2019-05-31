@@ -1,6 +1,7 @@
 PROJECT_NAME := herd
 
 BASE_DIR := $(shell pwd)
+ETC_DIR := $(BASE_DIR)/etc
 BASE_DIST_DIR := $(BASE_DIR)/dist
 DIST_DIR := $(BASE_DIST_DIR)/$(PROJECT_NAME)
 DIST_BIN_FILE := $(BASE_DIST_DIR)/$(PROJECT_NAME)-bin.zip
@@ -121,7 +122,10 @@ test: backend-test ui-test
 $(DIST_BIN_FILE): test uglify
 	zip $(DIST_BIN_FILE) $(DIST_DIR)
 
-dist: $(DIST_BIN_FILE)
+$(DIST_DIR)/etc:
+	@cp -r $(ETC_DIR) $(DIST_DIR)
+
+dist: $(DIST_BIN_FILE) $(DIST_DIR)/etc
 
 install: dist
 	@stack install
