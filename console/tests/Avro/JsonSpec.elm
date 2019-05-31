@@ -2,6 +2,7 @@ module Avro.JsonSpec exposing (suite)
 
 import Avro.Json as Json
 import Avro.Types as Avro
+import Avro.Types.Value as AvroV
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Json.Decode exposing (decodeString)
@@ -25,7 +26,7 @@ avroPrims =
 
 avroRecord : ( String, Avro.Type )
 avroRecord =
-    ( """{"type":"record","name":"fooRecord","aliases":[],"fields":[{"name":"barField","type":"int","aliases":[]}]}"""
+    ( """{"type":"record","name":"fooRecord","aliases":[],"fields":[{"name":"barField","type":"int","aliases":[],"default":10}]}"""
     , Avro.Record
         { name = "fooRecord"
         , namespace = Nothing
@@ -38,6 +39,7 @@ avroRecord =
               , doc = Nothing
               , order = Nothing
               , fieldType = Avro.Int
+              , default = Just (AvroV.Int 10)
               }
             ]
         }

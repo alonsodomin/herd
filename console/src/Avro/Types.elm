@@ -28,6 +28,19 @@ type Type
         , order : Maybe Order
         , fields : List Field
         }
+    | Fixed
+        { name : TypeName
+        , namespace : Maybe String
+        , aliases : List TypeName
+        , size : Int
+        }
+    | Enum
+        { name : TypeName
+        , namespace : Maybe String
+        , aliases : List TypeName
+        , doc : Maybe String
+        , symbols : List TypeName
+        }
 
 
 type alias Field =
@@ -36,8 +49,7 @@ type alias Field =
     , doc : Maybe String
     , order : Maybe Order
     , fieldType : Type
-
-    --, default : Maybe (Value Type)
+    , default : Maybe (Value Type)
     }
 
 

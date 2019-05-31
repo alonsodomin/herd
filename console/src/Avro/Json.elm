@@ -2,6 +2,7 @@ module Avro.Json exposing (decodeType, encodeType)
 
 import Array
 import Avro.Types as Type exposing (Field, Order(..), Type)
+import Avro.Types.Value as AvroV
 import Extra.Maybe exposing (catMaybes)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Json
@@ -65,6 +66,36 @@ encodeType typ =
                 ]
                     ++ opts
 
+        Type.Fixed fixed ->
+            let
+                opts =
+                    catMaybes
+                        [ Maybe.map (\x -> ( "namespace", Json.string x )) fixed.namespace ]
+            in
+            Json.object <|
+                [ ( "type", Json.string "fixed" )
+                , ( "name", Json.string fixed.name )
+                , ( "aliases", Json.list Json.string fixed.aliases )
+                , ( "size", Json.int fixed.size )
+                ]
+                    ++ opts
+
+        Type.Enum enum ->
+            let
+                opts =
+                    catMaybes
+                        [ Maybe.map (\x -> ( "namespace", Json.string x )) enum.namespace
+                        , Maybe.map (\x -> ( "doc", Json.string x )) enum.doc
+                        ]
+            in
+            Json.object <|
+                [ ( "type", Json.string "enum" )
+                , ( "name", Json.string enum.name )
+                , ( "aliases", Json.list Json.string enum.aliases )
+                , ( "symbols", Json.list Json.string enum.symbols )
+                ]
+                    ++ opts
+
 
 encodeOrder : Order -> Json.Value
 encodeOrder order =
@@ -86,6 +117,7 @@ encodeField field =
             catMaybes
                 [ Maybe.map (\x -> ( "order", encodeOrder x )) field.order
                 , Maybe.map (\x -> ( "doc", Json.string x )) field.doc
+                , Maybe.map (\x -> ( "default", encodeValue x )) field.default
                 ]
     in
     Json.object <|
@@ -94,6 +126,19 @@ encodeField field =
         , ( "aliases", Json.list Json.string field.aliases )
         ]
             ++ opts
+
+
+encodeValue : AvroV.Value t -> Json.Value
+encodeValue avroV =
+    case avroV of
+        AvroV.Null ->
+            Json.string "null"
+
+        AvroV.Boolean v ->
+            Json.bool v
+
+        AvroV.Int v ->
+            Json.int v
 
 
 
@@ -115,10 +160,12 @@ decodeType =
         , decodeMap
         , Decode.lazy (\_ -> decodeUnion)
         , Decode.lazy (\_ -> decodeRecord)
+        , decodeFixed
+        , decodeEnum
         ]
 
 
-match : a -> ( String, Type ) -> a -> Decoder Type
+match : a -> ( String, t ) -> a -> Decoder t
 match toMatch ( err, res ) value =
     if value == toMatch then
         Decode.succeed res
@@ -127,7 +174,7 @@ match toMatch ( err, res ) value =
         Decode.fail err
 
 
-decodeFromString : (String -> Decoder Type) -> Decoder Type
+decodeFromString : (String -> Decoder t) -> Decoder t
 decodeFromString f =
     Decode.string |> Decode.andThen f
 
@@ -236,14 +283,44 @@ decodeRecord =
             (Decode.field "fields" <| Decode.list decodeField)
 
 
+decodeFixed : Decoder Type
+decodeFixed =
+    let
+        createFixed name namespace aliases size =
+            Type.Fixed { name = name, namespace = namespace, aliases = aliases, size = size }
+    in
+    decodeComplex "fixed" "Not a fixed type" <|
+        Decode.map4 createFixed
+            (Decode.field "name" Decode.string)
+            (Decode.maybe <| Decode.field "namespace" Decode.string)
+            (Decode.field "aliases" <| Decode.list Decode.string)
+            (Decode.field "size" Decode.int)
+
+
+decodeEnum : Decoder Type
+decodeEnum =
+    let
+        createEnum name namespace aliases doc symbols =
+            Type.Enum { name = name, namespace = namespace, aliases = aliases, doc = doc, symbols = symbols }
+    in
+    decodeComplex "enum" "Not an enum" <|
+        Decode.map5 createEnum
+            (Decode.field "name" Decode.string)
+            (Decode.maybe <| Decode.field "namespace" Decode.string)
+            (Decode.field "aliases" <| Decode.list Decode.string)
+            (Decode.maybe <| Decode.field "doc" Decode.string)
+            (Decode.field "symbols" <| Decode.list Decode.string)
+
+
 decodeField : Decoder Field
 decodeField =
-    Decode.map5 Field
+    Decode.map6 Field
         (Decode.field "name" Decode.string)
         (Decode.field "aliases" <| Decode.list Decode.string)
         (Decode.maybe <| Decode.field "doc" Decode.string)
         (Decode.maybe <| Decode.field "order" decodeOrder)
         (Decode.field "type" decodeType)
+        (Decode.maybe <| Decode.field "default" decodeValue)
 
 
 decodeOrder : Decoder Order
@@ -264,3 +341,27 @@ decodeOrder =
                     Decode.fail <| "Invalid order value: " ++ str
     in
     Decode.string |> Decode.andThen handleOrderString
+
+
+decodeValue : Decoder (AvroV.Value t)
+decodeValue =
+    Decode.oneOf
+        [ decodeNullValue
+        , decodeBooleanValue
+        , decodeIntValue
+        ]
+
+
+decodeNullValue : Decoder (AvroV.Value t)
+decodeNullValue =
+    decodeFromString <| match "null" ( "Not a null", AvroV.Null )
+
+
+decodeBooleanValue : Decoder (AvroV.Value t)
+decodeBooleanValue =
+    Decode.map AvroV.Boolean Decode.bool
+
+
+decodeIntValue : Decoder (AvroV.Value t)
+decodeIntValue =
+    Decode.map AvroV.Int Decode.int

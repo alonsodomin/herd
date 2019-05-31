@@ -1,6 +1,7 @@
 module Avro.Types.Value exposing (Value(..))
 
 
-type Value typ
+type Value t
     = Null
     | Boolean Bool
+    | Int Int

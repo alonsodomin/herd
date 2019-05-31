@@ -6,6 +6,7 @@ module Main where
 import           Control.Monad.IO.Class
 import           Control.Monad.Logger
 import qualified Data.Avro.Schema       as Avro
+import qualified Data.Avro.Types.Value  as AvroV
 import           Data.List.NonEmpty     (NonEmpty (..))
 import qualified Data.List.NonEmpty     as NEL
 import qualified Data.Text              as T
@@ -33,7 +34,7 @@ main = do
             , Avro.doc = Nothing
             , Avro.order = Nothing
             , Avro.fields = [
-                Avro.Field "field" [] Nothing Nothing Avro.Int Nothing
+                Avro.Field "field" [] Nothing Nothing Avro.Int (Just $ AvroV.Int 10)
               ]
             }
 
