@@ -1,10 +1,15 @@
 module Avro.Json exposing (decodeType, encodeType)
 
 import Array
-import Avro.Types as Type exposing (Type)
+import Avro.Types as Type exposing (Field, Order(..), Type)
+import Extra.Maybe exposing (catMaybes)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Json
 import List.Nonempty as NEL exposing (Nonempty)
+
+
+
+-- Encoding operations
 
 
 encodeType : Type -> Json.Value
@@ -43,6 +48,57 @@ encodeType typ =
         Type.Union { options } ->
             Json.array encodeType (Array.fromList (NEL.toList options))
 
+        Type.Record rec ->
+            let
+                opts =
+                    catMaybes
+                        [ Maybe.map (\x -> ( "order", encodeOrder x )) rec.order
+                        , Maybe.map (\x -> ( "namespace", Json.string x )) rec.namespace
+                        , Maybe.map (\x -> ( "doc", Json.string x )) rec.doc
+                        ]
+            in
+            Json.object <|
+                [ ( "type", Json.string "record" )
+                , ( "name", Json.string rec.name )
+                , ( "aliases", Json.list Json.string rec.aliases )
+                , ( "fields", Json.list encodeField rec.fields )
+                ]
+                    ++ opts
+
+
+encodeOrder : Order -> Json.Value
+encodeOrder order =
+    case order of
+        Ascending ->
+            Json.string "ascending"
+
+        Descending ->
+            Json.string "descending"
+
+        Ignore ->
+            Json.string "ignore"
+
+
+encodeField : Field -> Json.Value
+encodeField field =
+    let
+        opts =
+            catMaybes
+                [ Maybe.map (\x -> ( "order", encodeOrder x )) field.order
+                , Maybe.map (\x -> ( "doc", Json.string x )) field.doc
+                ]
+    in
+    Json.object <|
+        [ ( "name", Json.string field.name )
+        , ( "type", encodeType field.fieldType )
+        , ( "aliases", Json.list Json.string field.aliases )
+        ]
+            ++ opts
+
+
+
+-- Decoding operations
+
 
 decodeType : Decoder Type
 decodeType =
@@ -58,6 +114,7 @@ decodeType =
         , decodeArray
         , decodeMap
         , Decode.lazy (\_ -> decodeUnion)
+        , Decode.lazy (\_ -> decodeRecord)
         ]
 
 
@@ -151,7 +208,59 @@ decodeUnion =
                 Nothing ->
                     Decode.fail "Empty union!"
     in
-    Decode.array decodeType
-        |> Decode.map Array.toList
+    Decode.list decodeType
         |> Decode.map NEL.fromList
         |> Decode.andThen handleParsed
+
+
+decodeRecord : Decoder Type
+decodeRecord =
+    let
+        createRecord name namespace aliases doc order fields =
+            Type.Record
+                { name = name
+                , namespace = namespace
+                , aliases = aliases
+                , doc = doc
+                , order = order
+                , fields = fields
+                }
+    in
+    decodeComplex "record" "Not a record" <|
+        Decode.map6 createRecord
+            (Decode.field "name" Decode.string)
+            (Decode.field "namespace" <| Decode.maybe Decode.string)
+            (Decode.field "aliases" <| Decode.list Decode.string)
+            (Decode.field "doc" <| Decode.maybe Decode.string)
+            (Decode.field "order" <| Decode.maybe decodeOrder)
+            (Decode.field "fields" <| Decode.list decodeField)
+
+
+decodeField : Decoder Field
+decodeField =
+    Decode.map5 Field
+        (Decode.field "name" Decode.string)
+        (Decode.field "aliases" <| Decode.list Decode.string)
+        (Decode.field "doc" <| Decode.maybe Decode.string)
+        (Decode.field "order" <| Decode.maybe decodeOrder)
+        (Decode.field "type" decodeType)
+
+
+decodeOrder : Decoder Order
+decodeOrder =
+    let
+        handleOrderString str =
+            case str of
+                "ascending" ->
+                    Decode.succeed Ascending
+
+                "descending" ->
+                    Decode.succeed Descending
+
+                "ignore" ->
+                    Decode.succeed Ignore
+
+                _ ->
+                    Decode.fail <| "Invalid order value: " ++ str
+    in
+    Decode.string |> Decode.andThen handleOrderString

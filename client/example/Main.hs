@@ -26,6 +26,16 @@ main = do
           registerSchema "foo" $ AvroSchema Avro.Boolean
           registerSchema "bar" $ AvroSchema Avro.Int
           registerSchema "foo" $ AvroSchema $ Avro.mkUnion (Avro.Null :| [Avro.Boolean])
+          registerSchema "quxx" $ AvroSchema $ Avro.Record
+            { Avro.name = Avro.TN "quxx"
+            , Avro.aliases = []
+            , Avro.namespace = Nothing
+            , Avro.doc = Nothing
+            , Avro.order = Nothing
+            , Avro.fields = [
+                Avro.Field "field" [] Nothing Nothing Avro.Int Nothing
+              ]
+            }
 
           subjectIds <- getSubjectIds
           liftIO . T.putStrLn $ "Subject IDs: " <> (toText subjectIds)
