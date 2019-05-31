@@ -23,6 +23,27 @@ avroPrims =
     ]
 
 
+avroRecord : ( String, Avro.Type )
+avroRecord =
+    ( """{"type":"record","name":"fooRecord","aliases":[],"fields":[{"name":"barField","type":"int","aliases":[]}]}"""
+    , Avro.Record
+        { name = "fooRecord"
+        , namespace = Nothing
+        , aliases = []
+        , doc = Nothing
+        , order = Nothing
+        , fields =
+            [ { name = "barField"
+              , aliases = []
+              , doc = Nothing
+              , order = Nothing
+              , fieldType = Avro.Int
+              }
+            ]
+        }
+    )
+
+
 schema : Fuzzer Avro.Type
 schema =
     Fuzz.oneOf
@@ -56,6 +77,16 @@ suite =
                             Expect.equal (Ok expectedUnion) (decodeString Json.decodeType input)
                    , test "should fail to decode an empty union" <|
                         \_ -> Expect.err (decodeString Json.decodeType "[]")
+                   , test "decodes a record" <|
+                        \_ ->
+                            let
+                                recString =
+                                    Tuple.first avroRecord
+
+                                rec =
+                                    Tuple.second avroRecord
+                            in
+                            Expect.equal (Ok rec) (decodeString Json.decodeType recString)
                    ]
         , describe "Avro.Json.encodeType" <|
             List.map avroEncodeTest avroPrims
@@ -66,6 +97,16 @@ suite =
                                     Avro.Union { options = NEL.cons Avro.Null (NEL.fromElement Avro.Boolean) }
                             in
                             Expect.equal "[\"null\",\"boolean\"]" (encode 0 <| Json.encodeType unionToEncode)
+                   , test "encodes a record" <|
+                        \_ ->
+                            let
+                                recString =
+                                    Tuple.first avroRecord
+
+                                rec =
+                                    Tuple.second avroRecord
+                            in
+                            Expect.equal recString (encode 0 <| Json.encodeType rec)
                    ]
         ]
 

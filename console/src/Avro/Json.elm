@@ -229,10 +229,10 @@ decodeRecord =
     decodeComplex "record" "Not a record" <|
         Decode.map6 createRecord
             (Decode.field "name" Decode.string)
-            (Decode.field "namespace" <| Decode.maybe Decode.string)
+            (Decode.maybe <| Decode.field "namespace" Decode.string)
             (Decode.field "aliases" <| Decode.list Decode.string)
-            (Decode.field "doc" <| Decode.maybe Decode.string)
-            (Decode.field "order" <| Decode.maybe decodeOrder)
+            (Decode.maybe <| Decode.field "doc" Decode.string)
+            (Decode.maybe <| Decode.field "order" decodeOrder)
             (Decode.field "fields" <| Decode.list decodeField)
 
 
@@ -241,8 +241,8 @@ decodeField =
     Decode.map5 Field
         (Decode.field "name" Decode.string)
         (Decode.field "aliases" <| Decode.list Decode.string)
-        (Decode.field "doc" <| Decode.maybe Decode.string)
-        (Decode.field "order" <| Decode.maybe decodeOrder)
+        (Decode.maybe <| Decode.field "doc" Decode.string)
+        (Decode.maybe <| Decode.field "order" decodeOrder)
         (Decode.field "type" decodeType)
 
 
