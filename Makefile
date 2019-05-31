@@ -120,12 +120,12 @@ test: backend-test ui-test
 # Misc
 
 $(DIST_BIN_FILE): test uglify
-	zip $(DIST_BIN_FILE) $(DIST_DIR)
 
 $(DIST_DIR)/etc:
 	@cp -r $(ETC_DIR) $(DIST_DIR)
 
 dist: $(DIST_BIN_FILE) $(DIST_DIR)/etc
+	zip $(DIST_BIN_FILE) $(DIST_DIR)
 
 install: dist
 	@stack install
