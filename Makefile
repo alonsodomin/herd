@@ -17,7 +17,7 @@ CONSOLE_DIST_DIR := $(DIST_DIR)/console
 CONSOLE_VIEW := $(CONSOLE_DIST_DIR)/main.html
 CONSOLE_APP := $(CONSOLE_DIST_DIR)/main.js
 
-MDC_DIR := $(CONSOLE_DIR)/elm-mdc
+MDC_DIR := $(CONSOLE_DIR)/libs/elm-mdc
 MDC_DEPS := $(CONSOLE_DIST_DIR)/elm-mdc.js $(CONSOLE_DIST_DIR)/material-components-web.css
 
 ELM_STUFF := $(CONSOLE_DIR)/elm-stuff
@@ -103,7 +103,7 @@ $(CONSOLE_APP): $(ELM) $(REMOTE_API) $(CONSOLE_MAIN)
 
 ui: $(CONSOLE_APP) $(CONSOLE_VIEW) $(MDC_DEPS)
 
-uglify: $(CONSOLE_APP) $(UGLIFY)
+uglify: ui $(UGLIFY)
 	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP)
 	$(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
 
