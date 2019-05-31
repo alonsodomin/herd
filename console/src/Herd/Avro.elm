@@ -6,7 +6,10 @@ import Avro.Types exposing (Type)
 import Json.Decode exposing (Decoder)
 import Json.Encode as Json
 
-type alias Schema = Avro.Schema
+
+type alias Schema =
+    Avro.Schema
+
 
 jsonDecSchema : Decoder Schema
 jsonDecSchema =

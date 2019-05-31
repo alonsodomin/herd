@@ -45,9 +45,11 @@ avroRecord =
         }
     )
 
+
 schema : Fuzzer Avro.Type
 schema =
-    let fuzzPrim =
+    let
+        fuzzPrim =
             Fuzz.oneOf
                 [ Fuzz.constant Avro.Null
                 , Fuzz.constant Avro.Boolean
@@ -58,14 +60,13 @@ schema =
                 , Fuzz.constant Avro.Bytes
                 , Fuzz.constant Avro.String
                 ]
-        
+
         -- fuzzArray =
         --     Fuzz.map (\x -> Avro.Array { items = x }) schema
-
         -- fuzzMap =
         --     Fuzz.map (\x -> Avro.Map { values = x }) schema
-    
-    in Fuzz.oneOf [fuzzPrim]
+    in
+    Fuzz.oneOf [ fuzzPrim ]
 
 
 suite : Test
