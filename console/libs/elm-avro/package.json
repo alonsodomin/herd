@@ -1,0 +1,15 @@
+{
+  "name": "elm-avro-tests",
+  "version": "0.0.0",
+  "description": "tests for elm-avro",
+  "scripts": {
+    "test": "elm make --docs=documentation.json && (cd tests && ./test.sh) && elm-format --validate src tests/src benchmarks"
+  },
+  "author": "A. Alonso Dominguez",
+  "license": "LGPL-3.0",
+  "devDependencies": {
+    "elm": "^0.19.0-bugfix2",
+    "elm-format": "^0.8.1"
+  },
+  "dependencies": {}
+}
