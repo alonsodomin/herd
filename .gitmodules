@@ -1,4 +1,0 @@
-[submodule "console/elm-mdc"]
-	path = console/elm-mdc
-	url = https://github.com/aforemny/elm-mdc.git
-	branch = master
