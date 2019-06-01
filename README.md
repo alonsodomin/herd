@@ -5,9 +5,19 @@
 
 Distributed schema-driven commit log. The idea behind Herd is to make a scalable self-descriptive storage that allows fine grained traceability of each of its records.
 
-## Requirements
+## Building
+
+First of all, ensure that your local setup meets the following requirements
 
 * [Rocks DB](https://rocksdb.org/)
+
+Then clone the repo ensuring that you recurse over the git submodules, and run run `make`.
+
+```bash
+git clone --recursive https://github.com/alonsodomin/herd
+cd herd
+make
+```
 
 ## Status
 
