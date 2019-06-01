@@ -140,7 +140,6 @@ instance encodeJsonAvroType :: EncodeJson Type where
     ~> "order" := rec.order
     ~> "fields" := rec.fields
     ~> jsonEmptyObject
-  encodeJson _ = jsonEmptyObject
 
 decodePrimitiveType :: String -> String -> Type -> TypeDecoder
 decodePrimitiveType name errMsg typ json = do
