@@ -3,7 +3,7 @@
   "scripts": {
     "build": "pulp build -I ./gen --to dist/app.js",
     "dist": "npm run build && cp -r static/* dist/",
-    "clean": "rimraf output && rimraf .pulp-cache && rimraf dist/",
+    "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
     "watch": "pulp -w build -I ./gen --to dist/app.js",
     "watch-fast": "webpack --mode=development --entry ./entry.js --output-path ./dist --output-filename app.js --progress --watch"
   },
@@ -11,7 +11,9 @@
     "pulp": "^11.0.0",
     "purescript": "^0.11.5",
     "purescript-psa": "^0.5.0",
+    "purescript-suggest": "^2.2.0",
     "webpack": "^4.16.2",
     "webpack-cli": "^3.1.0"
-  }
+  },
+  "dependencies": { }
 }

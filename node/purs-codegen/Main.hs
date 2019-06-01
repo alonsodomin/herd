@@ -5,18 +5,27 @@ module Main where
 
 import Control.Lens
 import           Data.Proxy
+import qualified Data.Avro.Schema as Avro
 import Data.Text (Text)
 import           Data.List.Split (splitOn)
 import           Language.PureScript.Bridge
 import           Language.PureScript.Bridge.PSTypes
---import           Servant.API
+import           Language.PureScript.Bridge.TypeInfo
 import           Servant.PureScript
 import           Options.Applicative
 
 import Herd.Node
 import           Herd.Types
 
--- API Definition
+-- Type Definition
+
+psAvroType :: PSType
+psAvroType = TypeInfo {
+    _typePackage = "purescript-avro"
+  , _typeModule = "Data.Avro.Schema"
+  , _typeName = "Type"
+  , _typeParameters = []
+  }
 
 herdAPITypes :: [SumType 'Haskell]
 herdAPITypes = [
@@ -24,6 +33,25 @@ herdAPITypes = [
   , mkSumType (Proxy :: Proxy Version)
   , mkSumType (Proxy :: Proxy AvroSchema)
   ]
+
+-- Language Bridge
+
+avroTypeBridge :: BridgePart
+avroTypeBridge = haskType ^== mkTypeInfo (Proxy :: Proxy Avro.Type) >> return psAvroType
+
+integerBridge :: BridgePart
+integerBridge = haskType ^== mkTypeInfo (Proxy :: Proxy Integer) >> return psInt
+
+herdBridge :: BridgePart
+herdBridge = defaultBridge <|> integerBridge <|> avroTypeBridge
+
+data HerdBridge
+
+herdBridgeProxy :: Proxy HerdBridge
+herdBridgeProxy = Proxy
+
+instance HasBridge HerdBridge where
+  languageBridge _ = buildBridge herdBridge
 
 -- Command Line Parser
 
@@ -68,4 +96,4 @@ runPursCodegen opts = do
   let settings = defaultSettings & apiModuleName .~ (opts ^. hcoModuleName)
   let destFolder = (opts ^. hcoDestFolder)
   writeAPIModuleWithSettings settings destFolder defaultBridgeProxy herdREST
-  writePSTypes destFolder (buildBridge defaultBridge) herdAPITypes
+  writePSTypes destFolder (buildBridge herdBridge) herdAPITypes
