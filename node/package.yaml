@@ -23,6 +23,7 @@ dependencies:
 - binary
 - binary-orphans
 - bytestring
+- containers
 - free
 - hashable
 - mmorph
@@ -103,12 +104,24 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - containers
     - elm-bridge
     - herd-node
     - optparse-applicative >= 0.14.2 && < 0.15
     - servant-elm
     - wl-pprint-text
+
+  herd-purs-codegen:
+    main:                Main.hs
+    source-dirs:         purs-codegen
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - herd-node
+    - optparse-applicative >= 0.14.2 && < 0.15
+    - purescript-bridge
+    - servant-purescript
 
 tests:
   herd-node-test:
