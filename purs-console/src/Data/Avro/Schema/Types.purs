@@ -1,4 +1,9 @@
-module Data.Avro.Schema.Types (Type) where
+module Data.Avro.Schema.Types
+  ( Type
+  , TypeName
+  , Order
+  , Field
+  ) where
 
 import Prelude
 
