@@ -113,7 +113,7 @@ backend-test: $(STACK_WORK_DIR)
 	@stack test
 
 ui-test: $(ELM_TEST) ui
-	@cd $(CONSOLE_DIR) && $(ELM_TEST) --compiler $(ELM)
+	@cd $(CONSOLE_DIR) && $(ELM_TEST) --compiler $(ELM) $(CONSOLE_DIR)/libs/elm-avro/tests/**/*.elm
 
 test: backend-test ui-test
 
