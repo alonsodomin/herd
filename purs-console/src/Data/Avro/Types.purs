@@ -1,8 +1,8 @@
-module Data.Avro.Schema.Types
-  ( Type
-  , TypeName
-  , Order
-  , Field
+module Data.Avro.Types
+  ( Type(..)
+  , TypeName(..)
+  , Order(..)
+  , Field(..)
   ) where
 
 import Prelude
@@ -10,20 +10,34 @@ import Prelude
 import Control.Alt ((<|>))
 import Data.Generic.Rep (class Generic)
 import Data.Either (Either(..))
-import Data.Argonaut.Core (Json, jsonEmptyObject)
+import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, caseJsonString, caseJsonArray, caseJsonObject, jsonEmptyObject)
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
 import Data.Argonaut.Generic (jsonToForeign)
-import Data.Foldable (foldl)
+import Data.Avro.Types.Value (Value)
+import Data.Avro.Types.Value as Value
+import Data.ByteString as BS
+import Data.Foldable (foldl, elem)
 import Data.Maybe (Maybe(..))
+import Data.Map as Map
 import Data.Newtype (class Newtype)
 import Data.List (List)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.List.NonEmpty as NEL
+import Foreign.Object as Object
 import Foreign.Class (class Encode)
+import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
+import Node.Encoding (Encoding(Base64))
+
 
 newtype TypeName =
   TypeName String
+
+derive instance eqTypeName :: Eq TypeName
+
+instance showTypeName :: Show TypeName where
+  show (TypeName name) = name
 
 derive instance genericAvroTypeName :: Generic TypeName _
 derive instance newtypeAvroTypeName :: Newtype TypeName _
@@ -272,7 +286,7 @@ data Field = Field {
   , doc :: Maybe String
   , order :: Maybe Order
   , typ :: Type
-  -- , default :: (Maybe (Value Type))
+  , default :: (Maybe (Value Type))
   }
 
 derive instance genericAvroField :: Generic Field _
@@ -285,7 +299,10 @@ instance decodeJsonAvroField :: DecodeJson Field where
     doc <- obj .:? "doc"
     order <- obj .:? "order"
     typ <- obj .: "type"
-    pure $ Field { name: name, aliases: aliases, doc: doc, order: order, typ: typ }
+    def <- do
+      defJson <- obj .:? "default"
+      traverse (parseFieldDefault typ) defJson
+    pure $ Field { name: name, aliases: aliases, doc: doc, order: order, typ: typ, default: def }
 
 instance encodeJsonAvroField :: EncodeJson Field where
   encodeJson (Field field) =
@@ -294,4 +311,83 @@ instance encodeJsonAvroField :: EncodeJson Field where
     ~> "doc" := field.doc
     ~> "order" := field.order
     ~> "type" := field.typ
+    ~> "default" := field.default
     ~> jsonEmptyObject
+
+parseFieldDefault :: Type -> Json -> Either String (Value Type)
+parseFieldDefault Null =
+  caseJsonNull (Left "Not a null value") (\_ -> Right Value.Null)
+
+parseFieldDefault Boolean =
+  caseJsonBoolean (Left "Not a boolean value") (Right <<< Value.Boolean)
+
+parseFieldDefault Int =
+  \x -> do
+    v <- decodeJson x
+    Right $ Value.Int v
+
+parseFieldDefault Long =
+  \x -> do
+    v <- decodeJson x
+    Right $ Value.Long v
+
+parseFieldDefault Float =
+  caseJsonNumber (Left "Not an float value") (Right <<< Value.Float)
+
+parseFieldDefault Double =
+  caseJsonNumber (Left "Not an double value") (Right <<< Value.Double)
+
+parseFieldDefault Bytes =
+  \json -> do
+    str <- decodeJson json
+    case (BS.fromString str Base64) of
+      Just x -> Right $ Value.Bytes x
+      Nothing -> Left "Invalid btes encoding"
+
+parseFieldDefault String =
+  caseJsonString (Left "Not an string value") (Right <<< Value.String)
+
+parseFieldDefault (Array { items }) =
+  caseJsonArray (Left "Not an array value") parseArray
+  where parseArray arr =
+          Value.Array <$> traverse (parseFieldDefault items) arr
+
+parseFieldDefault (Map { values }) =
+  caseJsonObject (Left "Not a map value") parseMap
+  where parseMap obj = do
+          parsedObj <- traverse (parseFieldDefault values) obj
+          tupled <- pure $ (Object.toUnfoldable parsedObj) :: Array (Tuple String (Value Type))
+          pure $ Value.Map (Map.fromFoldable tupled)
+
+parseFieldDefault t@(Record { fields }) =
+  caseJsonObject (Left "Not a record value") parseRecord
+  where lookupAndParseField valueMap (Field { name, typ }) =
+          case (Map.lookup name valueMap) of
+            Just v -> map (\x -> Tuple name x) $ parseFieldDefault typ v
+            Nothing -> Left $ "Field not found: " <> name
+
+        parseRecord obj =
+          let tupled = (Object.toUnfoldable obj) :: Array (Tuple String Json)
+              valueMap = Map.fromFoldable tupled
+          in (Value.Record t) <$> Map.fromFoldable <$> traverse (lookupAndParseField valueMap) fields
+
+parseFieldDefault typ@(Union { options }) =
+  \json -> do
+    v <- foldl (\prev t -> prev <|> parseFieldDefault t json) (Left "Not a valid union value") options
+    pure $ Value.Union options typ v
+
+parseFieldDefault typ@(Enum { name, symbols }) =
+  caseJsonString (Left "No a valid enum value") checkEnum
+  where checkEnum v =
+          if (elem (TypeName v) symbols) then Right $ Value.Enum typ v
+            else Left $ "Invalid value '" <> v <> "' for enum: " <> (show name)
+
+parseFieldDefault typ@(Fixed { size }) =
+  \json -> do
+    parsed <- parseFieldDefault Bytes json
+    case parsed of
+      Value.Bytes bytes ->
+          if (BS.length bytes > size) then
+            Left $ "Bytes received exceed the size: " <> (show size)
+            else Right $ Value.Fixed typ bytes
+      _ -> Left "IMPOSSIBLE BUG!"
