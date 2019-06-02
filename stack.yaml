@@ -48,11 +48,17 @@ extra-deps:
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
-- servant-purescript-0.9.0.3@sha256:d3755a503d2111e24781ad74f0a8b2337d07bb2dbf8d33e145717e9318e42c60
+#- servant-purescript-0.9.0.3@sha256:d3755a503d2111e24781ad74f0a8b2337d07bb2dbf8d33e145717e9318e42c60
 - servant-subscriber-0.6.0.2@sha256:e1cf0d273f2d072f9b36c40a2e18cb1663beaeef400b2351b9a0e15629a12076
 # - ../servant-elm
-- github: alonsodomin/servant-elm
-  commit: 641bb8d765fa1e09f258ec57be292960a1a0d140
+# - github: alonsodomin/servant-elm
+#   commit: 641bb8d765fa1e09f258ec57be292960a1a0d140
+- git: git@github.com:eskimor/purescript-bridge.git
+  commit: cb00f5e746a05d06eb32001e4579af64c29d567b
+#- ../servant-purescript
+- git: git@github.com:alonsodomin/servant-purescript.git
+  commit: ab14502279c92084f06aa6222a17873275279e63
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

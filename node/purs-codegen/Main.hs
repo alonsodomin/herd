@@ -22,7 +22,7 @@ import           Herd.Types
 psAvroType :: PSType
 psAvroType = TypeInfo {
     _typePackage = "purescript-avro"
-  , _typeModule = "Data.Avro.Schema"
+  , _typeModule = "Data.Avro.Schema.Types"
   , _typeName = "Type"
   , _typeParameters = []
   }
@@ -31,13 +31,12 @@ herdAPITypes :: [SumType 'Haskell]
 herdAPITypes = [
     mkSumType (Proxy :: Proxy SubjectId)
   , mkSumType (Proxy :: Proxy Version)
-  , mkSumType (Proxy :: Proxy AvroSchema)
   ]
 
 -- Language Bridge
 
 avroTypeBridge :: BridgePart
-avroTypeBridge = haskType ^== mkTypeInfo (Proxy :: Proxy Avro.Type) >> return psAvroType
+avroTypeBridge = haskType ^== mkTypeInfo (Proxy :: Proxy AvroSchema) >> return psAvroType
 
 integerBridge :: BridgePart
 integerBridge = haskType ^== mkTypeInfo (Proxy :: Proxy Integer) >> return psInt
@@ -95,5 +94,5 @@ runPursCodegen :: HerdCodegenOpts -> IO ()
 runPursCodegen opts = do
   let settings = defaultSettings & apiModuleName .~ (opts ^. hcoModuleName)
   let destFolder = (opts ^. hcoDestFolder)
-  writeAPIModuleWithSettings settings destFolder defaultBridgeProxy herdREST
+  writeAPIModuleWithSettings settings destFolder herdBridgeProxy herdREST
   writePSTypes destFolder (buildBridge herdBridge) herdAPITypes

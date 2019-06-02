@@ -96,19 +96,19 @@ executables:
     dependencies:
     - herd-node    
 
-  herd-node-codegen:
-    main:                Main.hs
-    source-dirs:         codegen
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - elm-bridge
-    - herd-node
-    - optparse-applicative >= 0.14.2 && < 0.15
-    - servant-elm
-    - wl-pprint-text
+  # herd-node-codegen:
+  #   main:                Main.hs
+  #   source-dirs:         codegen
+  #   ghc-options:
+  #   - -threaded
+  #   - -rtsopts
+  #   - -with-rtsopts=-N
+  #   dependencies:
+  #   - elm-bridge
+  #   - herd-node
+  #   - optparse-applicative >= 0.14.2 && < 0.15
+  #   - servant-elm
+  #   - wl-pprint-text
 
   herd-purs-codegen:
     main:                Main.hs
@@ -120,7 +120,7 @@ executables:
     dependencies:
     - herd-node
     - optparse-applicative >= 0.14.2 && < 0.15
-    - purescript-bridge
+    - purescript-bridge >= 0.13
     - servant-purescript
 
 tests:

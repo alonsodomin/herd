@@ -8,21 +8,25 @@ module Data.Avro.Schema.Types
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Generic (class Generic)
+import Data.Generic.Rep (class Generic)
 import Data.Either (Either(..))
-import Data.Argonaut.Core (Json, JObject, toObject, jsonEmptyObject)
-import Data.Argonaut.Decode (class DecodeJson, decodeJson, getField)
+import Data.Argonaut.Core (Json, jsonEmptyObject)
+import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
+import Data.Argonaut.Generic (jsonToForeign)
 import Data.Foldable (foldl)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.List (List)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.List.NonEmpty as NEL
+import Foreign.Class (class Encode)
 
 newtype TypeName =
   TypeName String
 
-derive instance genericAvroTypeName :: Generic TypeName
+derive instance genericAvroTypeName :: Generic TypeName _
+derive instance newtypeAvroTypeName :: Newtype TypeName _
 
 instance decodeJsonAvroTypeName :: DecodeJson TypeName where
   decodeJson json = TypeName <$> decodeJson json
@@ -64,7 +68,7 @@ data Type =
     , fields :: List Field
     }
 
-derive instance genericAvroType :: Generic Type
+derive instance genericAvroType :: Generic Type _
 
 type Decoder a = Json -> Either String a
 
@@ -73,9 +77,6 @@ type TypeDecoder = Decoder Type
 oneOfDecoder :: forall a. Array (Decoder a) -> Decoder a
 oneOfDecoder decoders =
   \json -> foldl (\prev dec -> (dec json) <|> prev) (Left "Invalid type") decoders
-
-jsonObject :: Json -> Either String JObject
-jsonObject json = maybe (Left "Not a JSON object") Right (toObject json)
 
 jsonNonEmptyList :: forall a. DecodeJson a => Decoder (NonEmptyList a)
 jsonNonEmptyList json = do
@@ -141,6 +142,9 @@ instance encodeJsonAvroType :: EncodeJson Type where
     ~> "fields" := rec.fields
     ~> jsonEmptyObject
 
+instance encodeForeignAvroType :: Encode Type where
+  encode = encodeJson >>> jsonToForeign
+
 decodePrimitiveType :: String -> String -> Type -> TypeDecoder
 decodePrimitiveType name errMsg typ json = do
   value <- decodeJson json
@@ -181,15 +185,15 @@ decodeStringType =
 
 decodeArrayType :: TypeDecoder
 decodeArrayType json = do
-  obj <- jsonObject json
-  typ <- getField obj "items"
-  pure (Array { items: typ })
+  obj <- decodeJson json
+  typ <- obj .: "items"
+  pure $ Array { items: typ }
 
 decodeMapType :: TypeDecoder
 decodeMapType json = do
-  obj <- jsonObject json
-  typ <- getField obj "values"
-  pure (Map { values: typ })
+  obj <- decodeJson json
+  typ <- obj .: "values"
+  pure $ Map { values: typ }
 
 decodeUnionType :: TypeDecoder
 decodeUnionType json = do
@@ -198,36 +202,36 @@ decodeUnionType json = do
 
 decodeFixedType :: TypeDecoder
 decodeFixedType json = do
-  obj <- jsonObject json
-  name <- getField obj "name"
-  namespace <- getField obj "namespace"
-  aliases <- getField obj "aliases"
-  size <- getField obj "size"
-  pure $ Fixed { name: name, namespace: namespace, aliases: aliases, size: size }
+  obj <- decodeJson json
+  name <- obj .: "name"
+  namespace <- obj .:? "namespace"
+  aliases <- obj .: "aliases"
+  size <- obj .: "size"
+  pure $ Fixed { name, namespace, aliases, size }
 
 decodeEnumType :: TypeDecoder
 decodeEnumType json = do
-  obj <- jsonObject json
-  name <- getField obj "name"
-  namespace <- getField obj "namespace"
-  aliases <- getField obj "aliases"
-  doc <- getField obj "doc"
-  maybeSymbols <- NEL.fromList <$> getField obj "symbols"
+  obj <- decodeJson json
+  name <- obj .: "name"
+  namespace <- obj .:? "namespace"
+  aliases <- obj .: "aliases"
+  doc <- obj .:? "doc"
+  maybeSymbols <- NEL.fromList <$> obj .: "symbols"
   case maybeSymbols of
     Just symbols ->
-      pure $ Enum { name: name, namespace: namespace, aliases: aliases, doc: doc, symbols: symbols }
+      pure $ Enum { name, namespace, aliases, doc, symbols }
     Nothing ->
       Left "Symbol list for Enum can not be empty"
 
 decodeRecordType :: TypeDecoder
 decodeRecordType json = do
-  obj <- jsonObject json
-  name <- getField obj "name"
-  namespace <- getField obj "namespace"
-  aliases <- getField obj "aliases"
-  doc <- getField obj "doc"
-  order <- getField obj "order"
-  fields <- getField obj "fields"
+  obj <- decodeJson json
+  name <- obj .: "name"
+  namespace <- obj .:? "namespace"
+  aliases <- obj .: "aliases"
+  doc <- obj .:? "doc"
+  order <- obj .:? "order"
+  fields <- obj .: "fields"
   pure $ Record {
     name: name
   , aliases: aliases
@@ -244,7 +248,7 @@ data Order =
   | Descending
   | Ignore
 
-derive instance genericAvroOrder :: Generic Order
+derive instance genericAvroOrder :: Generic Order _
 
 instance decodeJsonAvroOrder :: DecodeJson Order where
   decodeJson json = do
@@ -271,16 +275,16 @@ data Field = Field {
   -- , default :: (Maybe (Value Type))
   }
 
-derive instance genericAvroField :: Generic Field
+derive instance genericAvroField :: Generic Field _
 
 instance decodeJsonAvroField :: DecodeJson Field where
   decodeJson json = do
-    obj <- jsonObject json
-    name <- getField obj "name"
-    aliases <- getField obj "aliases"
-    doc <- getField obj "doc"
-    order <- getField obj "order"
-    typ <- getField obj "type"
+    obj <- decodeJson json
+    name <- obj .: "name"
+    aliases <- obj .: "aliases"
+    doc <- obj .:? "doc"
+    order <- obj .:? "order"
+    typ <- obj .: "type"
     pure $ Field { name: name, aliases: aliases, doc: doc, order: order, typ: typ }
 
 instance encodeJsonAvroField :: EncodeJson Field where
