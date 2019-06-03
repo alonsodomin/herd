@@ -13,14 +13,13 @@ load(
 # and make it accessible `@io_tweag_rules_haskell`.
 http_archive(
     name = "io_tweag_rules_haskell",
-    strip_prefix = "rules_haskell-0.9",
-    urls = ["https://github.com/tweag/rules_haskell/archive/v0.9.tar.gz"],
-    sha256 = "a4399554303e4de85d97c2deede5b173e0f7d2485a7291ee932eff693912c2ab",
+    strip_prefix = "rules_haskell-0.9.1",
+    urls = ["https://github.com/tweag/rules_haskell/archive/v0.9.1.tar.gz"],
 )
 
 load(
     "@io_tweag_rules_haskell//haskell:repositories.bzl",
-    "haskell_repositories"
+    "haskell_repositories",
 )
 
 # `haskell_repositories()` sets up all bazel dependencies
