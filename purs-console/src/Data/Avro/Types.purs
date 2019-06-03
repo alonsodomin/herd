@@ -8,26 +8,28 @@ module Data.Avro.Types
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Generic.Rep (class Generic)
-import Data.Either (Either(..))
 import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, caseJsonString, caseJsonArray, caseJsonObject, jsonEmptyObject)
+import Data.Argonaut.Core as Json
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
-import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
+import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (:=?), (~>))
 import Data.Argonaut.Generic (jsonToForeign)
+import Data.Array (catMaybes)
 import Data.Avro.Values (Value)
 import Data.Avro.Values as Value
 import Data.ByteString as BS
+import Data.Either (Either(..))
 import Data.Foldable (foldl, elem)
-import Data.Maybe (Maybe(..))
-import Data.Map as Map
-import Data.Newtype (class Newtype)
+import Data.Generic.Rep (class Generic)
 import Data.List (List)
 import Data.List.NonEmpty (NonEmptyList)
 import Data.List.NonEmpty as NEL
-import Foreign.Object as Object
-import Foreign.Class (class Encode)
+import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
+import Foreign.Class (class Encode)
+import Foreign.Object as Object
 import Node.Encoding (Encoding(Base64))
 
 
@@ -135,26 +137,31 @@ instance encodeJsonAvroType :: EncodeJson Type where
   encodeJson (Union { options }) =
     encodeJson (NEL.toList options)
   encodeJson (Fixed fixed) =
-    "name" := fixed.name
-    ~> "namespace" := fixed.namespace
-    ~> "aliases" := fixed.aliases
-    ~> "size" := fixed.size
-    ~> jsonEmptyObject
+    let opts = catMaybes
+          [ "namespace" :=? fixed.namespace ]
+    in "name" := fixed.name
+       ~> "aliases" := fixed.aliases
+       ~> "size" := fixed.size
+       ~> (Json.fromObject $ Object.fromFoldable opts)
   encodeJson (Enum enum) =
-    "name" := enum.name
-    ~> "namespace" := enum.namespace
-    ~> "aliases" := enum.aliases
-    ~> "doc" := enum.doc
-    ~> "symbols" := encodeJson (NEL.toList enum.symbols)
-    ~> jsonEmptyObject
+    let opts = catMaybes
+          [ "namespace" :=? enum.namespace
+          , "doc" :=? enum.doc
+          ]
+    in "name" := enum.name
+       ~> "aliases" := enum.aliases
+       ~> "symbols" := encodeJson (NEL.toList enum.symbols)
+       ~> (Json.fromObject $ Object.fromFoldable opts)
   encodeJson (Record rec) =
-    "name" := rec.name
-    ~> "namespace" := rec.namespace
-    ~> "aliases" := rec.aliases
-    ~> "doc" := rec.doc
-    ~> "order" := rec.order
-    ~> "fields" := rec.fields
-    ~> jsonEmptyObject
+    let opts = catMaybes
+          [ "namespace" :=? rec.namespace
+          , "doc" :=? rec.doc
+          , "order" :=? rec.order
+          ]
+    in "name" := rec.name
+       ~> "aliases" := rec.aliases
+       ~> "fields" := rec.fields
+       ~> (Json.fromObject $ Object.fromFoldable opts)
 
 instance encodeForeignAvroType :: Encode Type where
   encode = encodeJson >>> jsonToForeign

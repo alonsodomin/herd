@@ -9,6 +9,7 @@ You can edit this file as you like.
     , "bytestrings"
     , "console"
     , "effect"
+    , "gen"
     , "halogen"
     , "psci-support"
     , "servant-support"

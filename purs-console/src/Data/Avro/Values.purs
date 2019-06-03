@@ -2,6 +2,8 @@ module Data.Avro.Values where
 
 import Prelude
 
+import Control.Monad.Gen (class MonadGen)
+import Control.Monad.Gen as Gen
 import Data.Generic.Rep (class Generic)
 import Data.ByteString (ByteString)
 import Data.Map (Map)
@@ -24,3 +26,8 @@ data Value t =
   | Enum t String
 
 derive instance genericAvroValue :: Generic (Value t) _
+
+-- genValue :: forall m t. MonadGen m => m (Value t)
+-- genValue = _
+--   where genLeaf :: m (Value t)
+--         genLeaf 
