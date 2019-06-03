@@ -4,8 +4,6 @@ import Prelude
 
 import Data.Argonaut.Core (Json, caseJson)
 import Foreign (Foreign, unsafeToForeign)
-import Foreign.Class (class Encode, encode)
-import Foreign.Object (Object)
 import Foreign.Object as Object
 
 jsonToForeign :: Json -> Foreign

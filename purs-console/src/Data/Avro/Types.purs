@@ -14,8 +14,8 @@ import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, 
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (~>))
 import Data.Argonaut.Generic (jsonToForeign)
-import Data.Avro.Types.Value (Value)
-import Data.Avro.Types.Value as Value
+import Data.Avro.Values (Value)
+import Data.Avro.Values as Value
 import Data.ByteString as BS
 import Data.Foldable (foldl, elem)
 import Data.Maybe (Maybe(..))
@@ -311,9 +311,11 @@ instance encodeJsonAvroField :: EncodeJson Field where
     ~> "doc" := field.doc
     ~> "order" := field.order
     ~> "type" := field.typ
-    ~> "default" := field.default
+    ~> "default" := (encodeJsonValue <$> field.default)
     ~> jsonEmptyObject
 
+
+-- | Parses the default value of a field definition in an schema
 parseFieldDefault :: Type -> Json -> Either String (Value Type)
 parseFieldDefault Null =
   caseJsonNull (Left "Not a null value") (\_ -> Right Value.Null)
@@ -391,3 +393,20 @@ parseFieldDefault typ@(Fixed { size }) =
             Left $ "Bytes received exceed the size: " <> (show size)
             else Right $ Value.Fixed typ bytes
       _ -> Left "IMPOSSIBLE BUG!"
+
+-- |Encodes an Avro Value into Json, needed by the schema field definition
+encodeJsonValue :: Value Type -> Json
+encodeJsonValue Value.Null = encodeJson "null"
+encodeJsonValue (Value.Boolean v) = encodeJson v
+encodeJsonValue (Value.Int v) = encodeJson v
+encodeJsonValue (Value.Long v) = encodeJson v
+encodeJsonValue (Value.Float v) = encodeJson v
+encodeJsonValue (Value.Double v) = encodeJson v
+encodeJsonValue (Value.Bytes v) = encodeJson $ BS.toString v Base64
+encodeJsonValue (Value.String v) = encodeJson v
+encodeJsonValue (Value.Array v) = encodeJson $ map encodeJsonValue v
+encodeJsonValue (Value.Map v) = encodeJson $ map encodeJsonValue v
+encodeJsonValue (Value.Fixed _ v) = encodeJson $ BS.toString v Base64
+encodeJsonValue (Value.Enum _ v) = encodeJson v
+encodeJsonValue (Value.Union _ _ v) = encodeJsonValue v
+encodeJsonValue (Value.Record _ v) = encodeJson $ map encodeJsonValue v
