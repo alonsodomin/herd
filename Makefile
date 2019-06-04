@@ -27,7 +27,7 @@ all: dist
 
 # Setup build environment
 
-$(NPM):
+$(NPM_MODULES): $(NPM)
 	@cd $(CONSOLE_DIR) && npm install
 
 $(UGLIFY):
@@ -43,7 +43,7 @@ setup: $(STACK_WORK_DIR) $(NPM)
 backend-clean:
 	@stack clean
 
-ui-clean: $(NPM)
+ui-clean: $(NPM_MODULES)
 	@cd $(CONSOLE_DIR) && $(NPM) run clean
 
 clean: backend-clean ui-clean
@@ -70,7 +70,7 @@ $(REMOTE_API): backend
 $(CONSOLE_DIST_DIR):
 	mkdir -p $(CONSOLE_DIST_DIR)
 
-$(CONSOLE_APP): $(NPM) $(REMOTE_API) $(CONSOLE_DIST_DIR)
+$(CONSOLE_APP): $(NPM_MODULES) $(REMOTE_API) $(CONSOLE_DIST_DIR)
 	@cd $(CONSOLE_DIR) && $(NPM) run dist
 
 ui: $(CONSOLE_APP)
@@ -84,7 +84,7 @@ uglify: ui $(UGLIFY)
 backend-test: $(STACK_WORK_DIR)
 	@stack test
 
-ui-test: $(NPM) ui
+ui-test: $(NPM_MODULES) ui
 	@cd $(CONSOLE_DIR) && $(NPM) run test
 
 test: backend-test ui-test
