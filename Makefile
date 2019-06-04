@@ -87,7 +87,7 @@ backend-test: $(STACK_WORK_DIR)
 ui-test: $(NPM_MODULES) ui
 	@cd $(CONSOLE_DIR) && $(NPM) run test
 
-test: backend-test ui-test
+test: backend-test ui
 
 # Misc
 

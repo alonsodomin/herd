@@ -22,11 +22,11 @@ jobs:
           name: Install executable
           command: make install
       - save_cache:
-          name: Cache Dependencies
+          name: Node Stack Dependencies
           key: herd-{{ checksum "node/package.yaml" }}
           paths:
             - ".stack-work"
-            - "/root/.stack"
+            - "$HOME/.stack"
       - store_artifacts: # upload build artifact for display in CircleCi
           path: ~/.local/bin/herd
 destination: herd
