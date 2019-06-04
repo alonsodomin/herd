@@ -13,6 +13,7 @@ You can edit this file as you like.
     , "gen"
     , "halogen"
     , "psci-support"
+    , "quickcheck"
     , "servant-support"
     ]
 , packages =

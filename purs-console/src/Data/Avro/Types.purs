@@ -10,7 +10,8 @@ import Prelude
 import Control.Alt ((<|>))
 import Control.Lazy (class Lazy, defer)
 import Control.Monad.Gen (class MonadGen, chooseBool, chooseFloat, chooseInt)
-import Control.Monad.Gen as Gen
+import Control.Monad.Gen (chooseInt, elements, oneOf, resize, unfoldable) as Gen
+import Control.Monad.Gen.Common (genMaybe, genNonEmpty) as Gen
 import Control.Monad.Rec.Class (class MonadRec)
 import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, caseJsonString, caseJsonArray, caseJsonObject, jsonEmptyObject)
 import Data.Argonaut.Core as Json
@@ -26,11 +27,12 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl, elem)
 import Data.Generic.Rep (class Generic)
 import Data.List (List)
-import Data.List.NonEmpty (NonEmptyList)
+import Data.List.NonEmpty (NonEmptyList(..))
 import Data.List.NonEmpty as NEL
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Data.NonEmpty ((:|))
 import Data.String.Gen (genUnicodeString)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -271,6 +273,53 @@ decodeRecordType json = do
   , fields: fields
   }
 
+genType :: forall m. MonadGen m => MonadRec m => Lazy (m Type) => m Type
+genType = Gen.oneOf (genLeaf :| [genArray, genMap, genUnion, genFixed, genEnum, genRecord])
+  where genLeaf :: m Type
+        genLeaf = Gen.elements (Null :| [Boolean, Int, Long, Float, Double, Bytes, String])
+
+        genArray :: m Type
+        genArray = do
+          items <- defer \_ -> genType
+          pure $ Array { items }
+
+        genMap :: m Type
+        genMap = do
+          values <- defer \_ -> genType
+          pure $ Map { values }
+
+        genUnion :: m Type
+        genUnion = do
+          options <- NonEmptyList <$> Gen.genNonEmpty (defer \_ -> genType)
+          pure $ Union { options }
+
+        genFixed :: m Type
+        genFixed = do
+          name <- genTypeName
+          namespace <- Gen.genMaybe genUnicodeString
+          aliases <- Gen.unfoldable genTypeName
+          size <- Gen.chooseInt 0 bottom
+          pure $ Fixed { name, namespace, aliases, size }
+
+        genEnum :: m Type
+        genEnum = do
+          name <- genTypeName
+          namespace <- Gen.genMaybe genUnicodeString
+          aliases <- Gen.unfoldable genTypeName
+          doc <- Gen.genMaybe genUnicodeString
+          symbols <- NonEmptyList <$> Gen.genNonEmpty genTypeName
+          pure $ Enum { name, namespace, aliases, doc, symbols }
+
+        genRecord :: m Type
+        genRecord = do
+          name <- genTypeName
+          namespace <- Gen.genMaybe genUnicodeString
+          aliases <- Gen.unfoldable genTypeName
+          doc <- Gen.genMaybe genUnicodeString
+          order <- Gen.genMaybe genOrder
+          fields <- Gen.unfoldable genField
+          pure $ Record { name, namespace, aliases, doc, order, fields }
+
 -- Order
 
 data Order =
@@ -293,6 +342,9 @@ instance encodeJsonAvroOrder :: EncodeJson Order where
   encodeJson Ascending = encodeJson "ascending"
   encodeJson Descending = encodeJson "descending"
   encodeJson Ignore = encodeJson "ignore"
+
+genOrder :: forall m. MonadGen m => m Order
+genOrder = Gen.elements (Ascending :| [Descending, Ignore])
 
 -- Field
 
@@ -330,6 +382,16 @@ instance encodeJsonAvroField :: EncodeJson Field where
     ~> "default" := (encodeJsonValue <$> field.default)
     ~> jsonEmptyObject
 
+genField :: forall m. MonadGen m => MonadRec m => Lazy (m Type) => m Field
+genField = do
+  name <- genUnicodeString
+  aliases <- Gen.unfoldable genUnicodeString
+  doc <- Gen.genMaybe genUnicodeString
+  order <- Gen.genMaybe genOrder
+  typ <- genType
+  default <- Gen.genMaybe $ genValue typ
+  pure $ Field
+    { name, aliases, doc, order, typ, default }
 
 -- | Parses the default value of a field definition in an schema
 parseFieldDefault :: Type -> Json -> Either String (Value Type)
@@ -438,7 +500,7 @@ genByteString :: forall m. MonadGen m => MonadRec m => m ByteString
 genByteString = BS.toUTF8 <$> genUnicodeString
 
 -- |Generate an arbitrary typed value
-genValue :: forall m. MonadGen m => MonadRec m => Lazy (m (Value Type)) => Type -> m (Value Type)
+genValue :: forall m. MonadGen m => MonadRec m => Type -> m (Value Type)
 genValue Null = pure Value.Null
 genValue Boolean = Value.Boolean <$> chooseBool
 genValue Int = genIntegerValue Value.Int
@@ -447,9 +509,9 @@ genValue Float = genNumberValue Value.Float
 genValue Double = genNumberValue Value.Double
 genValue Bytes = Value.Bytes <$> genByteString
 genValue String = Value.String <$> genUnicodeString
-genValue (Array { items }) = Value.Array <$> Gen.unfoldable (defer \_ -> genValue items)
+genValue (Array { items }) = Value.Array <$> (Gen.unfoldable $ genValue items)
 genValue (Map { values }) = do
-  vs <- (Gen.unfoldable (Tuple <$> genUnicodeString <*> defer \_ -> genValue values)) :: m (Array (Tuple String (Value Type)))
+  vs <- (Gen.unfoldable (Tuple <$> genUnicodeString <*> genValue values)) :: m (Array (Tuple String (Value Type)))
   let valueMap = Map.fromFoldable vs
   pure $ Value.Map valueMap
 genValue typ@(Union { options }) = do
@@ -460,9 +522,9 @@ genValue typ@(Fixed { size }) =
   Value.Fixed typ <$> Gen.resize (\_ -> size) genByteString
 genValue typ@(Enum { symbols }) = ((Value.Enum typ) <<< show) <$> Gen.elements symbols
 genValue t@(Record { fields }) = do
-  values <- traverse genField fields
+  values <- traverse genFieldValue fields
   let valueMap = Map.fromFoldable values
   pure $ Value.Record t valueMap
-  where genField :: Field -> m (Tuple String (Value Type))
-        genField (Field { name, typ }) =
-          Tuple <$> (pure name) <*> (defer \_ -> genValue typ)
+  where genFieldValue :: Field -> m (Tuple String (Value Type))
+        genFieldValue (Field { name, typ }) =
+          Tuple <$> (pure name) <*> genValue typ
