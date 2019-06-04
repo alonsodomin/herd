@@ -91,9 +91,12 @@ test: backend-test ui
 
 # Misc
 
+$(DIST_DIR):
+	@mkdir -p $(DIST_DIR)
+
 $(DIST_BIN_FILE): test
 
-$(DIST_DIR)/etc:
+$(DIST_DIR)/etc: $(DIST_DIR)
 	@cp -r $(ETC_DIR) $(DIST_DIR)
 
 dist: $(DIST_BIN_FILE) $(DIST_DIR)/etc

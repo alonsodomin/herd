@@ -17,7 +17,7 @@ import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, 
 import Data.Argonaut.Core as Json
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (:=?), (~>))
-import Data.Argonaut.Generic (jsonToForeign)
+import Data.Argonaut.Generic (foreignToJson, jsonToForeign)
 import Data.Array (catMaybes)
 import Data.Avro.Values (Value)
 import Data.Avro.Values as Value
@@ -36,11 +36,12 @@ import Data.NonEmpty ((:|))
 import Data.String.Gen (genUnicodeString)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
-import Foreign.Class (class Encode)
+import Foreign (ForeignError(..), fail)
+import Foreign.Class (class Encode, class Decode)
 import Foreign.Object as Object
 import Node.Encoding (Encoding(Base64))
-import Test.QuickCheck.Gen (Gen)
 import Test.QuickCheck.Arbitrary (class Arbitrary, arbitrary)
+import Test.QuickCheck.Gen (Gen)
 
 
 newtype TypeName =
@@ -179,6 +180,13 @@ instance encodeJsonAvroType :: EncodeJson Type where
 
 instance encodeForeignAvroType :: Encode Type where
   encode = encodeJson >>> jsonToForeign
+
+instance decodeForeignAvroType :: Decode Type where
+  decode f = do
+    json <- foreignToJson f
+    case (decodeJson json) of
+      Left err -> fail $ ForeignError err
+      Right x -> pure x
 
 decodePrimitiveType :: String -> String -> Type -> TypeDecoder
 decodePrimitiveType name errMsg typ json = do

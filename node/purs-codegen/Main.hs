@@ -11,7 +11,7 @@ import           Data.Proxy
 import           Data.Text                           (Text)
 import           Language.PureScript.Bridge
 import           Language.PureScript.Bridge.PSTypes
-import           Language.PureScript.Bridge.TypeInfo
+import Language.PureScript.Bridge.CodeGenSwitches (ForeignOptions(..), genForeign)
 import           Options.Applicative
 import           Servant.PureScript
 
@@ -94,6 +94,8 @@ main = runPursCodegen =<< execParser opts
 runPursCodegen :: HerdCodegenOpts -> IO ()
 runPursCodegen opts = do
   let settings = defaultSettings & apiModuleName .~ (opts ^. hcoModuleName)
+  let foreignOpts = ForeignOptions { unwrapSingleConstructors = True }
+  let switches = defaultSwitch <> (genForeign foreignOpts)
   let destFolder = (opts ^. hcoDestFolder)
   writeAPIModuleWithSettings settings destFolder herdBridgeProxy herdREST
-  writePSTypes destFolder (buildBridge herdBridge) herdAPITypes
+  writePSTypesWith switches destFolder (buildBridge herdBridge) herdAPITypes

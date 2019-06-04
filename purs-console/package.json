@@ -1,11 +1,11 @@
 {
   "private": true,
   "scripts": {
-    "build": "npx -c 'spago build --path ./gen/**/*.purs'",
-    "test": "npx -c 'spago test --path ./gen/**/*.purs'",
-    "dist": "cp -r static/* dist/ && npx -c 'spago bundle-app --path ./gen/**/*.purs --main Main --to ./dist/app.js'",
+    "build": "npx -c 'spago build -p gen/Herd/*.purs -p gen/Herd/Console/*.purs'",
+    "test": "npx -c 'spago test -p gen/Herd/*.purs -p gen/Herd/Console/*.purs'",
+    "dist": "cp -r static/* dist/ && npx -c 'spago bundle-app -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs --main Main --to ./dist/app.js'",
     "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
-    "watch": "npx -c 'spago build --watch --path ./gen/**/*.purs'"
+    "watch": "npx -c 'spago build --watch -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs'"
   },
   "devDependencies": {
     "parcel": "1.12.3",

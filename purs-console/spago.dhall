@@ -8,6 +8,7 @@ You can edit this file as you like.
     [ "argonaut-codecs"
     , "bytestrings"
     , "console"
+    , "contravariant"
     , "control"
     , "effect"
     , "gen"
