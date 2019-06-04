@@ -12,6 +12,7 @@ You can edit this file as you like.
     , "effect"
     , "gen"
     , "halogen"
+    , "profunctor-lenses"
     , "psci-support"
     , "quickcheck"
     , "servant-support"
