@@ -1,10 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "build": "spago build --path ./gen/**/*.purs",
-    "dist": "cp -r static/* dist/ && spago bundle-app --path ./gen/**/*.purs --main Main --to ./dist/app.js",
+    "build": "npx -c 'spago build --path ./gen/**/*.purs'",
+    "dist": "cp -r static/* dist/ && npx -c'spago bundle-app --path ./gen/**/*.purs --main Main --to ./dist/app.js'",
     "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
-    "watch": "spago build --watch --path ./gen/**/*.purs"
+    "watch": "npx -c 'spago build --watch --path ./gen/**/*.purs'"
   },
   "devDependencies": {
     "pulp": "^12.0.0",
