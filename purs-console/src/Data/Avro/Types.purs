@@ -8,6 +8,10 @@ module Data.Avro.Types
 import Prelude
 
 import Control.Alt ((<|>))
+import Control.Lazy (class Lazy, defer)
+import Control.Monad.Gen (class MonadGen, chooseBool, chooseFloat, chooseInt)
+import Control.Monad.Gen as Gen
+import Control.Monad.Rec.Class (class MonadRec)
 import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, caseJsonString, caseJsonArray, caseJsonObject, jsonEmptyObject)
 import Data.Argonaut.Core as Json
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
@@ -16,6 +20,7 @@ import Data.Argonaut.Generic (jsonToForeign)
 import Data.Array (catMaybes)
 import Data.Avro.Values (Value)
 import Data.Avro.Values as Value
+import Data.ByteString (ByteString)
 import Data.ByteString as BS
 import Data.Either (Either(..))
 import Data.Foldable (foldl, elem)
@@ -26,6 +31,7 @@ import Data.List.NonEmpty as NEL
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Data.String.Gen (genUnicodeString)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Foreign.Class (class Encode)
@@ -49,6 +55,9 @@ instance decodeJsonAvroTypeName :: DecodeJson TypeName where
 
 instance encodeJsonAvroTypeName :: EncodeJson TypeName where
   encodeJson (TypeName value) = encodeJson value
+
+genTypeName :: forall m. MonadGen m => MonadRec m => m TypeName
+genTypeName = TypeName <$> genUnicodeString
 
 data Type =
     Null
@@ -417,3 +426,43 @@ encodeJsonValue (Value.Fixed _ v) = encodeJson $ BS.toString v Base64
 encodeJsonValue (Value.Enum _ v) = encodeJson v
 encodeJsonValue (Value.Union _ _ v) = encodeJsonValue v
 encodeJsonValue (Value.Record _ v) = encodeJson $ map encodeJsonValue v
+
+-- |Generate an arbitrary typed value
+genIntegerValue :: forall m t. MonadGen m => (Int -> Value t) -> m (Value t)
+genIntegerValue f = f <$> chooseInt top bottom
+
+genNumberValue :: forall m t. MonadGen m => (Number -> Value t) -> m (Value t)
+genNumberValue f = f <$> chooseFloat top bottom
+
+genByteString :: forall m. MonadGen m => MonadRec m => m ByteString
+genByteString = BS.toUTF8 <$> genUnicodeString
+
+-- |Generate an arbitrary typed value
+genValue :: forall m. MonadGen m => MonadRec m => Lazy (m (Value Type)) => Type -> m (Value Type)
+genValue Null = pure Value.Null
+genValue Boolean = Value.Boolean <$> chooseBool
+genValue Int = genIntegerValue Value.Int
+genValue Long = genIntegerValue Value.Long
+genValue Float = genNumberValue Value.Float
+genValue Double = genNumberValue Value.Double
+genValue Bytes = Value.Bytes <$> genByteString
+genValue String = Value.String <$> genUnicodeString
+genValue (Array { items }) = Value.Array <$> Gen.unfoldable (defer \_ -> genValue items)
+genValue (Map { values }) = do
+  vs <- (Gen.unfoldable (Tuple <$> genUnicodeString <*> defer \_ -> genValue values)) :: m (Array (Tuple String (Value Type)))
+  let valueMap = Map.fromFoldable vs
+  pure $ Value.Map valueMap
+genValue typ@(Union { options }) = do
+  opts <- traverse genValue options
+  value <- Gen.elements opts
+  pure $ Value.Union options typ value
+genValue typ@(Fixed { size }) =
+  Value.Fixed typ <$> Gen.resize (\_ -> size) genByteString
+genValue typ@(Enum { symbols }) = ((Value.Enum typ) <<< show) <$> Gen.elements symbols
+genValue t@(Record { fields }) = do
+  values <- traverse genField fields
+  let valueMap = Map.fromFoldable values
+  pure $ Value.Record t valueMap
+  where genField :: Field -> m (Tuple String (Value Type))
+        genField (Field { name, typ }) =
+          Tuple <$> (pure name) <*> (defer \_ -> genValue typ)

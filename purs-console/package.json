@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "npx -c 'spago build --path ./gen/**/*.purs'",
-    "dist": "cp -r static/* dist/ && npx -c'spago bundle-app --path ./gen/**/*.purs --main Main --to ./dist/app.js'",
+    "dist": "cp -r static/* dist/ && npx -c 'spago bundle-app --path ./gen/**/*.purs --main Main --to ./dist/app.js'",
     "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
     "watch": "npx -c 'spago build --watch --path ./gen/**/*.purs'"
   },
