@@ -2,6 +2,7 @@ module Data.Avro.Values
   ( Value(..)
   ) where
 
+import Prelude
 import Data.ByteString (ByteString)
 import Data.Generic.Rep (class Generic)
 import Data.List.NonEmpty (NonEmptyList)
@@ -23,4 +24,5 @@ data Value t =
   | Fixed t ByteString
   | Enum t String
 
+derive instance eqAvroValue :: Eq t => Eq (Value t)
 derive instance genericAvroValue :: Generic (Value t) _

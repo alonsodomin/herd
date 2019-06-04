@@ -1,20 +1,21 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
 
 module Main where
 
-import Control.Lens
+import           Control.Lens
+import qualified Data.Avro.Schema                    as Avro
+import           Data.List.Split                     (splitOn)
 import           Data.Proxy
-import qualified Data.Avro.Schema as Avro
-import Data.Text (Text)
-import           Data.List.Split (splitOn)
+import           Data.Text                           (Text)
 import           Language.PureScript.Bridge
 import           Language.PureScript.Bridge.PSTypes
 import           Language.PureScript.Bridge.TypeInfo
-import           Servant.PureScript
 import           Options.Applicative
+import           Servant.PureScript
 
-import Herd.Node
+import           Herd.Node
 import           Herd.Types
 
 -- Type Definition
@@ -22,7 +23,7 @@ import           Herd.Types
 psAvroType :: PSType
 psAvroType = TypeInfo {
     _typePackage = "purescript-avro"
-  , _typeModule = "Data.Avro.Schema.Types"
+  , _typeModule = "Data.Avro.Types"
   , _typeName = "Type"
   , _typeParameters = []
   }
