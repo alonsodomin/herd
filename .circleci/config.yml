@@ -25,7 +25,7 @@ jobs:
           key: herd-{{ checksum "node/package.yaml" }}
           paths:
             - ".stack-work"
-            - "$HOME/.stack"
+            - "/root/.stack"
       - store_artifacts: # upload build artifact for display in CircleCi
           path: ~/.local/bin/herd
 destination: herd
