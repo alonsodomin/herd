@@ -70,7 +70,6 @@ library:
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
   - json-rpc
-  - optparse-applicative >= 0.14.2 && < 0.15
   - network-transport
   - network-transport-tcp
   - rocksdb-haskell
@@ -80,10 +79,10 @@ library:
   - wai-cors
   - warp
   exposed-modules:
-  - Herd.CLI
   - Herd.Data.SchemaRegistry
   - Herd.Data.SubjectLog
   - Herd.Node
+  - Herd.Node.Config
 
 executables:
   herd:
@@ -94,7 +93,8 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - herd-node    
+    - optparse-applicative >= 0.14.2 && < 0.15
+    - herd-node
 
   # herd-node-codegen:
   #   main:                Main.hs

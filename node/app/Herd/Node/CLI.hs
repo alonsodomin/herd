@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Herd.CLI
+module Herd.Node.CLI
      ( herdCli
      ) where
 
