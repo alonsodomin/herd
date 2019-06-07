@@ -50,7 +50,7 @@ import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 import           Herd.Data.Text
 
 newtype SubjectId = SubjectId Text
-  deriving (Eq, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
+  deriving (Eq, Ord, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
 instance ToText SubjectId where
   toText (SubjectId x) = x

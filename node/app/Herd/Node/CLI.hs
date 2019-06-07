@@ -9,7 +9,7 @@ import           Data.Semigroup      ((<>))
 import           Data.Yaml           (ParseException, decodeFileEither,
                                       prettyPrintParseException)
 import           Options.Applicative
-import System.Environment
+import           System.Environment
 
 import           Herd.Node
 import           Herd.Node.Config
@@ -65,7 +65,7 @@ herd opts = do
   where readHomeFolder = do
           maybeHome <- lookupEnv "HERD_HOME"
           case maybeHome of
-            Just v -> pure v
+            Just v  -> pure v
             Nothing -> getExecutablePath
 
 herdCli :: IO ()

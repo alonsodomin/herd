@@ -10,16 +10,17 @@ module Herd.Node.REST
 
 import           Control.Lens
 import           Control.Monad.IO.Class
+import qualified Data.ByteString.Lazy        as BS
 import qualified Data.List.NonEmpty          as NEL
 import           Data.Maybe                  (isJust)
-import qualified Data.Text.Encoding as T
-import qualified Data.ByteString.Lazy as BS
+import qualified Data.Text                   as T
+import qualified Data.Text.Encoding          as T
 import           Network.Wai                 (Application)
 import           Network.Wai.Handler.Warp    (run)
 import           Network.Wai.Middleware.Cors (simpleCors)
 import           Servant
 
-import Herd.Data.Text
+import           Herd.Data.Text
 import           Herd.Node.API
 import           Herd.Node.Config
 import           Herd.Node.Core
@@ -32,7 +33,7 @@ type HerdREST = "subjects" :> Get '[JSON] [SubjectId]
            :<|> "subjects" :> Capture "subjectId" SubjectId :> Capture "version" Version :> Delete '[JSON] ()
 
 instance FromHttpApiData SubjectId where
-  parseUrlPiece = Right . SubjectId
+  parseUrlPiece str = Right . SubjectId $ T.filter (\ch -> ch /= '"') str
 
 instance FromHttpApiData Version where
   parseUrlPiece txt = do

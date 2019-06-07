@@ -79,22 +79,5 @@ fetchSubjectList = do
             Just v -> pure $ Just (Tuple subjectId v)
             Nothing -> pure Nothing
 
--- | Workaround for missing support of the Ord typeclass in the generated Version type
-
-newtype LatestVersion = LatestVersion Version
-
-derive instance newtypeLatestVersion :: Newtype LatestVersion _
-derive instance genericLatestVersion :: Generic LatestVersion _
-
-instance eqLatestVersion :: Eq LatestVersion where
-  eq (LatestVersion (Version x)) (LatestVersion (Version y)) = x == y
-
-instance ordLatestVersion :: Ord LatestVersion where
-  compare (LatestVersion (Version x)) (LatestVersion (Version y)) = compare x y
-
-instance semigroupLatestVersion :: Semigroup LatestVersion where
-  append (LatestVersion (Version x)) (LatestVersion (Version y)) =
-    LatestVersion $ Version (max x y)
-
-findLatestVersion :: forall f. Functor f => Foldable f => f Version -> Maybe Version
-findLatestVersion vs = unwrap <$> (maximum $ LatestVersion <$> vs)
+findLatestVersion :: forall f. Foldable f => f Version -> Maybe Version
+findLatestVersion = maximum

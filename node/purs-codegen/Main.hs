@@ -5,20 +5,26 @@
 module Main where
 
 import           Control.Lens
-import qualified Data.Avro.Schema                    as Avro
-import           Data.List.Split                     (splitOn)
+import qualified Data.Avro.Schema                           as Avro
+import           Data.List.Split                            (splitOn)
 import           Data.Proxy
-import           Data.Text                           (Text)
+import           Data.Text                                  (Text)
 import           Language.PureScript.Bridge
+import           Language.PureScript.Bridge.CodeGenSwitches (ForeignOptions (..),
+                                                             genForeign)
 import           Language.PureScript.Bridge.PSTypes
-import Language.PureScript.Bridge.CodeGenSwitches (ForeignOptions(..), genForeign)
 import           Options.Applicative
 import           Servant.PureScript
 
 import           Herd.Node
 import           Herd.Types
 
--- Type Definition
+-- Type Definitions
+
+haskSubjectId  = Proxy :: Proxy SubjectId
+haskVersion    = Proxy :: Proxy Version
+haskInteger    = Proxy :: Proxy Integer
+haskAvroSchema = Proxy :: Proxy AvroSchema
 
 psAvroType :: PSType
 psAvroType = TypeInfo {
@@ -30,17 +36,17 @@ psAvroType = TypeInfo {
 
 herdAPITypes :: [SumType 'Haskell]
 herdAPITypes = [
-    mkSumType (Proxy :: Proxy SubjectId)
-  , mkSumType (Proxy :: Proxy Version)
+    order haskSubjectId $ equal haskSubjectId $ mkSumType haskSubjectId
+  , order haskVersion $ equal haskVersion $ mkSumType haskVersion
   ]
 
 -- Language Bridge
 
 avroTypeBridge :: BridgePart
-avroTypeBridge = haskType ^== mkTypeInfo (Proxy :: Proxy AvroSchema) >> return psAvroType
+avroTypeBridge = haskType ^== mkTypeInfo haskAvroSchema >> return psAvroType
 
 integerBridge :: BridgePart
-integerBridge = haskType ^== mkTypeInfo (Proxy :: Proxy Integer) >> return psInt
+integerBridge = haskType ^== mkTypeInfo haskInteger >> return psInt
 
 herdBridge :: BridgePart
 herdBridge = defaultBridge <|> integerBridge <|> avroTypeBridge
