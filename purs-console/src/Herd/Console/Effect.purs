@@ -26,35 +26,16 @@ newtype ConsoleAff a =
   ConsoleAff (ReaderT ConsoleAjaxSettings (ExceptT AjaxError Aff) a)
 
 derive instance newtypeConsoleAff :: Newtype (ConsoleAff a) _
-
-instance functorConsoleAff :: Functor ConsoleAff where
-  map f (ConsoleAff fa) = ConsoleAff $ map f fa
-
-instance applyConsoleAff :: Apply ConsoleAff where
-  apply (ConsoleAff ff) (ConsoleAff fa) = ConsoleAff $ apply ff fa
-
-instance applicativeConsoleAff :: Applicative ConsoleAff where
-  pure x = ConsoleAff $ pure x
-
-instance bindConsoleAff :: Bind ConsoleAff where
-  bind (ConsoleAff fa) f = ConsoleAff $ bind fa (\x -> unwrap $ f x)
-
-instance monadConsoleAff :: Monad ConsoleAff
-
-instance monadAskConsoleAff :: MonadAsk (SPSettings_ SPParams_) ConsoleAff where
-  ask = ConsoleAff $ ask
-
-instance monadThrowConsoleAff :: MonadThrow AjaxError ConsoleAff where
-  throwError x = ConsoleAff $ throwError x
-
-instance monadErrorConsoleAff :: MonadError AjaxError ConsoleAff where
-  catchError (ConsoleAff fa) f = ConsoleAff $ catchError fa (\x -> unwrap $ f x)
-
-instance monadEffectConsoleAff :: MonadEffect ConsoleAff where
-  liftEffect x = ConsoleAff $ liftEffect x
-
-instance monadAffConsoleAff :: MonadAff ConsoleAff where
-  liftAff = ConsoleAff <<< liftAff
+derive newtype instance functorConsoleAff :: Functor ConsoleAff
+derive newtype instance applyConsoleAff :: Apply ConsoleAff
+derive newtype instance applicativeConsoleAff :: Applicative ConsoleAff
+derive newtype instance bindConsoleAff :: Bind ConsoleAff
+derive newtype instance monadConsoleAff :: Monad ConsoleAff
+derive newtype instance monadAskConsoleAff :: MonadAsk (SPSettings_ SPParams_) ConsoleAff
+derive newtype instance monadThrowConsoleAff :: MonadThrow AjaxError ConsoleAff
+derive newtype instance monadErrorConsoleAff :: MonadError AjaxError ConsoleAff
+derive newtype instance monadEffectConsoleAff :: MonadEffect ConsoleAff
+derive newtype instance monadAffConsoleAff :: MonadAff ConsoleAff
 
 runConsoleAff :: forall a. ConsoleAjaxSettings -> ConsoleAff a -> Aff a
 runConsoleAff settings (ConsoleAff fa) = do
