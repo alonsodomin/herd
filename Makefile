@@ -99,9 +99,11 @@ $(DIST_BIN_FILE): test
 $(DIST_DIR)/etc: $(DIST_DIR)
 	@cp -r $(ETC_DIR) $(DIST_DIR)
 
-dist: $(DIST_BIN_FILE) $(DIST_DIR)/etc $(DIST_CONSOLE_DIR)/app.js
+$(DIST_CONSOLE_DIR)/app.js: $(DIST_DIR)
 	@mkdir -p $(DIST_CONSOLE_DIR)
 	cp -r $(CONSOLE_DIST_DIR)/* $(DIST_CONSOLE_DIR)/
+
+dist: $(DIST_BIN_FILE) $(DIST_DIR)/etc $(DIST_CONSOLE_DIR)/app.js
 	zip $(DIST_BIN_FILE) $(DIST_DIR)
 
 install: dist
