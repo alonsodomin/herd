@@ -51,17 +51,19 @@ mkHerdNode :: LocalNode -> SchemaRegistryServer -> SubjectLogServer -> HerdNode
 mkHerdNode = HerdNode
 
 data HerdEnv = HerdEnv
-  { _heLogger :: Logger
-  , _heNode   :: HerdNode
+  { _heLogger     :: Logger
+  , _heNode       :: HerdNode
+  , _heHomeFolder :: FilePath
   }
 
 makeLenses ''HerdEnv
 
-mkHerdEnv :: HerdConfig -> HerdNode -> HerdEnv
-mkHerdEnv config node =
+mkHerdEnv :: FilePath -> HerdConfig -> HerdNode -> HerdEnv
+mkHerdEnv homeFolder config node =
   HerdEnv {
-    _heLogger = logger (config ^. hcLogging . lcDriver)
-  , _heNode   = node
+    _heLogger     = logger (config ^. hcLogging . lcDriver)
+  , _heNode       = node
+  , _heHomeFolder = homeFolder
   }
 
   where logger :: LoggingDriver -> Logger
