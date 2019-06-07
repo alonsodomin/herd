@@ -53,7 +53,7 @@ ui =
 
     render :: State -> H.ComponentHTML Query
     render state =
-      HH.ul [] $ map renderItem $ state.schemas
+      HH.ul [] $ map renderItem state.schemas
       where renderItem (Tuple (SubjectId subjectId) (Version version)) =
               HH.li [] [ HH.text subjectId ]
 

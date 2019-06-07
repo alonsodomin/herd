@@ -13,6 +13,7 @@ module Herd.Node.Core
      , mkHerdEnv
      , heLogger
      , heNode
+     , heHomeFolder
      , HerdActionT
      , HerdProcess
      , liftAction
