@@ -1,0 +1,23 @@
+/* This is a hack to workaround the way .mdl-layout is handled with upgradeElement */
+.mdl-layout__container > .mdl-layout__container {
+  height: 0;
+}
+
+/* page content width */
+.page-content > .mdl-grid {
+  max-width: 960px;
+}
+
+/* sticky footer */
+.mdl-layout__content {
+  -webkit-flex: 1 0 auto;
+  flex: 1 0 auto;
+}
+
+/*
+dialog {
+  position: fixed;
+  top: 50%;
+  transform: translate(0, -50%);
+}
+*/

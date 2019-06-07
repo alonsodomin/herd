@@ -1,19 +1,20 @@
 {
   "private": true,
   "scripts": {
-    "build": "npx -c 'spago build -p gen/Herd/*.purs -p gen/Herd/Console/*.purs'",
-    "test": "npx -c 'spago test -p gen/Herd/*.purs -p gen/Herd/Console/*.purs'",
-    "dist": "cp -r static/* dist/ && npx -c 'spago bundle-app -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs --main Main --to ./dist/app.js'",
+    "install": "spago install",
+    "build": "spago build -p gen/Herd/*.purs -p gen/Herd/Console/*.purs",
+    "test": "spago test -p gen/Herd/*.purs -p gen/Herd/Console/*.purs",
+    "dist": "cp -r static/* dist/ && spago bundle-app -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs --main Main --to ./dist/app.js",
     "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
-    "watch": "npx -c 'spago build --watch -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs'"
+    "watch": "spago build --watch -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs"
   },
   "devDependencies": {
-    "parcel": "1.12.3",
-    "pulp": "^12.0.0",
     "purescript": "^0.12.5",
     "purescript-psa": "^0.5.0",
     "purescript-suggest": "^2.2.0",
     "spago": "^0.8.3",
+    "parcel": "^1.12.3",
+    "rimraf": "^2.6.3",
     "webpack": "^4.16.2",
     "webpack-cli": "^3.1.0"
   },

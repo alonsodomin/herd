@@ -159,6 +159,20 @@ let additions =
         ]
         "https://github.com/rightfold/purescript-bytestrings.git"
         "v7.0.0"
+  , halogen-mdl =
+      mkPackage
+        [ "console"
+        , "effect"
+        , "halogen"
+        , "halogen-css"
+        , "numbers"
+        , "psci-support"
+        , "web-dom"
+        , "web-html"
+        , "web-uievents"
+        ]
+        "https://github.com/alonsodomin/purescript-halogen-mdl.git"
+        "94a6464057e03c18b5b9a11f264d0d2ab3ee72ab"
   }
 
 in  upstream // overrides // additions

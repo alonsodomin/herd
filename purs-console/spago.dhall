@@ -13,6 +13,7 @@ You can edit this file as you like.
     , "effect"
     , "gen"
     , "halogen"
+    , "halogen-mdl"
     , "profunctor-lenses"
     , "psci-support"
     , "quickcheck"
