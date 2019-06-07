@@ -3,10 +3,8 @@ module Herd.Console.Schema.List where
 import Prelude
 
 import Data.Array (catMaybes)
-import Data.Foldable (class Foldable, maximum)
-import Data.Generic.Rep (class Generic)
+import Data.Foldable (maximum)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype, unwrap)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Halogen as H
@@ -74,10 +72,8 @@ fetchSubjectList = do
   catMaybes <$> traverse pickSubjectAndVersion subjectIds
   where pickSubjectAndVersion :: SubjectId -> ConsoleAff (Maybe (Tuple SubjectId Version))
         pickSubjectAndVersion subjectId = do
-          maybeVersion <- findLatestVersion <$> getSubjectsBySubjectId subjectId
+          maybeVersion <- maximum <$> getSubjectsBySubjectId subjectId
           case maybeVersion of
             Just v -> pure $ Just (Tuple subjectId v)
             Nothing -> pure Nothing
 
-findLatestVersion :: forall f. Foldable f => f Version -> Maybe Version
-findLatestVersion = maximum
