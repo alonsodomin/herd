@@ -5,20 +5,25 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.MDL as MDL
 import Halogen.MDL.Layout as Layout
 import Halogen.MDL.Navigation as Navigation
+
 import Herd.Console.Effect (ConsoleAff)
 import Herd.Console.Page.SchemaBrowser as SchemaBrowser
+import Herd.Console.Route (Route(..))
+import Herd.Console.Route as Route
 
 type State = { }
 
 data Query a =
     InitializeComponent a
   | FinalizeComponent a
+  | NavClick a
 
-data Slot = SchemaBrowserSlot
+data Slot = PageSlot
 derive instance eqConsoleSlot :: Eq Slot
 derive instance ordConsoleSlot :: Ord Slot
 
@@ -84,8 +89,19 @@ ui = H.lifecycleParentComponent
             [ HH.span
                 [ HP.classes [ Layout.cl.layoutTitle ] ]
                 [ HH.text "Herd Console" ]
-            , HH.nav [ HP.classes [ Navigation.cl.navigation ] ] [ ]
+            , HH.nav
+                [ HP.classes [ Navigation.cl.navigation ] ]
+                [ renderDrawerLink SchemaBrowser ]
             ]
+
+        renderDrawerLink :: Route -> ConsoleHTML
+        renderDrawerLink route =
+          HH.a
+            [ HP.href $ Route.href route
+            , HP.classes [ Navigation.cl.navigationLink ]
+            , HE.onClick $ HE.input_ NavClick
+            ]
+            [ HH.text $ Route.label route ]
 
         renderLayoutContent :: ConsoleHTML
         renderLayoutContent =
@@ -93,7 +109,7 @@ ui = H.lifecycleParentComponent
             [ HP.classes [ Layout.cl.layoutContent ] ]
             [ HH.div
                 [ HP.classes [ HH.ClassName "page-content" ] ]
-                [ HH.slot SchemaBrowserSlot SchemaBrowser.ui unit absurd ]
+                [ HH.slot PageSlot SchemaBrowser.ui unit absurd ]
             ]
 
         eval :: Query ~> H.ParentDSL State Query SchemaBrowser.Query Slot Void ConsoleAff
@@ -102,3 +118,9 @@ ui = H.lifecycleParentComponent
           H.put { }  -- required to trigger the rendering of the UI
           pure next
         eval (FinalizeComponent next) = pure next
+        eval (NavClick next) = do
+          maybeDrawer <- H.getHTMLElementRef drawerRef
+          case maybeDrawer of
+            Just drawer -> H.liftEffect $ Layout.toggleDrawer
+            Nothing -> pure unit
+          pure next
