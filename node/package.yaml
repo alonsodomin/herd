@@ -96,20 +96,6 @@ executables:
     - optparse-applicative >= 0.14.2 && < 0.15
     - herd-node
 
-  # herd-node-codegen:
-  #   main:                Main.hs
-  #   source-dirs:         codegen
-  #   ghc-options:
-  #   - -threaded
-  #   - -rtsopts
-  #   - -with-rtsopts=-N
-  #   dependencies:
-  #   - elm-bridge
-  #   - herd-node
-  #   - optparse-applicative >= 0.14.2 && < 0.15
-  #   - servant-elm
-  #   - wl-pprint-text
-
   herd-purs-codegen:
     main:                Main.hs
     source-dirs:         purs-codegen
