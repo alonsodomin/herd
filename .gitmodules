@@ -1,8 +1,0 @@
-[submodule "console/libs/elm-mdc"]
-	path = console/libs/elm-mdc
-	url = https://github.com/aforemny/elm-mdc.git
-	branch = master
-[submodule "console/libs/elm-avro"]
-	path = console/libs/elm-avro
-	url = https://github.com/alonsodomin/elm-avro.git
-	branch = master
