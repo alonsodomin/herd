@@ -5,13 +5,16 @@ jobs:
       - image: alonsodomin/herd-circleci
     steps:
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init --recursive
+      - run:
+          name: Sync Git submodules
+          command: |
+            git submodule sync
+            git submodule update --init --recursive
+      - run: npm install -g yarn
       - restore_cache:
           name: Restore Cached Dependencies
           keys:
             - herd-node-{{ checksum "node/package.yaml" }}
-            - herd-console-{{ checksum "console/elm.json" }}
       - run:
           name: Resolve/Update Dependencies
           command: make setup
@@ -22,7 +25,7 @@ jobs:
           name: Install executable
           command: make install
       - save_cache:
-          name: Cache Dependencies
+          name: Node Stack Dependencies
           key: herd-{{ checksum "node/package.yaml" }}
           paths:
             - ".stack-work"

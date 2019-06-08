@@ -50,7 +50,7 @@ import           Text.ParserCombinators.ReadP (pfail, readP_to_S, readS_to_P)
 import           Herd.Data.Text
 
 newtype SubjectId = SubjectId Text
-  deriving (Eq, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
+  deriving (Eq, Ord, Show, Read, Generic, Typeable, Hashable, Binary, FromJSON, ToJSON)
 
 instance ToText SubjectId where
   toText (SubjectId x) = x
@@ -123,11 +123,11 @@ instance Binary Schema where
   put = put . BSL.toStrict . JSON.encode
   get = (get :: B.Get ByteString) >>= ((either fail pure) . JSON.eitherDecode' . BSL.fromStrict)
 
-newtype AvroSchema = AvroSchema { unwrapSchema :: Schema }
+newtype AvroSchema = AvroSchema Schema
   deriving (Eq, Generic, Typeable, Binary)
 
 asSchema :: Getter AvroSchema Schema
-asSchema = to unwrapSchema
+asSchema = to (\(AvroSchema schema) -> schema)
 
 instance Show AvroSchema where
   showsPrec p (AvroSchema sch) = showsPrec p (JSON.encode sch)

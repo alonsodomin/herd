@@ -1,14 +1,23 @@
 {
-  "name": "herd-console",
-  "version": "0.1.0",
-  "description": "Herd's user interface",
-  "repository": "https://github.com/alonsodomin/herd",
-  "license": "GPL-3.0",
-  "author": "A. Alonso Dominguez",
-  "dependencies": {
-    "elm": "0.19.0-no-deps",
-    "elm-format": "elm0.19.0",
-    "elm-test": "0.19.0-rev6",
-    "uglify-js": "^3.5.15"
-  }
+  "private": true,
+  "scripts": {
+    "install": "spago install",
+    "build": "spago build -p gen/Herd/*.purs -p gen/Herd/Console/*.purs",
+    "test": "spago test -p gen/Herd/*.purs -p gen/Herd/Console/*.purs",
+    "dist": "cp -r static/* dist/ && spago bundle-app -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs --main Main --to ./dist/app.js && parcel build dist/index.html",
+    "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
+    "start": "yarn dist && parcel dist/index.html",
+    "watch": "spago build --watch -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs"
+  },
+  "devDependencies": {
+    "purescript": "^0.12.5",
+    "purescript-psa": "^0.5.0",
+    "purescript-suggest": "^2.2.0",
+    "spago": "^0.8.3",
+    "parcel": "^1.12.3",
+    "rimraf": "^2.6.3",
+    "webpack": "^4.16.2",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {}
 }

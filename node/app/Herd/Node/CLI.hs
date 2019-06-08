@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Herd.CLI
+module Herd.Node.CLI
      ( herdCli
      ) where
 
@@ -9,6 +9,7 @@ import           Data.Semigroup      ((<>))
 import           Data.Yaml           (ParseException, decodeFileEither,
                                       prettyPrintParseException)
 import           Options.Applicative
+import           System.Environment
 
 import           Herd.Node
 import           Herd.Node.Config
@@ -59,7 +60,13 @@ loadHerdConf configFile = do
 herd :: HerdOpts -> IO ()
 herd opts = do
   config <- loadHerdConf (opts ^. hoConfigFile)
-  startHerdNode config
+  homeFolder <- readHomeFolder
+  startHerdNode homeFolder config
+  where readHomeFolder = do
+          maybeHome <- lookupEnv "HERD_HOME"
+          case maybeHome of
+            Just v  -> pure v
+            Nothing -> getExecutablePath
 
 herdCli :: IO ()
 herdCli = do

@@ -23,6 +23,7 @@ dependencies:
 - binary
 - binary-orphans
 - bytestring
+- containers
 - free
 - hashable
 - mmorph
@@ -69,7 +70,6 @@ library:
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
   - json-rpc
-  - optparse-applicative >= 0.14.2 && < 0.15
   - network-transport
   - network-transport-tcp
   - rocksdb-haskell
@@ -79,10 +79,10 @@ library:
   - wai-cors
   - warp
   exposed-modules:
-  - Herd.CLI
   - Herd.Data.SchemaRegistry
   - Herd.Data.SubjectLog
   - Herd.Node
+  - Herd.Node.Config
 
 executables:
   herd:
@@ -93,22 +93,21 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - herd-node    
+    - optparse-applicative >= 0.14.2 && < 0.15
+    - herd-node
 
-  herd-node-codegen:
+  herd-purs-codegen:
     main:                Main.hs
-    source-dirs:         codegen
+    source-dirs:         purs-codegen
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - containers
-    - elm-bridge
     - herd-node
     - optparse-applicative >= 0.14.2 && < 0.15
-    - servant-elm
-    - wl-pprint-text
+    - purescript-bridge >= 0.13
+    - servant-purescript
 
 tests:
   herd-node-test:
