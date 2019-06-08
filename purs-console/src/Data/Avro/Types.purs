@@ -8,12 +8,12 @@ module Data.Avro.Types
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Lazy (class Lazy, defer)
+import Control.Lazy (defer)
 import Control.Monad.Gen (chooseInt, elements, oneOf, resize, unfoldable) as Gen
 import Control.Monad.Gen (class MonadGen, chooseBool, chooseFloat, chooseInt)
 import Control.Monad.Gen.Common (genMaybe, genNonEmpty) as Gen
 import Control.Monad.Rec.Class (class MonadRec)
-import Data.Argonaut.Core (Json, caseJsonNull, caseJsonBoolean, caseJsonNumber, caseJsonString, caseJsonArray, caseJsonObject, jsonEmptyObject)
+import Data.Argonaut.Core (Json, caseJsonArray, caseJsonBoolean, caseJsonNull, caseJsonNumber, caseJsonObject, caseJsonString, jsonEmptyObject, stringify)
 import Data.Argonaut.Core as Json
 import Data.Argonaut.Decode (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Argonaut.Encode (class EncodeJson, encodeJson, (:=), (:=?), (~>))
@@ -100,6 +100,9 @@ data Type =
 
 derive instance genericAvroType :: Generic Type _
 derive instance eqAvroType :: Eq Type
+
+instance showAvroType :: Show Type where
+  show = stringify <<< encodeJson
 
 type Decoder a = Json -> Either String a
 

@@ -6,7 +6,6 @@ import Data.Array (catMaybes)
 import Data.Foldable (maximum)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -15,29 +14,29 @@ import Halogen.MDL.Card as Card
 import Halogen.MDL.List as List
 import Halogen.MDL.Shadow as Shadow
 import Herd.Console.Effect (ConsoleAff)
-import Herd.Console.Remote (getSubjects, getSubjectsBySubjectId)
+import Herd.Console.Remote as Remote
+import Herd.Console.Types (SchemaId(..))
 import Herd.Types (SubjectId(..), Version(..))
 
 
-type SubjectList = Array (Tuple SubjectId Version)
+type SubjectList = Array SchemaId
 
 getSubjectIds :: SubjectList -> Array SubjectId
-getSubjectIds = map (\(Tuple subjectId _) -> subjectId)
+getSubjectIds = map (\(SchemaId subjectId _) -> subjectId)
 
 type State =
   { loading         :: Boolean
   , schemas         :: SubjectList
-  , selectedSubject :: Maybe (Tuple SubjectId Version)
+  , selectedSubject :: Maybe SchemaId
   }
 
 data Query a =
     Initialize a
-  | SubjectSelected SubjectId Version a
-  | GetSubjects (Array SubjectId -> a)
+  | ClickSchema SchemaId a
 
 type Input = Unit
 
-type Message = Unit
+data Message = SchemaSelected SchemaId
 
 ui :: H.Component HH.HTML Query Input Message ConsoleAff
 ui =
@@ -69,10 +68,10 @@ ui =
           [ HP.class_ Card.cl.cardMenu ]
           []
         ]
-      where renderItem (Tuple s@(SubjectId subjectId) v@(Version version)) =
+      where renderItem schemaId@(SchemaId (SubjectId subjectId) (Version version)) =
               HH.li
                 [ HP.classes [ List.cl.listItem ]
-                , HE.onClick (HE.input_ (SubjectSelected s v))
+                , HE.onClick (HE.input_ (ClickSchema schemaId))
                 ]
                 [ HH.span
                   [ HP.class_ List.cl.listItemPrimaryContent ]
@@ -87,23 +86,21 @@ ui =
       subjectList <- H.lift fetchSubjectList
       H.modify_ (_ { loading = false, schemas = subjectList })
       pure next
-    eval (SubjectSelected subjectId version next) = do
-      H.modify_ (_ { selectedSubject = Just $ Tuple subjectId version })
+    eval (ClickSchema schemaId next) = do
+      H.modify_ (_ { selectedSubject = Just $ schemaId })
+      H.raise $ SchemaSelected schemaId
       pure next
-    eval (GetSubjects reply) = do
-      state <- H.get
-      pure (reply $ getSubjectIds state.schemas)
 
 -- | Fetch the latest versions for all the available subjects
 
 fetchSubjectList :: ConsoleAff SubjectList
 fetchSubjectList = do
-  subjectIds <- getSubjects
+  subjectIds <- Remote.getSubjects
   catMaybes <$> traverse pickSubjectAndVersion subjectIds
-  where pickSubjectAndVersion :: SubjectId -> ConsoleAff (Maybe (Tuple SubjectId Version))
+  where pickSubjectAndVersion :: SubjectId -> ConsoleAff (Maybe SchemaId)
         pickSubjectAndVersion subjectId = do
-          maybeVersion <- maximum <$> getSubjectsBySubjectId subjectId
+          maybeVersion <- maximum <$> Remote.getSubjectsBySubjectId subjectId
           case maybeVersion of
-            Just v -> pure $ Just (Tuple subjectId v)
+            Just v -> pure $ Just (SchemaId subjectId v)
             Nothing -> pure Nothing
 

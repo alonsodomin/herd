@@ -2,15 +2,15 @@ module Herd.Console.Effect where
 
 import Prelude
 
-import Control.Monad.Error.Class (class MonadError, class MonadThrow, catchError, throwError)
+import Control.Monad.Error.Class (class MonadError, class MonadThrow, throwError)
 import Control.Monad.Except.Trans (ExceptT, runExceptT)
-import Control.Monad.Reader.Class (class MonadAsk, ask)
+import Control.Monad.Reader.Class (class MonadAsk)
 import Control.Monad.Reader.Trans (ReaderT, runReaderT)
 import Data.Either (Either(..))
-import Data.Newtype (class Newtype, unwrap)
+import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Effect.Aff.Class (class MonadAff, liftAff)
-import Effect.Class (class MonadEffect, liftEffect)
+import Effect.Aff.Class (class MonadAff)
+import Effect.Class (class MonadEffect)
 import Effect.Exception (error)
 import Herd.Console.Remote (SPParams_(..))
 import Servant.PureScript.Ajax (AjaxError)
