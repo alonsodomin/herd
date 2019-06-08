@@ -2,6 +2,7 @@ module Herd.Console.Schema.Editor where
 
 import Prelude
 
+import Data.Argonaut.Encode (encodeJson)
 import Data.Avro.Types as Avro
 import Data.Maybe (Maybe(..))
 import Halogen as H
@@ -11,6 +12,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.MDL.Card as Card
 import Halogen.MDL.Shadow as Shadow
 
+import Herd.Console.Component.JsonTree (renderJson)
 import Herd.Console.Effect (ConsoleAff)
 import Herd.Console.Remote as Remote
 import Herd.Console.Types (SchemaId(..))
@@ -55,7 +57,8 @@ ui =
               []
             ]
           where displaySchema :: Maybe Avro.Type -> H.ComponentHTML Query
-                displaySchema (Just t) = HH.pre [] [ HH.text $ show t ]
+                displaySchema (Just t) =
+                  HH.pre_ [ renderJson $ encodeJson t ]
                 displaySchema Nothing = HH.span_ [ HH.text "No schema selected" ]
 
         eval :: Query ~> H.ComponentDSL State Query Message ConsoleAff

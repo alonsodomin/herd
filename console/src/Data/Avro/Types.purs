@@ -158,6 +158,7 @@ instance encodeJsonAvroType :: EncodeJson Type where
     let opts = catMaybes
           [ "namespace" :=? fixed.namespace ]
     in "name" := fixed.name
+       ~> "type" := "fixed"
        ~> "aliases" := fixed.aliases
        ~> "size" := fixed.size
        ~> (Json.fromObject $ Object.fromFoldable opts)
@@ -167,6 +168,7 @@ instance encodeJsonAvroType :: EncodeJson Type where
           , "doc" :=? enum.doc
           ]
     in "name" := enum.name
+       ~> "type" := "enum"
        ~> "aliases" := enum.aliases
        ~> "symbols" := encodeJson (NEL.toList enum.symbols)
        ~> (Json.fromObject $ Object.fromFoldable opts)
@@ -177,6 +179,7 @@ instance encodeJsonAvroType :: EncodeJson Type where
           , "order" :=? rec.order
           ]
     in "name" := rec.name
+       ~> "type" := "record"
        ~> "aliases" := rec.aliases
        ~> "fields" := rec.fields
        ~> (Json.fromObject $ Object.fromFoldable opts)
