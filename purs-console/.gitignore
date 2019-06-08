@@ -7,4 +7,5 @@
 /.purs*
 /.psa*
 .spago/
+.cache/
 package-lock.json
