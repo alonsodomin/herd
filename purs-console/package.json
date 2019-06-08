@@ -6,6 +6,7 @@
     "test": "spago test -p gen/Herd/*.purs -p gen/Herd/Console/*.purs",
     "dist": "cp -r static/* dist/ && spago bundle-app -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs --main Main --to ./dist/app.js",
     "clean": "rimraf output && rimraf .pulp-cache && rimraf gen/ && rimraf dist/",
+    "start": "yarn dist && parcel dist/index.html",
     "watch": "spago build --watch -p ./gen/Herd/*.purs -p ./gen/Herd/Console/*.purs"
   },
   "devDependencies": {

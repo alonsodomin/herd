@@ -11,6 +11,9 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.MDL.Card as Card
+import Halogen.MDL.List as List
+import Halogen.MDL.Shadow as Shadow
 import Herd.Console.Effect (ConsoleAff)
 import Herd.Console.Remote (getSubjects, getSubjectsBySubjectId)
 import Herd.Types (SubjectId(..), Version(..))
@@ -22,12 +25,14 @@ getSubjectIds :: SubjectList -> Array SubjectId
 getSubjectIds = map (\(Tuple subjectId _) -> subjectId)
 
 type State =
-  { loading :: Boolean
-  , schemas :: SubjectList
+  { loading         :: Boolean
+  , schemas         :: SubjectList
+  , selectedSubject :: Maybe (Tuple SubjectId Version)
   }
 
 data Query a =
     Initialize a
+  | SubjectSelected SubjectId Version a
   | GetSubjects (Array SubjectId -> a)
 
 type Input = Unit
@@ -47,18 +52,43 @@ ui =
 
   where
     initialState :: State
-    initialState = { loading: true, schemas: [] }
+    initialState = { loading: true, schemas: [], selectedSubject: Nothing }
 
     render :: State -> H.ComponentHTML Query
     render state =
-      HH.ul [] $ map renderItem state.schemas
-      where renderItem (Tuple (SubjectId subjectId) (Version version)) =
-              HH.li [] [ HH.text subjectId ]
+      HH.div
+        [ HP.classes [ Card.cl.card, Shadow.cl.shadow2dp ] ]
+        [ HH.div
+          [ HP.class_ Card.cl.cardTitle ]
+          [ HH.h2 [ HP.class_ Card.cl.cardTitleText ] [ HH.text "Subjects" ] ]
+        , HH.div
+          [ HP.class_ Card.cl.cardSupportingText ]
+          [ HH.ul [ HP.class_ List.cl.list ] $ map renderItem state.schemas
+          ]
+        , HH.div
+          [ HP.class_ Card.cl.cardMenu ]
+          []
+        ]
+      where renderItem (Tuple s@(SubjectId subjectId) v@(Version version)) =
+              HH.li
+                [ HP.classes [ List.cl.listItem ]
+                , HE.onClick (HE.input_ (SubjectSelected s v))
+                ]
+                [ HH.span
+                  [ HP.class_ List.cl.listItemPrimaryContent ]
+                  [ HH.text subjectId ]
+                , HH.a
+                  [ HP.class_ List.cl.listItemSecondaryAction ]
+                  [ HH.text $ "v" <> (show version) ]
+                ]                
 
     eval :: Query ~> H.ComponentDSL State Query Message ConsoleAff
     eval (Initialize next) = do
       subjectList <- H.lift fetchSubjectList
-      H.modify_ (\st -> st { loading = false, schemas = subjectList })
+      H.modify_ (_ { loading = false, schemas = subjectList })
+      pure next
+    eval (SubjectSelected subjectId version next) = do
+      H.modify_ (_ { selectedSubject = Just $ Tuple subjectId version })
       pure next
     eval (GetSubjects reply) = do
       state <- H.get

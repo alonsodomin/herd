@@ -17,26 +17,21 @@ CONSOLE_APP := $(CONSOLE_DIST_DIR)/app.js
 
 NPM_MODULES := $(CONSOLE_DIR)/node_modules
 NPM_TOOLS_DIR := $(NPM_MODULES)/.bin
-NPM := $(shell which npm)
+YARN := $(shell which yarn)
 
 REMOTE_API := $(CONSOLE_GEN_DIR)/Herd/Console/Remote.elm
-
-UGLIFY := $(NPM_TOOLS_DIR)/uglifyjs
 
 all: dist
 
 # Setup build environment
 
-$(NPM_MODULES): $(NPM)
-	@cd $(CONSOLE_DIR) && npm install
-
-$(UGLIFY):
-	@cd $(CONSOLE_DIR) && npm install
+$(NPM_MODULES): $(YARN)
+	@cd $(CONSOLE_DIR) && yarn install
 
 $(STACK_WORK_DIR):
 	@stack setup
 
-setup: $(STACK_WORK_DIR) $(NPM)
+setup: $(STACK_WORK_DIR) $(NPM_MODULES)
 
 # Clean environment
 
@@ -44,7 +39,7 @@ backend-clean:
 	@stack clean
 
 ui-clean: $(NPM_MODULES)
-	@cd $(CONSOLE_DIR) && $(NPM) run clean
+	@cd $(CONSOLE_DIR) && $(YARN) clean
 
 clean: backend-clean ui-clean
 
@@ -71,13 +66,9 @@ $(CONSOLE_DIST_DIR):
 	mkdir -p $(CONSOLE_DIST_DIR)
 
 $(CONSOLE_APP): $(NPM_MODULES) $(REMOTE_API) $(CONSOLE_DIST_DIR)
-	@cd $(CONSOLE_DIR) && $(NPM) run dist
+	@cd $(CONSOLE_DIR) && $(YARN) dist
 
 ui: $(CONSOLE_APP)
-
-uglify: ui $(UGLIFY)
-	$(UGLIFY) $(CONSOLE_APP) --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters=true,keep_fargs=false,unsafe_comps=true,unsafe=true,passes=2' --output=$(CONSOLE_APP)
-	$(UGLIFY) $(CONSOLE_APP) --mangle --output=$(CONSOLE_APP)
 
 # Testing tagets
 
@@ -85,7 +76,7 @@ backend-test: $(STACK_WORK_DIR)
 	@stack test
 
 ui-test: $(NPM_MODULES) ui
-	@cd $(CONSOLE_DIR) && $(NPM) run test
+	@cd $(CONSOLE_DIR) && $(YARN) test
 
 test: backend-test ui
 
@@ -99,7 +90,7 @@ $(DIST_BIN_FILE): test
 $(DIST_DIR)/etc: $(DIST_DIR)
 	@cp -r $(ETC_DIR) $(DIST_DIR)
 
-$(DIST_CONSOLE_DIR)/app.js: $(DIST_DIR)
+$(DIST_CONSOLE_DIR)/app.js: $(DIST_DIR) $(CONSOLE_APP)
 	@mkdir -p $(DIST_CONSOLE_DIR)
 	cp -r $(CONSOLE_DIST_DIR)/* $(DIST_CONSOLE_DIR)/
 
