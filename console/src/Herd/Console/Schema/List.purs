@@ -2,9 +2,10 @@ module Herd.Console.Schema.List where
 
 import Prelude
 
-import Data.Array (catMaybes)
+import Data.Array (filter, catMaybes)
 import Data.Foldable (maximum)
 import Data.Maybe (Maybe(..))
+import Data.String as Str
 import Data.Traversable (traverse)
 import Halogen as H
 import Halogen.HTML as HH
@@ -24,15 +25,25 @@ type SubjectList = Array SchemaId
 getSubjectIds :: SubjectList -> Array SubjectId
 getSubjectIds = map (\(SchemaId subjectId _) -> subjectId)
 
+filterSubjects :: (SubjectId -> Boolean) -> SubjectList -> SubjectList
+filterSubjects pred = filter (\(SchemaId subjectId _) -> pred subjectId)
+
 type State =
   { loading         :: Boolean
   , schemas         :: SubjectList
   , selectedSubject :: Maybe SchemaId
+  , subjectFilter   :: Maybe String
   }
 
 data Query a =
     Initialize a
   | ClickSchema SchemaId a
+  | FilterSubjects (Maybe String) a
+
+queryFilterSubjects :: forall a. String -> a -> Query a
+queryFilterSubjects str a =
+  if Str.length str > 0 then FilterSubjects (Just str) a
+    else FilterSubjects Nothing a
 
 type Input = Unit
 
@@ -51,7 +62,12 @@ ui =
 
   where
     initialState :: State
-    initialState = { loading: true, schemas: [], selectedSubject: Nothing }
+    initialState =
+      { loading: true
+      , schemas: []
+      , selectedSubject: Nothing
+      , subjectFilter: Nothing
+      }
 
     render :: State -> H.ComponentHTML Query
     render state =
@@ -61,14 +77,34 @@ ui =
           [ HP.class_ Card.cl.cardTitle ]
           [ HH.h2 [ HP.class_ Card.cl.cardTitleText ] [ HH.text "Subjects" ] ]
         , HH.div
+          [ HP.class_ Card.cl.cardActions ]
+          [ HH.div
+            [ HP.classes $ HH.ClassName <$> [ "mdl-textfield", "mdl-js-textfield" ] ]
+            [ HH.input
+              [ HP.class_ $ HH.ClassName "mdl-textfield__input"
+              , HP.type_ HP.InputSearch
+              , HE.onValueChange (HE.input queryFilterSubjects)
+              ]
+            , HH.label
+              [ HP.classes $ HH.ClassName <$> [ "mdl-textfield__label" ] ]
+              [ HH.i [ HP.class_ $ HH.ClassName "material-icons" ] [ HH.text "search" ] ]
+            ]
+          ]
+        , HH.div
           [ HP.class_ Card.cl.cardSupportingText ]
-          [ HH.ul [ HP.class_ List.cl.list ] $ map renderItem state.schemas
+          [ HH.ul [ HP.class_ List.cl.list ] $ map renderItem visibleSubjects
           ]
         , HH.div
           [ HP.class_ Card.cl.cardMenu ]
           []
         ]
-      where renderItem schemaId@(SchemaId (SubjectId subjectId) (Version version)) =
+      where visibleSubjects :: SubjectList
+            visibleSubjects =
+              case state.subjectFilter of
+                Nothing -> state.schemas
+                Just sf -> filterSubjects (\(SubjectId x) -> sf == x) state.schemas
+
+            renderItem schemaId@(SchemaId (SubjectId subjectId) (Version version)) =
               HH.li
                 [ HP.classes [ List.cl.listItem ]
                 , HE.onClick (HE.input_ (ClickSchema schemaId))
@@ -89,6 +125,9 @@ ui =
     eval (ClickSchema schemaId next) = do
       H.modify_ (_ { selectedSubject = Just $ schemaId })
       H.raise $ SchemaSelected schemaId
+      pure next
+    eval (FilterSubjects filter next) = do
+      H.modify_ (_ { subjectFilter = filter })
       pure next
 
 -- | Fetch the latest versions for all the available subjects
