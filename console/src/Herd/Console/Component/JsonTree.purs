@@ -7,9 +7,10 @@ import Data.Argonaut.Core (Json, caseJson)
 import Data.Argonaut.Core as Json
 import Data.Array ((:))
 import Data.Array as Array
+import Data.Either (either)
 import Data.Foldable (foldl)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.String as Str
 import Data.String.Pattern (Pattern(..), Replacement(..))
 import Data.Tuple (Tuple(..))
@@ -20,13 +21,13 @@ import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import URL.Validator (parseURL)
 
 type State =
   { value :: Json }
 
 data Query a =
-    ToggleNode a
-  | UpdateJson Json a
+    UpdateJson Json a
 
 type Input = Json
 
@@ -46,10 +47,9 @@ component =
 
         render :: State -> H.ComponentHTML Query
         render state =
-          HH.pre [ HP.class_ clsJsonDocument ] $ renderJson state.value
+          HH.pre [ HP.class_ clsJsonDocument ] $ renderJsonRoot state.value        
 
         eval :: Query ~> H.ComponentDSL State Query Message m
-        eval (ToggleNode next) = pure next
         eval (UpdateJson json next) = do
           H.modify_ (_ { value = json })
           pure next
@@ -74,6 +74,12 @@ clsJsonToggle = HH.ClassName "json-toggle"
 clsJsonDict :: HH.ClassName
 clsJsonDict = HH.ClassName "json-dict"
 
+isCollapsible :: Json -> Boolean
+isCollapsible json = maybe false (\o -> not $ Object.isEmpty o) $ Json.toObject json
+
+isURL :: String -> Boolean
+isURL str = either (const false) (const true) $ parseURL str
+
 escapeString :: String -> String
 escapeString str =
   let replacements =
@@ -83,13 +89,26 @@ escapeString str =
         ]
   in foldl (\s (Tuple p r) -> Str.replace p r s) str replacements
 
+renderToggle :: forall p i. HTML p i
+renderToggle = renderToggle' Nothing
+
+renderToggle' :: forall p i. Maybe String -> HTML p i
+renderToggle' (Just txt) = HH.a [ HP.class_ clsJsonToggle ] [ HH.text txt ]
+renderToggle' Nothing = HH.a [ HP.class_ clsJsonToggle ] []
+
+renderJsonRoot :: forall p i. Json -> Array (HTML p i)
+renderJsonRoot json =
+  let writeToggle =
+        if isCollapsible json then
+          tell [ renderToggle ]
+          else pure unit
+      writeDoc = tell $ renderJson json
+  in execWriter $ writeToggle *> writeDoc
+
 renderJson :: forall p i. Json -> Array (HTML p i)
 renderJson json =
   caseJson renderNull renderBoolean renderNumber renderString renderArray renderObject json
-  where isCollapsible :: Json -> Boolean
-        isCollapsible j = maybe false (\o -> not $ Object.isEmpty o) $ Json.toObject j
-  
-        renderNull :: Unit -> Array (HTML p i)
+  where renderNull :: Unit -> Array (HTML p i)
         renderNull _ = [ HH.span [ HP.class_ clsJsonLiteral ] [ HH.text "null" ] ]
 
         renderNumber :: Number -> Array (HTML p i)
@@ -103,7 +122,9 @@ renderJson json =
         renderString :: String -> Array (HTML p i)
         renderString str =
           let escaped = escapeString str
-          in [ HH.span [ HP.class_ clsJsonString ] [ HH.text escaped ] ]
+          in if isURL str then
+               [ HH.a [ HP.href str, HP.class_ clsJsonString, HP.target "_blank" ] [ HH.text escaped ] ]
+               else [ HH.span [ HP.class_ clsJsonString ] [ HH.text escaped ] ]
 
         renderArray :: Array Json -> Array (HTML p i)
         renderArray arr
@@ -120,7 +141,7 @@ renderJson json =
         renderArrayItem size idx item =
           let toggle =
                 if isCollapsible item then
-                  tell [ HH.a [ HP.class_ clsJsonToggle ] [] ]
+                  tell [ renderToggle ]
                   else pure unit
               theItem = tell $ renderJson item
               comma =
@@ -145,7 +166,7 @@ renderJson json =
         renderObjectField size idx (Tuple name value) =
           let fieldName = 
                 if isCollapsible value then
-                  tell [ HH.a [ HP.class_ clsJsonToggle ] [ HH.text name ] ]
+                  tell [ renderToggle' $ Just name ]
                   else tell [ HH.text name ]
               theValue  = tell $ (HH.text ": ") : (renderJson value)
               comma =

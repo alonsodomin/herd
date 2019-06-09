@@ -173,6 +173,11 @@ let additions =
         ]
         "https://github.com/alonsodomin/purescript-halogen-mdl.git"
         "94a6464057e03c18b5b9a11f264d0d2ab3ee72ab"
+  , url-validator =
+      mkPackage
+        [ "nullable" ]
+        "https://github.com/bbarker/purescript-url-validator.git"
+        "v1.1.0"
   }
 
 in  upstream // overrides // additions
