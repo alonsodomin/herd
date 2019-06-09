@@ -103,4 +103,4 @@ handleDeleteSchema env subjectId version = do
 startRESTServer :: HerdConfig -> HerdEnv -> IO ()
 startRESTServer cfg env = do
   let port = cfg ^. hcNetwork . ncHttp . nbPort
-  run port (herdRESTApp env)
+  run (fromIntegral port) (herdRESTApp env)

@@ -6,6 +6,8 @@ module Herd.Node.Config where
 
 import           Control.Lens
 import           Control.Monad.Logger (LogLevel (..))
+import           Dhall (Interpret)
+import qualified Dhall as Dhall
 import           Data.Aeson
 import           Data.Text            (Text)
 import qualified Data.Text            as T
@@ -20,10 +22,12 @@ defaultHttpPort = 8081
 
 data NetworkBinding = NetworkBinding
   { _nbHost :: Text
-  , _nbPort :: Int
+  , _nbPort :: Integer
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''NetworkBinding
+
+instance Interpret NetworkBinding
 
 instance FromJSON NetworkBinding where
   parseJSON = withObject "network config" $ \o -> do
@@ -38,6 +42,8 @@ data NetworkConfig = NetworkConfig
 
 makeLenses ''NetworkConfig
 
+instance Interpret NetworkConfig
+
 instance FromJSON NetworkConfig where
   parseJSON = withObject "network config" $ \o -> do
     _ncHttp    <- o .: "http"
@@ -48,6 +54,8 @@ data LoggingDriver =
     LoggingConsole
   | LoggingFile FilePath
   deriving (Eq, Show, Generic, Typeable)
+
+instance Interpret LoggingDriver
 
 instance FromJSON LoggingDriver where
   parseJSON = withObject "logging driver" $ \o -> do
@@ -68,6 +76,17 @@ data LoggingConfig = LoggingConfig
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''LoggingConfig
+
+instance Interpret LogLevel where
+  autoWith _ = Dhall.union
+    ( ((const LevelDebug)    <$> Dhall.constructor "debug" Dhall.unit)
+   <> ((const LevelInfo)     <$> Dhall.constructor "info" Dhall.unit)
+   <> ((const LevelWarn)     <$> Dhall.constructor "warn" Dhall.unit)
+   <> ((const LevelError)    <$> Dhall.constructor "error" Dhall.unit)
+   <> ((LevelOther . T.pack) <$> Dhall.constructor "other" Dhall.string)
+    )
+
+instance Interpret LoggingConfig
 
 instance FromJSON LoggingConfig where
   parseJSON = withObject "logging config" $ \o -> do
@@ -91,6 +110,8 @@ data ClusterConfig = ClusterConfig
 
 makeLenses ''ClusterConfig
 
+instance Interpret ClusterConfig
+
 instance FromJSON ClusterConfig where
   parseJSON = withObject "cluster config" $ \o -> do
     _ccBinding   <- o .: "binding"
@@ -103,6 +124,8 @@ data StorageConfig = StorageConfig
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''StorageConfig
+
+instance Interpret StorageConfig
 
 instance FromJSON StorageConfig where
   parseJSON = withObject "storage config" $ \o -> do
@@ -120,6 +143,8 @@ data HerdConfig = HerdConfig
 
 makeLenses ''HerdConfig
 
+instance Interpret HerdConfig
+
 instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
     _hcNetwork <- o .: "network"
@@ -131,3 +156,6 @@ instance FromJSON HerdConfig where
 
 defaultConfigFile :: FilePath
 defaultConfigFile = "./conf/config.yml"
+
+loadConfig :: FilePath -> IO HerdConfig
+loadConfig path = Dhall.input Dhall.auto $ T.pack path

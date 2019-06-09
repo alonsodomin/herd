@@ -69,6 +69,7 @@ library:
   - distributed-process-monad-control
   - distributed-process-simplelocalnet
   - distributed-process-supervisor
+  - dhall >= 1.21.0 && < 1.22
   - json-rpc
   - network-transport
   - network-transport-tcp
