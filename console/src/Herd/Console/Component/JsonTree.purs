@@ -1,12 +1,11 @@
-module Herd.Console.Component.JsonTree
-  ( renderJson
-  ) where
+module Herd.Console.Component.JsonTree where
 
 import Prelude
 
 import Control.Monad.Writer (execWriter, tell)
 import Data.Argonaut.Core (Json, caseJson)
 import Data.Argonaut.Core as Json
+import Data.Array ((:))
 import Data.Array as Array
 import Data.Foldable (foldl)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -16,9 +15,46 @@ import Data.String.Pattern (Pattern(..), Replacement(..))
 import Data.Tuple (Tuple(..))
 import Foreign.Object (Object)
 import Foreign.Object as Object
+import Halogen as H
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+
+type State =
+  { value :: Json }
+
+data Query a =
+    ToggleNode a
+  | UpdateJson Json a
+
+type Input = Json
+
+type Message = Void
+
+component :: forall m. H.Component HH.HTML Query Input Message m
+component =
+  H.component
+    { initialState
+    , render
+    , eval
+    , receiver : HE.input UpdateJson
+    }
+
+  where initialState :: Json -> State
+        initialState json = { value: json }
+
+        render :: State -> H.ComponentHTML Query
+        render state =
+          HH.pre [ HP.class_ clsJsonDocument ] $ renderJson state.value
+
+        eval :: Query ~> H.ComponentDSL State Query Message m
+        eval (ToggleNode next) = pure next
+        eval (UpdateJson json next) = do
+          H.modify_ (_ { value = json })
+          pure next
+
+-- HTML
 
 clsJsonDocument :: HH.ClassName
 clsJsonDocument = HH.ClassName "json-document"
@@ -40,13 +76,16 @@ clsJsonDict = HH.ClassName "json-dict"
 
 escapeString :: String -> String
 escapeString str =
-  let replacements = [ Tuple (Pattern "/&/g") (Replacement "&amp;") ]
+  let replacements =
+        [ Tuple (Pattern "/&/g") (Replacement "&amp;")
+        , Tuple (Pattern "/</g") (Replacement "&lt;")
+        , Tuple (Pattern "/>/g") (Replacement "&gt;")
+        ]
   in foldl (\s (Tuple p r) -> Str.replace p r s) str replacements
 
-renderJson :: forall p i. Json -> HTML p i
+renderJson :: forall p i. Json -> Array (HTML p i)
 renderJson json =
-  --HH.div [ HP.class_ clsJsonDocument ]
-  HH.span_ $ caseJson renderNull renderBoolean renderNumber renderString renderArray renderObject json
+  caseJson renderNull renderBoolean renderNumber renderString renderArray renderObject json
   where isCollapsible :: Json -> Boolean
         isCollapsible j = maybe false (\o -> not $ Object.isEmpty o) $ Json.toObject j
   
@@ -83,7 +122,7 @@ renderJson json =
                 if isCollapsible item then
                   tell [ HH.a [ HP.class_ clsJsonToggle ] [] ]
                   else pure unit
-              theItem = tell [ renderJson item ]
+              theItem = tell $ renderJson item
               comma =
                 if idx < (size - 1) then
                   tell [ HH.text "," ]
@@ -108,7 +147,7 @@ renderJson json =
                 if isCollapsible value then
                   tell [ HH.a [ HP.class_ clsJsonToggle ] [ HH.text name ] ]
                   else tell [ HH.text name ]
-              theValue  = tell [ HH.text ": ", renderJson value ]
+              theValue  = tell $ (HH.text ": ") : (renderJson value)
               comma =
                 if idx < (size - 1) then tell [ HH.text "," ]
                   else pure unit

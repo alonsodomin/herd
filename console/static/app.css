@@ -14,6 +14,10 @@
   flex: 1 0 auto;
 }
 
+#schema-editor {
+  width: 500px;
+}
+
 /*
 dialog {
   position: fixed;

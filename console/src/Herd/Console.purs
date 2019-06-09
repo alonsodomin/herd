@@ -28,6 +28,7 @@ derive instance eqConsoleSlot :: Eq Slot
 derive instance ordConsoleSlot :: Ord Slot
 
 type ConsoleHTML = H.ParentHTML Query SchemaBrowser.Query Slot ConsoleAff
+type ConsoleDSL = H.ParentDSL State Query SchemaBrowser.Query Slot Void ConsoleAff
 
 ui :: H.Component HH.HTML Query Unit Void ConsoleAff
 ui = H.lifecycleParentComponent
@@ -112,7 +113,7 @@ ui = H.lifecycleParentComponent
                 [ HH.slot PageSlot SchemaBrowser.ui unit absurd ]
             ]
 
-        eval :: Query ~> H.ParentDSL State Query SchemaBrowser.Query Slot Void ConsoleAff
+        eval :: Query ~> ConsoleDSL
         eval (InitializeComponent next) = do
           MDL.upgradeElementByRef layoutRef
           H.put { }  -- required to trigger the rendering of the UI

@@ -12,7 +12,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.MDL.Card as Card
 import Halogen.MDL.Shadow as Shadow
 
-import Herd.Console.Component.JsonTree (renderJson)
+import Herd.Console.Component.JsonTree as JsonTree
 import Herd.Console.Effect (ConsoleAff)
 import Herd.Console.Remote as Remote
 import Herd.Console.Types (SchemaId(..))
@@ -29,9 +29,16 @@ type Input = Maybe SchemaId
 
 type Message = Void
 
+data Slot = JsonTreeSlot
+derive instance eqEditorSlot :: Eq Slot
+derive instance ordEditorSlot :: Ord Slot
+
+type EditorHTML = H.ParentHTML Query JsonTree.Query Slot ConsoleAff
+type EditorDSL = H.ParentDSL State Query JsonTree.Query Slot Void ConsoleAff
+
 ui :: H.Component HH.HTML Query Input Message ConsoleAff
 ui =
-  H.component
+  H.parentComponent
     { initialState: const initialState
     , render
     , eval
@@ -41,10 +48,12 @@ ui =
   where initialState :: State
         initialState = { selectedSchema: Nothing }
 
-        render :: State -> H.ComponentHTML Query
+        render :: State -> EditorHTML
         render state =
           HH.div
-            [ HP.classes [ Card.cl.card, Shadow.cl.shadow2dp ] ]
+            [ HP.id_ "schema-editor"
+            , HP.classes [ Card.cl.card, Shadow.cl.shadow2dp ]
+            ]
             [ HH.div
               [ HP.class_ Card.cl.cardTitle ]
               [ HH.h2 [ HP.class_ Card.cl.cardTitleText ] [ HH.text "Schema" ] ]
@@ -56,12 +65,12 @@ ui =
               [ HP.class_ Card.cl.cardMenu ]
               []
             ]
-          where displaySchema :: Maybe Avro.Type -> H.ComponentHTML Query
-                displaySchema (Just t) =
-                  HH.pre_ [ renderJson $ encodeJson t ]
+          where displaySchema :: Maybe Avro.Type -> EditorHTML
+                displaySchema (Just schema) =
+                  HH.slot JsonTreeSlot JsonTree.component (encodeJson schema) absurd
                 displaySchema Nothing = HH.span_ [ HH.text "No schema selected" ]
 
-        eval :: Query ~> H.ComponentDSL State Query Message ConsoleAff
+        eval :: Query ~> EditorDSL
         eval (FetchSchema maybeSchemaId next) = do
           case maybeSchemaId of
             Just schemaId -> do
