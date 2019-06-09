@@ -4,11 +4,18 @@ import Prelude
 
 import Data.Argonaut.Encode (encodeJson)
 import Data.Avro.Types as Avro
+import Data.Const (Const)
+import Data.Functor.Coproduct.Nested (type (<\/>))
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..), snd)
+import Effect.Aff.Class (liftAff)
 import Halogen as H
+import Halogen.Component.ChildPath as CP
+import Halogen.Data.Prism (type (\/))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.MDL.Button as Button
 import Halogen.MDL.Card as Card
 import Halogen.MDL.Shadow as Shadow
 
@@ -18,23 +25,43 @@ import Herd.Console.Remote as Remote
 import Herd.Console.Types (SchemaId(..))
 
 type State =
-  { selectedSchema :: Maybe Avro.Type
+  { selectedSchema :: Maybe (Tuple SchemaId Avro.Type)
   }
 
 data Query a =
     FetchSchema (Maybe SchemaId) a
-  | GetSchema (Maybe Avro.Type -> a)
+  | OnDeleteSchema SchemaId Button.Message a
 
 type Input = Maybe SchemaId
 
-type Message = Void
+data Message = SchemaDeleted
 
-data Slot = JsonTreeSlot
-derive instance eqEditorSlot :: Eq Slot
-derive instance ordEditorSlot :: Ord Slot
+type ChildSlot =
+     JsonTreeSlot
+  \/ ActionSlot
+  \/ Void
 
-type EditorHTML = H.ParentHTML Query JsonTree.Query Slot ConsoleAff
-type EditorDSL = H.ParentDSL State Query JsonTree.Query Slot Void ConsoleAff
+type ChildQuery =
+       JsonTree.Query
+  <\/> Button.Query
+  <\/> Const Void
+
+data JsonTreeSlot = JsonTreeSlot
+derive instance eqEditorJsonTreeSlot :: Eq JsonTreeSlot
+derive instance ordEditorJsonTreeSlot :: Ord JsonTreeSlot
+
+cpJsonTree :: CP.ChildPath JsonTree.Query ChildQuery JsonTreeSlot ChildSlot
+cpJsonTree = CP.cp1
+
+data ActionSlot = DeleteActionSlot
+derive instance eqEditorActionSlot :: Eq ActionSlot
+derive instance ordEditorActionSlot :: Ord ActionSlot
+
+cpDeleteAction :: CP.ChildPath Button.Query ChildQuery ActionSlot ChildSlot
+cpDeleteAction = CP.cp2
+
+type EditorHTML = H.ParentHTML Query ChildQuery ChildSlot ConsoleAff
+type EditorDSL = H.ParentDSL State Query ChildQuery ChildSlot Message ConsoleAff
 
 ui :: H.Component HH.HTML Query Input Message ConsoleAff
 ui =
@@ -58,29 +85,46 @@ ui =
               [ HP.class_ Card.cl.cardTitle ]
               [ HH.h2 [ HP.class_ Card.cl.cardTitleText ] [ HH.text "Schema" ] ]
             , HH.div
+              [ HP.class_ Card.cl.cardActions ]
+              [ displayActions ]
+            , HH.div
               [ HP.class_ Card.cl.cardSupportingText ]
-              [ displaySchema state.selectedSchema
+              [ displaySchema $ snd <$> state.selectedSchema
               ]
             , HH.div
               [ HP.class_ Card.cl.cardMenu ]
               []
             ]
-          where displaySchema :: Maybe Avro.Type -> EditorHTML
+          where displayActions :: EditorHTML
+                displayActions =
+                  case state.selectedSchema of
+                    Just (Tuple schemaId _) ->
+                      HH.slot'
+                        cpDeleteAction
+                        DeleteActionSlot
+                        (H.hoist liftAff Button.button)
+                        (Button.init { type: Button.Raised, color: Button.Colored, content: Button.Text "Delete", disabled: false, ripple: true })
+                        (HE.input $ OnDeleteSchema schemaId)
+                    Nothing -> HH.span_ []
+          
+                displaySchema :: Maybe Avro.Type -> EditorHTML
                 displaySchema (Just schema) =
-                  HH.slot JsonTreeSlot JsonTree.component (encodeJson schema) absurd
+                  HH.slot' cpJsonTree JsonTreeSlot JsonTree.component (encodeJson schema) absurd
                 displaySchema Nothing = HH.span_ [ HH.text "No schema selected" ]
 
         eval :: Query ~> EditorDSL
         eval (FetchSchema maybeSchemaId next) = do
           case maybeSchemaId of
             Just schemaId -> do
-              schema <- H.lift $ fetchSchema schemaId
-              H.modify_ (_ { selectedSchema = schema })
+              maybeSchema <- H.lift $ fetchSchema schemaId
+              H.modify_ (_ { selectedSchema = (Tuple schemaId) <$> maybeSchema })
               pure next
             Nothing -> pure next
-        eval (GetSchema reply) = do
-          state <- H.get
-          pure $ reply state.selectedSchema
+        eval (OnDeleteSchema (SchemaId subjectId version) _ next) = do
+          H.lift $ Remote.deleteSubjectsBySubjectIdByVersion subjectId version
+          H.modify_ (_ { selectedSchema = Nothing })
+          H.raise SchemaDeleted
+          pure next
 
 -- | Fetch the schema definition
 fetchSchema :: SchemaId -> ConsoleAff (Maybe Avro.Type)

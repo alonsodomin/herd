@@ -36,7 +36,7 @@ type State =
   }
 
 data Query a =
-    Initialize a
+    RefreshList a
   | ClickSchema SchemaId a
   | FilterSubjects (Maybe String) a
 
@@ -55,7 +55,7 @@ ui =
     { initialState: const initialState
     , render
     , eval
-    , initializer: Just (H.action Initialize)
+    , initializer: Just (H.action RefreshList)
     , finalizer : Nothing
     , receiver: const Nothing
     }
@@ -118,7 +118,7 @@ ui =
                 ]                
 
     eval :: Query ~> H.ComponentDSL State Query Message ConsoleAff
-    eval (Initialize next) = do
+    eval (RefreshList next) = do
       subjectList <- H.lift fetchSubjectList
       H.modify_ (_ { loading = false, schemas = subjectList })
       pure next

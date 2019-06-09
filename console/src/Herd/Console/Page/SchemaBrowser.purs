@@ -20,7 +20,9 @@ import Herd.Console.Types (SchemaId)
 type State =
   { selectedSchema :: Maybe SchemaId }
 
-data Query a = HandleListMessage SchemaList.Message a
+data Query a =
+    HandleListMessage SchemaList.Message a
+  | HandleEditorMessage SchemaEditor.Message a
 
 type ChildSlot =
      ListSlot
@@ -48,6 +50,9 @@ derive instance ordEditorSlot :: Ord EditorSlot
 cpEditor :: CP.ChildPath SchemaEditor.Query ChildQuery EditorSlot ChildSlot
 cpEditor = CP.cp2
 
+type BrowserHTML = H.ParentHTML Query ChildQuery ChildSlot ConsoleAff
+type BrowserDSL = H.ParentDSL State Query ChildQuery ChildSlot Void ConsoleAff
+
 ui :: H.Component HH.HTML Query Unit Void ConsoleAff
 ui =
   H.parentComponent
@@ -60,13 +65,16 @@ ui =
   where initialState :: State
         initialState = { selectedSchema: Nothing }
 
-        render :: State -> H.ParentHTML Query ChildQuery ChildSlot ConsoleAff
+        render :: State -> BrowserHTML
         render state = Grid.el.grid_
           [ Cell.el.cell4Col_ [ HH.slot' cpList ListSlot SchemaList.ui unit (HE.input HandleListMessage) ]
-          , Cell.el.cell6Col_ [ HH.slot' cpEditor EditorSlot SchemaEditor.ui state.selectedSchema absurd ]
+          , Cell.el.cell6Col_ [ HH.slot' cpEditor EditorSlot SchemaEditor.ui state.selectedSchema (HE.input HandleEditorMessage) ]
           ]
 
-        eval :: Query ~> H.ParentDSL State Query ChildQuery ChildSlot Void ConsoleAff
+        eval :: Query ~> BrowserDSL
         eval (HandleListMessage (SchemaList.SchemaSelected schemaId) a) = do
           H.modify_ (_ { selectedSchema = Just schemaId })
           pure a
+        eval (HandleEditorMessage SchemaEditor.SchemaDeleted next) = do
+          _ <- H.query' cpList ListSlot $ H.action SchemaList.RefreshList
+          pure next
