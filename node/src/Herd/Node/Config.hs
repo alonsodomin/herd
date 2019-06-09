@@ -6,15 +6,16 @@ module Herd.Node.Config where
 
 import           Control.Lens
 import           Control.Monad.Logger (LogLevel (..))
-import           Dhall (Interpret, autoWith, defaultInterpretOptions, fieldModifier)
-import qualified Dhall as Dhall
 import           Data.Aeson
-import qualified Data.Char as Char
+import qualified Data.Char            as Char
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Typeable
+import           Dhall                (Interpret, autoWith,
+                                       defaultInterpretOptions, fieldModifier)
+import qualified Dhall                as Dhall
 import           GHC.Generics
-import GHC.Natural
+import           GHC.Natural
 
 defaultClusterPort :: Natural
 defaultClusterPort = 9001
