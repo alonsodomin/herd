@@ -12,6 +12,7 @@ import           Data.Text        (Text)
 import qualified Data.Text        as T
 import           Data.Time.Clock  (UTCTime)
 import           Data.Time.Format
+import GHC.Natural
 
 class ToText a where
   toText :: a -> Text
@@ -33,6 +34,7 @@ instance ToText UTCTime where
 
 instance ToText Integer
 instance ToText Int
+instance ToText Natural
 
 instance (Foldable f, ToText a) => ToText (f a) where
   toText xs = "[" <> (foldr T.append "" $ intersperse ", " $ map toText $ toList xs) <> "]"

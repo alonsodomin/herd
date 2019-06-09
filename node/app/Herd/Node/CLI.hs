@@ -59,7 +59,7 @@ loadHerdConf configFile = do
 
 herd :: HerdOpts -> IO ()
 herd opts = do
-  config <- loadHerdConf (opts ^. hoConfigFile)
+  config <- loadConfig (opts ^. hoConfigFile)
   homeFolder <- readHomeFolder
   startHerdNode homeFolder config
   where readHomeFolder = do

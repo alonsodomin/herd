@@ -6,13 +6,15 @@ module Herd.Node.Config where
 
 import           Control.Lens
 import           Control.Monad.Logger (LogLevel (..))
-import           Dhall (Interpret)
+import           Dhall (Interpret, autoWith, defaultInterpretOptions, fieldModifier)
 import qualified Dhall as Dhall
 import           Data.Aeson
+import qualified Data.Char as Char
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Typeable
 import           GHC.Generics
+import GHC.Natural
 
 defaultClusterPort :: Int
 defaultClusterPort = 9001
@@ -22,7 +24,7 @@ defaultHttpPort = 8081
 
 data NetworkBinding = NetworkBinding
   { _nbHost :: Text
-  , _nbPort :: Integer
+  , _nbPort :: Natural
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''NetworkBinding
@@ -120,7 +122,7 @@ instance FromJSON ClusterConfig where
 
 data StorageConfig = StorageConfig
   { _scDataLocation      :: FilePath
-  , _scReplicationFactor :: Integer
+  , _scReplicationFactor :: Natural
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''StorageConfig
@@ -138,7 +140,6 @@ data HerdConfig = HerdConfig
   , _hcLogging :: LoggingConfig
   , _hcCluster :: ClusterConfig
   , _hcStorage :: StorageConfig
-  , _hcVersion :: Text
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''HerdConfig
@@ -151,11 +152,16 @@ instance FromJSON HerdConfig where
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
     _hcCluster <- o .: "cluster"
     _hcStorage <- o .: "storage"
-    _hcVersion <- o .: "version"
     return HerdConfig{..}
 
 defaultConfigFile :: FilePath
 defaultConfigFile = "./conf/config.yml"
 
 loadConfig :: FilePath -> IO HerdConfig
-loadConfig path = Dhall.input Dhall.auto $ T.pack path
+loadConfig path = Dhall.input interpreter $ T.pack path
+  where interpreter :: Interpret a => Dhall.Type a
+        interpreter = autoWith (defaultInterpretOptions { fieldModifier = fieldNameModifier })
+
+        fieldNameModifier name =
+          let prefixLess = T.dropWhile (\x -> x == '_' || Char.isLower x) name
+          in T.cons (Char.toLower $ T.head prefixLess) (T.tail prefixLess)

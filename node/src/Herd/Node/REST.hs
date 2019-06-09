@@ -54,7 +54,7 @@ herdHTTP = Proxy
 
 herdServer :: HerdEnv -> Server HerdHTTP
 herdServer env = subjectServer
-            :<|> serveDirectory ((env ^. heHomeFolder) ++ "/console")
+            :<|> serveDirectoryFileServer ((env ^. heHomeFolder) ++ "/console")
   where subjectServer =
           handleGetSubjects env
           :<|> handleGetSubjectVersions env
