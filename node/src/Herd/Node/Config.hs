@@ -16,10 +16,10 @@ import           Data.Typeable
 import           GHC.Generics
 import GHC.Natural
 
-defaultClusterPort :: Int
+defaultClusterPort :: Natural
 defaultClusterPort = 9001
 
-defaultHttpPort :: Int
+defaultHttpPort :: Natural
 defaultHttpPort = 8081
 
 data NetworkBinding = NetworkBinding
