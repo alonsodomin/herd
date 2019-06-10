@@ -58,7 +58,11 @@ data LoggingDriver =
   | LoggingFile FilePath
   deriving (Eq, Show, Generic, Typeable)
 
-instance Interpret LoggingDriver
+instance Interpret LoggingDriver where
+  autoWith _ = Dhall.union
+    ( ((const LoggingConsole) <$> Dhall.constructor "Console" Dhall.unit)
+   <> (LoggingFile            <$> Dhall.constructor "File"    Dhall.string)
+    )
 
 instance FromJSON LoggingDriver where
   parseJSON = withObject "logging driver" $ \o -> do
@@ -82,11 +86,11 @@ makeLenses ''LoggingConfig
 
 instance Interpret LogLevel where
   autoWith _ = Dhall.union
-    ( ((const LevelDebug)    <$> Dhall.constructor "debug" Dhall.unit)
-   <> ((const LevelInfo)     <$> Dhall.constructor "info" Dhall.unit)
-   <> ((const LevelWarn)     <$> Dhall.constructor "warn" Dhall.unit)
-   <> ((const LevelError)    <$> Dhall.constructor "error" Dhall.unit)
-   <> ((LevelOther . T.pack) <$> Dhall.constructor "other" Dhall.string)
+    ( ((const LevelDebug)    <$> Dhall.constructor "Debug" Dhall.unit)
+   <> ((const LevelInfo)     <$> Dhall.constructor "Info" Dhall.unit)
+   <> ((const LevelWarn)     <$> Dhall.constructor "Warn" Dhall.unit)
+   <> ((const LevelError)    <$> Dhall.constructor "Error" Dhall.unit)
+   <> ((LevelOther . T.pack) <$> Dhall.constructor "Other" Dhall.string)
     )
 
 instance Interpret LoggingConfig
