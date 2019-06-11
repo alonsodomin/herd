@@ -3,6 +3,9 @@
 *.cabal
 *.iml
 
+# Bazel
+bazel-*
+
 # Console 
 elm-stuff/
 dist/

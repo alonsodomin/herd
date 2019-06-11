@@ -13,8 +13,8 @@ load(
 # and make it accessible `@io_tweag_rules_haskell`.
 http_archive(
     name = "io_tweag_rules_haskell",
-    strip_prefix = "rules_haskell-0.9.1",
-    urls = ["https://github.com/tweag/rules_haskell/archive/v0.9.1.tar.gz"],
+    strip_prefix = "rules_haskell-c5c4e67474e8ec20a747eb9bcad00a21f6745069",
+    urls = ["https://github.com/tweag/rules_haskell/archive/c5c4e67474e8ec20a747eb9bcad00a21f6745069.tar.gz"],
 )
 
 load(
