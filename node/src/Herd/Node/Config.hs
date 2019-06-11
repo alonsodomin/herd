@@ -141,10 +141,11 @@ instance FromJSON StorageConfig where
     return StorageConfig{..}
 
 data HerdConfig = HerdConfig
-  { _hcNetwork :: NetworkConfig
-  , _hcLogging :: LoggingConfig
-  , _hcCluster :: ClusterConfig
-  , _hcStorage :: StorageConfig
+  { _hcConsoleDir :: FilePath
+  , _hcNetwork    :: NetworkConfig
+  , _hcLogging    :: LoggingConfig
+  , _hcCluster    :: ClusterConfig
+  , _hcStorage    :: StorageConfig
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''HerdConfig
