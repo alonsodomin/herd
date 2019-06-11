@@ -35,4 +35,19 @@ load(
 # downloaded from haskell.org.
 haskell_register_ghc_bindists(version = "8.6.4")
 
+HAZEL_COMMIT="4684266e14e4a4ebb5973c1036f701f7f287d3fa"
+http_archive(
+    name = "ai_formation_hazel",
+    strip_prefix = "hazel-" + HAZEL_COMMIT,
+    urls = ["https://github.com/FormationAI/hazel/archive/{}.tar.gz".format(HAZEL_COMMIT)],
+)
+
+load("@ai_formation_hazel//:hazel.bzl", "hazel_repositories")
+load("//:packages_lts-12.26.bzl", "core_packages", "packages")
+
+hazel_repositories(
+    core_packages = core_packages,
+    packages = packages
+)
+
 #### PureScript Support ####

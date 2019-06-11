@@ -5,9 +5,12 @@ package(default_visibility = ["//visibility:public"])
 load(
     "@io_tweag_rules_haskell//haskell:haskell.bzl",
     "haskell_toolchain_library",
+    "haskell_import",
     "haskell_library",
     "haskell_binary",
 )
+
+load("@ai_formation_hazel//tools:mangling.bzl", "hazel_library")
 
 # `haskell_toolchain_library` can access builtin GHC packages
 # and assign them a bazel target name, so that they
@@ -18,7 +21,10 @@ haskell_library(
   name = "protocol",
   src_strip_prefix = "src",
   srcs = glob(['src/**/*.hs']),
-  deps = [":base"]
+  deps = [
+    ":base",
+    #":aeson"
+  ]
 )
 
 # You can add your own libraries with `haskell_library`.
