@@ -11,7 +11,7 @@ import Halogen.MDL as MDL
 import Halogen.MDL.Layout as Layout
 import Halogen.MDL.Navigation as Navigation
 
-import Herd.Console.Effect (ConsoleAff)
+import Herd.Console.Effect (RemoteAff)
 import Herd.Console.Page.SchemaBrowser as SchemaBrowser
 import Herd.Console.Route (Route(..))
 import Herd.Console.Route as Route
@@ -27,10 +27,10 @@ data Slot = PageSlot
 derive instance eqConsoleSlot :: Eq Slot
 derive instance ordConsoleSlot :: Ord Slot
 
-type ConsoleHTML = H.ParentHTML Query SchemaBrowser.Query Slot ConsoleAff
-type ConsoleDSL = H.ParentDSL State Query SchemaBrowser.Query Slot Void ConsoleAff
+type ConsoleHTML = H.ParentHTML Query SchemaBrowser.Query Slot RemoteAff
+type ConsoleDSL = H.ParentDSL State Query SchemaBrowser.Query Slot Void RemoteAff
 
-ui :: H.Component HH.HTML Query Unit Void ConsoleAff
+ui :: H.Component HH.HTML Query Unit Void RemoteAff
 ui = H.lifecycleParentComponent
   { initialState: const initialState
   , initializer: Just $ H.action InitializeComponent
