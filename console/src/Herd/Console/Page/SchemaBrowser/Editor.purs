@@ -1,4 +1,4 @@
-module Herd.Console.Schema.Editor where
+module Herd.Console.Page.SchemaBrowser.Editor where
 
 import Prelude
 

@@ -13,8 +13,8 @@ import Halogen.HTML.Events as HE
 import Halogen.MDL.Cell as Cell
 import Halogen.MDL.Grid as Grid
 import Herd.Console.Effect (RemoteAff)
-import Herd.Console.Schema.Editor as SchemaEditor
-import Herd.Console.Schema.List as SchemaList
+import Herd.Console.Page.SchemaBrowser.Editor as SchemaEditor
+import Herd.Console.Page.SchemaBrowser.List as SchemaList
 import Herd.Console.Types (SchemaId)
 
 type State =
