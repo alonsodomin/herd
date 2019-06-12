@@ -43,6 +43,9 @@ ui = H.lifecycleParentComponent
   where initialState :: State
         initialState = { }
 
+        headerTitle :: String
+        headerTitle = "Herd Console"
+
         layoutRef :: H.RefLabel
         layoutRef = H.RefLabel "mdl-layout-ref"
 
@@ -75,7 +78,7 @@ ui = H.lifecycleParentComponent
             [ HP.classes [ Layout.cl.layoutHeader ] ]
             [ HH.div
                 [ HP.classes [ Layout.cl.layoutHeaderRow ] ]
-                [ HH.span [ HP.classes [ Layout.cl.layoutTitle] ] [ HH.text "Herd Console" ]
+                [ HH.span [ HP.classes [ Layout.cl.layoutTitle] ] [ HH.text headerTitle ]
                 , HH.div [ HP.classes [ Layout.cl.layoutSpacer ] ] []
                 , HH.nav [ HP.classes [ Navigation.cl.navigation, Layout.cl.layoutLargeScreenOnly ] ] [ ]
                 ]
@@ -89,7 +92,7 @@ ui = H.lifecycleParentComponent
             ]
             [ HH.span
                 [ HP.classes [ Layout.cl.layoutTitle ] ]
-                [ HH.text "Herd Console" ]
+                [ HH.text headerTitle ]
             , HH.nav
                 [ HP.classes [ Navigation.cl.navigation ] ]
                 [ renderDrawerLink SchemaBrowser ]
