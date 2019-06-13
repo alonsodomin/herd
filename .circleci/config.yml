@@ -26,7 +26,7 @@ jobs:
           command: make install
       - save_cache:
           name: Node Stack Dependencies
-          key: herd-{{ checksum "node/package.yaml" }}
+          key: herd-node-{{ checksum "node/package.yaml" }}
           paths:
             - ".stack-work"
             - "/root/.stack"
