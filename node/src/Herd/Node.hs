@@ -29,8 +29,8 @@ import           Herd.Node.RPC
 import           Herd.Process.SchemaRegistry                        (spawnSchemaRegistry)
 import           Herd.Process.SubjectLog                            (spawnSubjectLog)
 
-startHerdNode :: FilePath -> HerdConfig -> IO ()
-startHerdNode homeFolder config = do
+startHerdNode :: HerdConfig -> IO ()
+startHerdNode config = do
   node <- startNode
   runProcess node (rootSupervisor node)
 
@@ -47,7 +47,7 @@ startHerdNode homeFolder config = do
           slog <- spawnSubjectLog
 
           let herdNode = mkHerdNode localNode reg slog
-          let herdEnv  = mkHerdEnv homeFolder config herdNode
+          let herdEnv  = mkHerdEnv config herdNode
 
           _ <- spawnLocal . liftIO $ startRpcServer config herdEnv
           liftIO $ startRESTServer config herdEnv
