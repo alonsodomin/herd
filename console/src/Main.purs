@@ -8,11 +8,11 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 
 import Herd.Console as Console
-import Herd.Console.Effect (defaultConsoleSettings, runConsoleAff)
+import Herd.Console.Effect (defaultRemoteSettings, runRemoteAff)
 
 main :: Effect Unit
 main = do
-  let settings = defaultConsoleSettings
+  let settings = defaultRemoteSettings
   HA.runHalogenAff do
     body <- HA.awaitBody
-    runUI (H.hoist (runConsoleAff settings) Console.ui) unit body
+    runUI (H.hoist (runRemoteAff settings) Console.ui) unit body

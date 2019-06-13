@@ -17,28 +17,28 @@ import Servant.PureScript.Ajax (AjaxError)
 import Servant.PureScript.Ajax as Ajax
 import Servant.PureScript.Settings (SPSettings_, defaultSettings)
 
-type ConsoleAjaxSettings = SPSettings_ SPParams_
+type RemoteSettings = SPSettings_ SPParams_
 
-defaultConsoleSettings :: ConsoleAjaxSettings
-defaultConsoleSettings = defaultSettings $ SPParams_ { baseURL : "http://localhost:8081/" }
+defaultRemoteSettings :: RemoteSettings
+defaultRemoteSettings = defaultSettings $ SPParams_ { baseURL : "http://localhost:8081/" }
 
-newtype ConsoleAff a =
-  ConsoleAff (ReaderT ConsoleAjaxSettings (ExceptT AjaxError Aff) a)
+newtype RemoteAff a =
+  RemoteAff (ReaderT RemoteSettings (ExceptT AjaxError Aff) a)
 
-derive instance newtypeConsoleAff :: Newtype (ConsoleAff a) _
-derive newtype instance functorConsoleAff :: Functor ConsoleAff
-derive newtype instance applyConsoleAff :: Apply ConsoleAff
-derive newtype instance applicativeConsoleAff :: Applicative ConsoleAff
-derive newtype instance bindConsoleAff :: Bind ConsoleAff
-derive newtype instance monadConsoleAff :: Monad ConsoleAff
-derive newtype instance monadAskConsoleAff :: MonadAsk (SPSettings_ SPParams_) ConsoleAff
-derive newtype instance monadThrowConsoleAff :: MonadThrow AjaxError ConsoleAff
-derive newtype instance monadErrorConsoleAff :: MonadError AjaxError ConsoleAff
-derive newtype instance monadEffectConsoleAff :: MonadEffect ConsoleAff
-derive newtype instance monadAffConsoleAff :: MonadAff ConsoleAff
+derive instance newtypeRemoteAff :: Newtype (RemoteAff a) _
+derive newtype instance functorRemoteAff :: Functor RemoteAff
+derive newtype instance applyRemoteAff :: Apply RemoteAff
+derive newtype instance applicativeRemoteAff :: Applicative RemoteAff
+derive newtype instance bindRemoteAff :: Bind RemoteAff
+derive newtype instance monadRemoteAff :: Monad RemoteAff
+derive newtype instance monadAskRemoteAff :: MonadAsk (SPSettings_ SPParams_) RemoteAff
+derive newtype instance monadThrowRemoteAff :: MonadThrow AjaxError RemoteAff
+derive newtype instance monadErrorRemoteAff :: MonadError AjaxError RemoteAff
+derive newtype instance monadEffectRemoteAff :: MonadEffect RemoteAff
+derive newtype instance monadAffRemoteAff :: MonadAff RemoteAff
 
-runConsoleAff :: forall a. ConsoleAjaxSettings -> ConsoleAff a -> Aff a
-runConsoleAff settings (ConsoleAff fa) = do
+runRemoteAff :: forall a. RemoteSettings -> RemoteAff a -> Aff a
+runRemoteAff settings (RemoteAff fa) = do
   res <- runExceptT $ runReaderT fa settings
   case res of
     Left err -> throwError $ error (Ajax.errorToString err)

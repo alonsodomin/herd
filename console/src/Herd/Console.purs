@@ -11,7 +11,7 @@ import Halogen.MDL as MDL
 import Halogen.MDL.Layout as Layout
 import Halogen.MDL.Navigation as Navigation
 
-import Herd.Console.Effect (ConsoleAff)
+import Herd.Console.Effect (RemoteAff)
 import Herd.Console.Page.SchemaBrowser as SchemaBrowser
 import Herd.Console.Route (Route(..))
 import Herd.Console.Route as Route
@@ -27,10 +27,10 @@ data Slot = PageSlot
 derive instance eqConsoleSlot :: Eq Slot
 derive instance ordConsoleSlot :: Ord Slot
 
-type ConsoleHTML = H.ParentHTML Query SchemaBrowser.Query Slot ConsoleAff
-type ConsoleDSL = H.ParentDSL State Query SchemaBrowser.Query Slot Void ConsoleAff
+type ConsoleHTML = H.ParentHTML Query SchemaBrowser.Query Slot RemoteAff
+type ConsoleDSL = H.ParentDSL State Query SchemaBrowser.Query Slot Void RemoteAff
 
-ui :: H.Component HH.HTML Query Unit Void ConsoleAff
+ui :: H.Component HH.HTML Query Unit Void RemoteAff
 ui = H.lifecycleParentComponent
   { initialState: const initialState
   , initializer: Just $ H.action InitializeComponent
@@ -42,6 +42,9 @@ ui = H.lifecycleParentComponent
 
   where initialState :: State
         initialState = { }
+
+        headerTitle :: String
+        headerTitle = "Herd Console"
 
         layoutRef :: H.RefLabel
         layoutRef = H.RefLabel "mdl-layout-ref"
@@ -75,7 +78,7 @@ ui = H.lifecycleParentComponent
             [ HP.classes [ Layout.cl.layoutHeader ] ]
             [ HH.div
                 [ HP.classes [ Layout.cl.layoutHeaderRow ] ]
-                [ HH.span [ HP.classes [ Layout.cl.layoutTitle] ] [ HH.text "Herd Console" ]
+                [ HH.span [ HP.classes [ Layout.cl.layoutTitle] ] [ HH.text headerTitle ]
                 , HH.div [ HP.classes [ Layout.cl.layoutSpacer ] ] []
                 , HH.nav [ HP.classes [ Navigation.cl.navigation, Layout.cl.layoutLargeScreenOnly ] ] [ ]
                 ]
@@ -89,7 +92,7 @@ ui = H.lifecycleParentComponent
             ]
             [ HH.span
                 [ HP.classes [ Layout.cl.layoutTitle ] ]
-                [ HH.text "Herd Console" ]
+                [ HH.text headerTitle ]
             , HH.nav
                 [ HP.classes [ Navigation.cl.navigation ] ]
                 [ renderDrawerLink SchemaBrowser ]

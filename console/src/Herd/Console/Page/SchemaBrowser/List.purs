@@ -1,4 +1,4 @@
-module Herd.Console.Schema.List where
+module Herd.Console.Page.SchemaBrowser.List where
 
 import Prelude
 
@@ -14,7 +14,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.MDL.Card as Card
 import Halogen.MDL.List as List
 import Halogen.MDL.Shadow as Shadow
-import Herd.Console.Effect (ConsoleAff)
+import Herd.Console.Effect (RemoteAff)
 import Herd.Console.Remote as Remote
 import Herd.Console.Types (SchemaId(..))
 import Herd.Types (SubjectId(..), Version(..))
@@ -49,7 +49,7 @@ type Input = Unit
 
 data Message = SchemaSelected SchemaId
 
-ui :: H.Component HH.HTML Query Input Message ConsoleAff
+ui :: H.Component HH.HTML Query Input Message RemoteAff
 ui =
   H.lifecycleComponent
     { initialState: const initialState
@@ -117,7 +117,7 @@ ui =
                   [ HH.text $ "v" <> (show version) ]
                 ]                
 
-    eval :: Query ~> H.ComponentDSL State Query Message ConsoleAff
+    eval :: Query ~> H.ComponentDSL State Query Message RemoteAff
     eval (RefreshList next) = do
       subjectList <- H.lift fetchSubjectList
       H.modify_ (_ { loading = false, schemas = subjectList })
@@ -132,11 +132,11 @@ ui =
 
 -- | Fetch the latest versions for all the available subjects
 
-fetchSubjectList :: ConsoleAff SubjectList
+fetchSubjectList :: RemoteAff SubjectList
 fetchSubjectList = do
   subjectIds <- Remote.getSubjects
   catMaybes <$> traverse pickSubjectAndVersion subjectIds
-  where pickSubjectAndVersion :: SubjectId -> ConsoleAff (Maybe SchemaId)
+  where pickSubjectAndVersion :: SubjectId -> RemoteAff (Maybe SchemaId)
         pickSubjectAndVersion subjectId = do
           maybeVersion <- maximum <$> Remote.getSubjectsBySubjectId subjectId
           case maybeVersion of

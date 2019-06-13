@@ -12,9 +12,9 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.MDL.Cell as Cell
 import Halogen.MDL.Grid as Grid
-import Herd.Console.Effect (ConsoleAff)
-import Herd.Console.Schema.Editor as SchemaEditor
-import Herd.Console.Schema.List as SchemaList
+import Herd.Console.Effect (RemoteAff)
+import Herd.Console.Page.SchemaBrowser.Editor as SchemaEditor
+import Herd.Console.Page.SchemaBrowser.List as SchemaList
 import Herd.Console.Types (SchemaId)
 
 type State =
@@ -50,10 +50,10 @@ derive instance ordEditorSlot :: Ord EditorSlot
 cpEditor :: CP.ChildPath SchemaEditor.Query ChildQuery EditorSlot ChildSlot
 cpEditor = CP.cp2
 
-type BrowserHTML = H.ParentHTML Query ChildQuery ChildSlot ConsoleAff
-type BrowserDSL = H.ParentDSL State Query ChildQuery ChildSlot Void ConsoleAff
+type BrowserHTML = H.ParentHTML Query ChildQuery ChildSlot RemoteAff
+type BrowserDSL = H.ParentDSL State Query ChildQuery ChildSlot Void RemoteAff
 
-ui :: H.Component HH.HTML Query Unit Void ConsoleAff
+ui :: H.Component HH.HTML Query Unit Void RemoteAff
 ui =
   H.parentComponent
     { initialState: const initialState

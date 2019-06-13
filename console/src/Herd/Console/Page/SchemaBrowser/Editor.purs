@@ -1,4 +1,4 @@
-module Herd.Console.Schema.Editor where
+module Herd.Console.Page.SchemaBrowser.Editor where
 
 import Prelude
 
@@ -20,7 +20,7 @@ import Halogen.MDL.Card as Card
 import Halogen.MDL.Shadow as Shadow
 
 import Herd.Console.Component.JsonTree as JsonTree
-import Herd.Console.Effect (ConsoleAff)
+import Herd.Console.Effect (RemoteAff)
 import Herd.Console.Remote as Remote
 import Herd.Console.Types (SchemaId(..))
 
@@ -60,10 +60,10 @@ derive instance ordEditorActionSlot :: Ord ActionSlot
 cpDeleteAction :: CP.ChildPath Button.Query ChildQuery ActionSlot ChildSlot
 cpDeleteAction = CP.cp2
 
-type EditorHTML = H.ParentHTML Query ChildQuery ChildSlot ConsoleAff
-type EditorDSL = H.ParentDSL State Query ChildQuery ChildSlot Message ConsoleAff
+type EditorHTML = H.ParentHTML Query ChildQuery ChildSlot RemoteAff
+type EditorDSL = H.ParentDSL State Query ChildQuery ChildSlot Message RemoteAff
 
-ui :: H.Component HH.HTML Query Input Message ConsoleAff
+ui :: H.Component HH.HTML Query Input Message RemoteAff
 ui =
   H.parentComponent
     { initialState: const initialState
@@ -127,6 +127,6 @@ ui =
           pure next
 
 -- | Fetch the schema definition
-fetchSchema :: SchemaId -> ConsoleAff (Maybe Avro.Type)
+fetchSchema :: SchemaId -> RemoteAff (Maybe Avro.Type)
 fetchSchema (SchemaId subjectId version) =
   Remote.getSubjectsBySubjectIdByVersion subjectId version
