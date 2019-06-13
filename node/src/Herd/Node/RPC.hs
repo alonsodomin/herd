@@ -108,6 +108,6 @@ startRpcServer :: HerdConfig -> HerdEnv -> IO ()
 startRpcServer config env = (env ^. heLogger) $ do
   let host = config ^. hcNetwork . ncBroker . nbHost
   let port = config ^. hcNetwork . ncBroker . nbPort
-  let ss   = serverSettings port (fromString . T.unpack $ host)
+  let ss   = serverSettings (fromIntegral port) (fromString . T.unpack $ host)
   $(logInfo) $ "starting Herd RPC server at " <> host <> ":" <> (toText port)
   jsonrpcTCPServer V2 False ss $ runAction env rpcServer

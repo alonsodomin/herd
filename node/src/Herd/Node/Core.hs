@@ -13,7 +13,7 @@ module Herd.Node.Core
      , mkHerdEnv
      , heLogger
      , heNode
-     , heHomeFolder
+     , heConfig
      , HerdActionT
      , HerdProcess
      , liftAction
@@ -52,19 +52,19 @@ mkHerdNode :: LocalNode -> SchemaRegistryServer -> SubjectLogServer -> HerdNode
 mkHerdNode = HerdNode
 
 data HerdEnv = HerdEnv
-  { _heLogger     :: Logger
-  , _heNode       :: HerdNode
-  , _heHomeFolder :: FilePath
+  { _heLogger :: Logger
+  , _heNode   :: HerdNode
+  , _heConfig :: HerdConfig
   }
 
 makeLenses ''HerdEnv
 
-mkHerdEnv :: FilePath -> HerdConfig -> HerdNode -> HerdEnv
-mkHerdEnv homeFolder config node =
+mkHerdEnv :: HerdConfig -> HerdNode -> HerdEnv
+mkHerdEnv config node =
   HerdEnv {
-    _heLogger     = logger (config ^. hcLogging . lcDriver)
-  , _heNode       = node
-  , _heHomeFolder = homeFolder
+    _heLogger = logger (config ^. hcLogging . lcDriver)
+  , _heNode   = node
+  , _heConfig = config
   }
 
   where logger :: LoggingDriver -> Logger

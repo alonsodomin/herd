@@ -54,7 +54,7 @@ herdHTTP = Proxy
 
 herdServer :: HerdEnv -> Server HerdHTTP
 herdServer env = subjectServer
-            :<|> serveDirectory ((env ^. heHomeFolder) ++ "/console")
+            :<|> serveDirectoryFileServer (env ^. heConfig . hcConsoleDir)
   where subjectServer =
           handleGetSubjects env
           :<|> handleGetSubjectVersions env
@@ -103,4 +103,4 @@ handleDeleteSchema env subjectId version = do
 startRESTServer :: HerdConfig -> HerdEnv -> IO ()
 startRESTServer cfg env = do
   let port = cfg ^. hcNetwork . ncHttp . nbPort
-  run port (herdRESTApp env)
+  run (fromIntegral port) (herdRESTApp env)

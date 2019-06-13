@@ -7,23 +7,30 @@ module Herd.Node.Config where
 import           Control.Lens
 import           Control.Monad.Logger (LogLevel (..))
 import           Data.Aeson
+import qualified Data.Char            as Char
 import           Data.Text            (Text)
 import qualified Data.Text            as T
 import           Data.Typeable
+import           Dhall                (Interpret, autoWith,
+                                       defaultInterpretOptions, fieldModifier)
+import qualified Dhall                as Dhall
 import           GHC.Generics
+import           GHC.Natural
 
-defaultClusterPort :: Int
+defaultClusterPort :: Natural
 defaultClusterPort = 9001
 
-defaultHttpPort :: Int
+defaultHttpPort :: Natural
 defaultHttpPort = 8081
 
 data NetworkBinding = NetworkBinding
   { _nbHost :: Text
-  , _nbPort :: Int
+  , _nbPort :: Natural
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''NetworkBinding
+
+instance Interpret NetworkBinding
 
 instance FromJSON NetworkBinding where
   parseJSON = withObject "network config" $ \o -> do
@@ -38,6 +45,8 @@ data NetworkConfig = NetworkConfig
 
 makeLenses ''NetworkConfig
 
+instance Interpret NetworkConfig
+
 instance FromJSON NetworkConfig where
   parseJSON = withObject "network config" $ \o -> do
     _ncHttp    <- o .: "http"
@@ -48,6 +57,12 @@ data LoggingDriver =
     LoggingConsole
   | LoggingFile FilePath
   deriving (Eq, Show, Generic, Typeable)
+
+instance Interpret LoggingDriver where
+  autoWith _ = Dhall.union
+    ( ((const LoggingConsole) <$> Dhall.constructor "Console" Dhall.unit)
+   <> (LoggingFile            <$> Dhall.constructor "File"    Dhall.string)
+    )
 
 instance FromJSON LoggingDriver where
   parseJSON = withObject "logging driver" $ \o -> do
@@ -68,6 +83,17 @@ data LoggingConfig = LoggingConfig
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''LoggingConfig
+
+instance Interpret LogLevel where
+  autoWith _ = Dhall.union
+    ( ((const LevelDebug)    <$> Dhall.constructor "Debug" Dhall.unit)
+   <> ((const LevelInfo)     <$> Dhall.constructor "Info" Dhall.unit)
+   <> ((const LevelWarn)     <$> Dhall.constructor "Warn" Dhall.unit)
+   <> ((const LevelError)    <$> Dhall.constructor "Error" Dhall.unit)
+   <> ((LevelOther . T.pack) <$> Dhall.constructor "Other" Dhall.string)
+    )
+
+instance Interpret LoggingConfig
 
 instance FromJSON LoggingConfig where
   parseJSON = withObject "logging config" $ \o -> do
@@ -91,6 +117,8 @@ data ClusterConfig = ClusterConfig
 
 makeLenses ''ClusterConfig
 
+instance Interpret ClusterConfig
+
 instance FromJSON ClusterConfig where
   parseJSON = withObject "cluster config" $ \o -> do
     _ccBinding   <- o .: "binding"
@@ -99,10 +127,12 @@ instance FromJSON ClusterConfig where
 
 data StorageConfig = StorageConfig
   { _scDataLocation      :: FilePath
-  , _scReplicationFactor :: Integer
+  , _scReplicationFactor :: Natural
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''StorageConfig
+
+instance Interpret StorageConfig
 
 instance FromJSON StorageConfig where
   parseJSON = withObject "storage config" $ \o -> do
@@ -111,14 +141,16 @@ instance FromJSON StorageConfig where
     return StorageConfig{..}
 
 data HerdConfig = HerdConfig
-  { _hcNetwork :: NetworkConfig
-  , _hcLogging :: LoggingConfig
-  , _hcCluster :: ClusterConfig
-  , _hcStorage :: StorageConfig
-  , _hcVersion :: Text
+  { _hcConsoleDir :: FilePath
+  , _hcNetwork    :: NetworkConfig
+  , _hcLogging    :: LoggingConfig
+  , _hcCluster    :: ClusterConfig
+  , _hcStorage    :: StorageConfig
   } deriving (Eq, Show, Generic, Typeable)
 
 makeLenses ''HerdConfig
+
+instance Interpret HerdConfig
 
 instance FromJSON HerdConfig where
   parseJSON = withObject "herd config" $ \o -> do
@@ -126,8 +158,16 @@ instance FromJSON HerdConfig where
     _hcLogging <- maybe defaultLoggingConfig id <$> o .:? "logging"
     _hcCluster <- o .: "cluster"
     _hcStorage <- o .: "storage"
-    _hcVersion <- o .: "version"
     return HerdConfig{..}
 
 defaultConfigFile :: FilePath
 defaultConfigFile = "./conf/config.yml"
+
+loadConfig :: FilePath -> IO HerdConfig
+loadConfig path = Dhall.input interpreter $ T.pack path
+  where interpreter :: Interpret a => Dhall.Type a
+        interpreter = autoWith (defaultInterpretOptions { fieldModifier = fieldNameModifier })
+
+        fieldNameModifier name =
+          let prefixLess = T.dropWhile (\x -> x == '_' || Char.isLower x) name
+          in T.cons (Char.toLower $ T.head prefixLess) (T.tail prefixLess)

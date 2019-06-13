@@ -36,6 +36,7 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
+- cborg-json-0.2.1.0@sha256:af9137557002ca5308fe80570a9a29398dfb9708423870875223796760689ac3
 - distributed-process-0.7.4@sha256:9e43cb9a27e976e3e4c054e783bdfbd6140760e70997448da66993f4674a6409
 - distributed-process-async-0.2.6@sha256:42d6b759da0990c91303cc589ed02fe38d57973410f02f5fdabb1e135a943514
 - distributed-process-client-server-0.2.5.1@sha256:6e29e84673f689e85f49a51b86901077039965fd2340e0002527e8332463c178
@@ -43,15 +44,18 @@ extra-deps:
 - distributed-process-monad-control-0.5.1.3@sha256:72f0c212135ddaf9c7613499f9612855f2470e4ec6b8aa3447781fa2a5dbd260
 - distributed-process-simplelocalnet-0.2.4@sha256:044a003f81a648f9fb9b1c7ae9cd8f753f5f1c32d9db5ff8b31e91e91f525ed7
 - distributed-process-supervisor-0.2.1@sha256:dcd6ac3383eb45afd30705a9833930c8a33af8d8ef83aeb870f20600edcd8e32
-- elm-bridge-0.5.1@sha256:e38bfb9dcd1e2cd119a280072f2f99ed718120c21f37f102b8318156645f06da
+- dhall-1.21.0@sha256:c218ff8a8a43f0537a1cbde3b77da9c465a7d79199ee711caf30e9294122e12a
+- dotgen-0.4.2@sha256:309b7cc8a3593a8e48bee7b53020d5f72db156d58edf78a0214f58fbb84b292b
+- megaparsec-7.0.5@sha256:45e1f1348fab2783646fdb4d9e6097568981a740951c7356d36d794e2baba305
 - network-transport-tcp-0.6.0@sha256:077b733c97db7949d18d09877e847fae117cc6e4e5c35941442f52debbd32452
 - nonempty-containers-0.1.1.0@sha256:a572d9cfcb3f5f1b5564f254f34c76837312df187c4e0202c443885b5f711966
 - json-rpc-1.0.0@sha256:8818da9cff6ae0803c6e21ce55fb26eab68a90b22851962368150dee49ecf16d
+- repline-0.2.1.0@sha256:0f8e92d78e771afb9d41243c2b6ab9609fe02f94e676fae3caed66fa4ce09b18
 - rocksdb-haskell-1.0.1@sha256:3a437ec1cedea56e02ae85a8e37539151c5295cb228117e46aa90767f1072d61
+- serialise-0.2.1.0@sha256:8d6051f64c6ebfaf705195dd0b8dfb667617f2e674b290ed2e44985009e4f951
 - servant-subscriber-0.6.0.2@sha256:e1cf0d273f2d072f9b36c40a2e18cb1663beaeef400b2351b9a0e15629a12076
 - git: git@github.com:shmish111/purescript-bridge.git
   commit: 80774b20f8df2af4138f9e2a6d0c64da33b1fcc5
-#- ../servant-purescript
 - git: git@github.com:alonsodomin/servant-purescript.git
   commit: ab14502279c92084f06aa6222a17873275279e63
 
