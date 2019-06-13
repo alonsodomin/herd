@@ -8,7 +8,7 @@ module Data.Avro.Types
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Lazy (defer)
+import Control.Lazy (class Lazy, defer)
 import Control.Monad.Gen (chooseInt, elements, oneOf, resize, unfoldable) as Gen
 import Control.Monad.Gen (class MonadGen, chooseBool, chooseFloat, chooseInt)
 import Control.Monad.Gen.Common (genMaybe, genNonEmpty) as Gen
@@ -412,7 +412,7 @@ instance arbitraryAvroField :: Arbitrary Field where
     aliases <- Gen.unfoldable genUnicodeString
     doc <- Gen.genMaybe genUnicodeString
     order <- Gen.genMaybe arbitrary
-    typ <- arbitrary
+    typ <- (defer \_ -> arbitrary)
     default <- Gen.genMaybe $ genValue typ
     pure $ Field
       { name, aliases, doc, order, typ, default }
@@ -524,7 +524,7 @@ genByteString :: forall m. MonadGen m => MonadRec m => m ByteString
 genByteString = BS.toUTF8 <$> genUnicodeString
 
 -- | Generate an arbitrary typed value
-genValue :: forall m. MonadGen m => MonadRec m => Type -> m (Value Type)
+genValue :: forall m. MonadGen m => MonadRec m => Lazy (m (Value Type)) => Type -> m (Value Type)
 genValue Null = pure Value.Null
 genValue Boolean = Value.Boolean <$> chooseBool
 genValue Int = genIntegerValue Value.Int
@@ -533,13 +533,13 @@ genValue Float = genNumberValue Value.Float
 genValue Double = genNumberValue Value.Double
 genValue Bytes = Value.Bytes <$> genByteString
 genValue String = Value.String <$> genUnicodeString
-genValue (Array { items }) = Value.Array <$> (Gen.unfoldable $ genValue items)
+genValue (Array { items }) = Value.Array <$> (Gen.unfoldable $ (defer \_ -> genValue items))
 genValue (Map { values }) = do
-  vs <- (Gen.unfoldable (Tuple <$> genUnicodeString <*> genValue values)) :: m (Array (Tuple String (Value Type)))
+  vs <- (Gen.unfoldable (Tuple <$> genUnicodeString <*> (defer \_ -> genValue values))) :: m (Array (Tuple String (Value Type)))
   let valueMap = Map.fromFoldable vs
   pure $ Value.Map valueMap
 genValue typ@(Union { options }) = do
-  opts <- traverse genValue options
+  opts <- traverse (defer \_ -> genValue) options
   value <- Gen.elements opts
   pure $ Value.Union options typ value
 genValue typ@(Fixed { size }) =
@@ -551,4 +551,4 @@ genValue t@(Record { fields }) = do
   pure $ Value.Record t valueMap
   where genFieldValue :: Field -> m (Tuple String (Value Type))
         genFieldValue (Field { name, typ }) =
-          Tuple <$> (pure name) <*> genValue typ
+          Tuple <$> (pure name) <*> (defer \_ -> genValue typ)

@@ -52,8 +52,8 @@ avroPrims =
   , Tuple Types.String "\"string\""
   ]
 
-checkAvroType :: Effect Unit
-checkAvroType = quickCheck jsonRoundTrip
+quickCheckAvroType :: Effect Unit
+quickCheckAvroType = quickCheck jsonRoundTrip
 
 jsonRoundTrip :: Type -> Boolean
 jsonRoundTrip typ = decodeJson (encodeJson typ) == Right typ
