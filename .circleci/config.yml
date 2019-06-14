@@ -37,6 +37,7 @@ jobs:
             - "console/node_modules"
             - "console/.spago"
             - "console/.cache"
+            - "/root/.cache/spago"
       - store_artifacts: # upload build artifact for display in CircleCi
           path: dist/herd-bin.zip
 destination: herd
