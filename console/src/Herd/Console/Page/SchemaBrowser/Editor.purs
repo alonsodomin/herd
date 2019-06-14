@@ -6,9 +6,11 @@ import Data.Argonaut.Encode (encodeJson)
 import Data.Avro.Types as Avro
 import Data.Const (Const)
 import Data.Functor.Coproduct.Nested (type (<\/>))
-import Data.Maybe (Maybe(..), maybe, isNothing)
+import Data.Maybe (Maybe(..), isNothing)
+import Data.Newtype (unwrap)
 import Data.Tuple (Tuple(..), fst, snd)
 import Effect.Aff.Class (liftAff)
+import Effect.Console as Console
 import Halogen as H
 import Halogen.Component.ChildPath as CP
 import Halogen.Data.Prism (type (\/))
@@ -29,7 +31,8 @@ type State =
 
 data Query a =
     FetchSchema (Maybe SchemaId) a
-  | OnDeleteSchema SchemaId Button.Message a
+  | OnNewSchema Button.Message a
+  | OnDeleteSchema Button.Message a
 
 type Input = Maybe SchemaId
 
@@ -113,7 +116,7 @@ ui =
                       , ripple: true
                       }
                     )
-                    (const Nothing)
+                    (HE.input OnNewSchema)
 
                 deleteSchemaButton :: EditorHTML
                 deleteSchemaButton =
@@ -128,7 +131,7 @@ ui =
                         , disabled: isNothing state.selectedSchema
                         , ripple: true
                         })
-                    (maybe (const Nothing) (HE.input <<< OnDeleteSchema <<< fst) state.selectedSchema)
+                    (HE.input OnDeleteSchema)
           
                 displaySchema :: Maybe Avro.Type -> EditorHTML
                 displaySchema (Just schema) =
@@ -139,15 +142,27 @@ ui =
         eval (FetchSchema maybeSchemaId next) = do
           case maybeSchemaId of
             Just schemaId -> do
+              H.liftEffect $ Console.log ("Schema '" <> (show schemaId) <> "' has been selected")
               maybeSchema <- H.lift $ fetchSchema schemaId
               H.modify_ (_ { selectedSchema = (Tuple schemaId) <$> maybeSchema })
               pure next
             Nothing -> pure next
-        eval (OnDeleteSchema (SchemaId subjectId version) _ next) = do
-          H.lift $ Remote.deleteSubjectsBySubjectIdByVersion subjectId version
-          H.modify_ (_ { selectedSchema = Nothing })
-          H.raise SchemaDeleted
+        eval (OnNewSchema _ next) = do
+          H.liftEffect $ Console.log "Opening editor for creating a new schema"
           pure next
+        eval (OnDeleteSchema _ next) = do
+          state <- H.get
+          maybeSchemaId <- pure $ fst <$> state.selectedSchema
+          case maybeSchemaId of
+            Just (SchemaId subjectId version) -> do
+              H.liftEffect $ Console.log ("Deleting schema: " <> (unwrap subjectId))
+              H.lift $ Remote.deleteSubjectsBySubjectIdByVersion subjectId version
+              H.modify_ (_ { selectedSchema = Nothing })
+              H.raise SchemaDeleted
+              pure next
+            Nothing -> do
+              H.liftEffect $ Console.log "Either no schema is selected or the button is disabled"
+              pure next
 
 -- | Fetch the schema definition
 fetchSchema :: SchemaId -> RemoteAff (Maybe Avro.Type)
