@@ -18,6 +18,7 @@ You can edit this file as you like.
     , "psci-support"
     , "quickcheck"
     , "servant-support"
+    , "spec"
     , "url-validator"
     ]
 , packages =

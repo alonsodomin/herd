@@ -78,7 +78,7 @@ backend-test: $(STACK_WORK_DIR)
 ui-test: $(NPM_MODULES) ui
 	@cd $(CONSOLE_DIR) && $(YARN) test
 
-test: backend-test ui
+test: backend-test ui-test
 
 # Misc
 
