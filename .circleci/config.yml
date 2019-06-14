@@ -10,11 +10,11 @@ jobs:
           command: |
             git submodule sync
             git submodule update --init --recursive
-      - run: npm install -g yarn
       - restore_cache:
           name: Restore Cached Dependencies
           keys:
             - herd-node-{{ checksum "node/package.yaml" }}
+            - herd-console-{{ checksum "console/spago.dhall" }}
       - run:
           name: Resolve/Update Dependencies
           command: make setup
@@ -22,14 +22,21 @@ jobs:
           name: Run tests
           command: make test
       - run:
-          name: Install executable
-          command: make install
+          name: Generate distribution
+          command: make dist
       - save_cache:
           name: Node Stack Dependencies
           key: herd-node-{{ checksum "node/package.yaml" }}
           paths:
             - ".stack-work"
             - "/root/.stack"
+      - save_cache:
+          name: Spago Dependencies
+          key: herd-console-{{ checksum "console/spago.dhall" }}
+          paths:
+            - "console/node_modules"
+            - "console/.spago"
+            - "console/.cache"
       - store_artifacts: # upload build artifact for display in CircleCi
-          path: ~/.local/bin/herd
+          path: dist/herd-bin.zip
 destination: herd
