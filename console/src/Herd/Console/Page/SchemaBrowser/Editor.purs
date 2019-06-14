@@ -6,8 +6,8 @@ import Data.Argonaut.Encode (encodeJson)
 import Data.Avro.Types as Avro
 import Data.Const (Const)
 import Data.Functor.Coproduct.Nested (type (<\/>))
-import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..), snd)
+import Data.Maybe (Maybe(..), maybe, isNothing)
+import Data.Tuple (Tuple(..), fst, snd)
 import Effect.Aff.Class (liftAff)
 import Halogen as H
 import Halogen.Component.ChildPath as CP
@@ -18,7 +18,6 @@ import Halogen.HTML.Properties as HP
 import Halogen.MDL.Button as Button
 import Halogen.MDL.Card as Card
 import Halogen.MDL.Shadow as Shadow
-
 import Herd.Console.Component.JsonTree as JsonTree
 import Herd.Console.Effect (RemoteAff)
 import Herd.Console.Remote as Remote
@@ -53,12 +52,14 @@ derive instance ordEditorJsonTreeSlot :: Ord JsonTreeSlot
 cpJsonTree :: CP.ChildPath JsonTree.Query ChildQuery JsonTreeSlot ChildSlot
 cpJsonTree = CP.cp1
 
-data ActionSlot = DeleteActionSlot
+data ActionSlot =
+    NewActionSlot
+  | DeleteActionSlot
 derive instance eqEditorActionSlot :: Eq ActionSlot
 derive instance ordEditorActionSlot :: Ord ActionSlot
 
-cpDeleteAction :: CP.ChildPath Button.Query ChildQuery ActionSlot ChildSlot
-cpDeleteAction = CP.cp2
+cpAction :: CP.ChildPath Button.Query ChildQuery ActionSlot ChildSlot
+cpAction = CP.cp2
 
 type EditorHTML = H.ParentHTML Query ChildQuery ChildSlot RemoteAff
 type EditorDSL = H.ParentDSL State Query ChildQuery ChildSlot Message RemoteAff
@@ -96,16 +97,38 @@ ui =
               []
             ]
           where displayActions :: EditorHTML
-                displayActions =
-                  case state.selectedSchema of
-                    Just (Tuple schemaId _) ->
-                      HH.slot'
-                        cpDeleteAction
-                        DeleteActionSlot
-                        (H.hoist liftAff Button.button)
-                        (Button.init { type: Button.Raised, color: Button.Colored, content: Button.Text "Delete", disabled: false, ripple: true })
-                        (HE.input $ OnDeleteSchema schemaId)
-                    Nothing -> HH.span_ []
+                displayActions = HH.div_ [ newSchemaButton, deleteSchemaButton ]
+
+                newSchemaButton :: EditorHTML
+                newSchemaButton =
+                  HH.slot'
+                    cpAction
+                    NewActionSlot
+                    (H.hoist liftAff Button.button)
+                    (Button.init
+                      { type: Button.Raised
+                      , color: Button.Colored
+                      , content: Button.Text "New"
+                      , disabled: false
+                      , ripple: true
+                      }
+                    )
+                    (const Nothing)
+
+                deleteSchemaButton :: EditorHTML
+                deleteSchemaButton =
+                  HH.slot'
+                    cpAction
+                    DeleteActionSlot
+                    (H.hoist liftAff Button.button)
+                    (Button.init
+                        { type: Button.Raised
+                        , color: Button.Colored
+                        , content: Button.Text "Delete"
+                        , disabled: isNothing state.selectedSchema
+                        , ripple: true
+                        })
+                    (maybe (const Nothing) (HE.input <<< OnDeleteSchema <<< fst) state.selectedSchema)
           
                 displaySchema :: Maybe Avro.Type -> EditorHTML
                 displaySchema (Just schema) =

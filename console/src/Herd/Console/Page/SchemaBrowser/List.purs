@@ -6,6 +6,7 @@ import Data.Array (filter, catMaybes)
 import Data.Foldable (maximum)
 import Data.Maybe (Maybe(..))
 import Data.String as Str
+import Data.String.Pattern (Pattern(..))
 import Data.Traversable (traverse)
 import Halogen as H
 import Halogen.HTML as HH
@@ -32,17 +33,17 @@ type State =
   { loading         :: Boolean
   , schemas         :: SubjectList
   , selectedSubject :: Maybe SchemaId
-  , subjectFilter   :: Maybe String
+  , subjectFilter   :: Maybe Pattern
   }
 
 data Query a =
     RefreshList a
   | ClickSchema SchemaId a
-  | FilterSubjects (Maybe String) a
+  | FilterSubjects (Maybe Pattern) a
 
 queryFilterSubjects :: forall a. String -> a -> Query a
 queryFilterSubjects str a =
-  if Str.length str > 0 then FilterSubjects (Just str) a
+  if Str.length str > 0 then FilterSubjects (Just $ Pattern str) a
     else FilterSubjects Nothing a
 
 type Input = Unit
@@ -83,7 +84,7 @@ ui =
             [ HH.input
               [ HP.class_ $ HH.ClassName "mdl-textfield__input"
               , HP.type_ HP.InputSearch
-              , HE.onValueChange (HE.input queryFilterSubjects)
+              , HE.onValueInput (HE.input queryFilterSubjects)
               ]
             , HH.label
               [ HP.classes $ HH.ClassName <$> [ "mdl-textfield__label" ] ]
@@ -101,8 +102,9 @@ ui =
       where visibleSubjects :: SubjectList
             visibleSubjects =
               case state.subjectFilter of
-                Nothing -> state.schemas
-                Just sf -> filterSubjects (\(SubjectId x) -> sf == x) state.schemas
+                Nothing      -> state.schemas
+                Just pattern ->
+                  filterSubjects (\(SubjectId subjectId) -> Str.contains pattern subjectId) state.schemas
 
             renderItem schemaId@(SchemaId (SubjectId subjectId) (Version version)) =
               HH.li
