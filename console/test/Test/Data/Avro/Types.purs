@@ -1,5 +1,5 @@
 module Test.Data.Avro.Types
-  ( checkAvroType
+  ( quickCheckAvroType
   , describeAvroType
   ) where
 
