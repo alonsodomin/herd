@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-command -v stylish-haskell >/dev/null 2>&1 || { echo "Could not find stylish-haskell. Aborting." >&2; exit 1; }
+command -v stylish-haskell >/dev/null 2>&1 || { echo "Could not find stylish-haskell. Install it with 'stack install stylish-haskell'. Aborting." >&2; exit 1; }
 
 find . -name \*.hs -and \( -not \( -name Setup.hs -or -path ./.stack-work/\* -or -path ./dist/\* \) \) | xargs stylish-haskell -i > stylish-out 2>&1
 

@@ -106,5 +106,5 @@ dist: $(DIST_BIN_FILE)
 install: dist
 	@stack install
 
-fmt: stylize.sh
+fmt: stylize.sh .stylish-haskell.yaml
 	@./stylize.sh
